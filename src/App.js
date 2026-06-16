@@ -18,6 +18,22 @@ const BIBLIA_VERSIONES = {
   TLA: BibliaTLA
 };
 
+// LECTURAS DIARIAS (Lista de 35 para romper la sincronía de los meses)
+const LECTURAS_DIARIAS = [
+  { libro: 'Salmos', capitulo: 1 }, { libro: 'Proverbios', capitulo: 3 }, { libro: 'Juan', capitulo: 1 },
+  { libro: 'Romanos', capitulo: 8 }, { libro: 'Filipenses', capitulo: 4 }, { libro: 'Salmos', capitulo: 23 },
+  { libro: 'Isaías', capitulo: 40 }, { libro: 'Mateo', capitulo: 5 }, { libro: 'Efesios', capitulo: 2 },
+  { libro: 'Hebreos', capitulo: 11 }, { libro: 'Salmos', capitulo: 91 }, { libro: 'Juan', capitulo: 3 },
+  { libro: '1 Corintios', capitulo: 13 }, { libro: 'Colosenses', capitulo: 3 }, { libro: 'Santiago', capitulo: 1 },
+  { libro: 'Salmos', capitulo: 121 }, { libro: 'Proverbios', capitulo: 16 }, { libro: 'Mateo', capitulo: 6 },
+  { libro: 'Romanos', capitulo: 12 }, { libro: 'Gálatas', capitulo: 5 }, { libro: 'Salmos', capitulo: 139 },
+  { libro: 'Isaías', capitulo: 53 }, { libro: 'Lucas', capitulo: 15 }, { libro: 'Juan', capitulo: 15 },
+  { libro: 'Efesios', capitulo: 6 }, { libro: 'Filipenses', capitulo: 2 }, { libro: '1 Tesalonicenses', capitulo: 5 },
+  { libro: '1 Juan', capitulo: 4 }, { libro: 'Apocalipsis', capitulo: 21 }, { libro: 'Salmos', capitulo: 27 },
+  { libro: 'Proverbios', capitulo: 4 }, { libro: 'Josué', capitulo: 1 }, { libro: 'Jeremías', capitulo: 29 },
+  { libro: 'Mateo', capitulo: 28 }, { libro: 'Hechos', capitulo: 2 }
+];
+
 const LIBROS_MENU = [
   { nombre: 'Génesis', testamento: 'Antiguo Testamento' },
   { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
@@ -116,6 +132,10 @@ export default function App() {
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
+  // Calculador de días absolutos: Nunca se reinicia a 1, rota de forma continua e infinita.
+  const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
+  const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length];
+
   // EL MOTOR BLINDADO: A prueba de errores en el JSON
   const obtenerVersiculos = () => {
     try {
@@ -145,7 +165,7 @@ export default function App() {
 
       return versiculos.length > 0 ? versiculos : [{ numero: '', texto: "No hay texto para este capítulo." }];
     } catch (e) {
-      // Si ocurre un error, en lugar de decir "Cargando", nos va a mostrar el error real en pantalla
+      // Si ocurre un error, muestra el error real en pantalla
       return [{ numero: '⚠️', texto: `Error detectado por la App: ${e.message}` }];
     }
   };
@@ -278,11 +298,12 @@ export default function App() {
       <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-8 relative z-10">
         {vistaActual === 'home' && (
           <div className="animate-in fade-in duration-500">
-            <div onClick={() => abrirLibro('Salmos', 23)} className="relative overflow-hidden rounded-3xl p-8 mb-10 cursor-pointer group shadow-xl transition-transform hover:scale-[1.02] border border-[#cca300]/40 backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
+            {/* NUEVA TARJETA DINÁMICA DE LECTURA DIARIA */}
+            <div onClick={() => abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo)} className="relative overflow-hidden rounded-3xl p-8 mb-10 cursor-pointer group shadow-xl transition-transform hover:scale-[1.02] border border-[#cca300]/40 backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
               <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity"><Heart size={80} color="#ffd700" /></div>
-              <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura Diaria</p>
-              <h2 className="text-3xl font-black text-[#fcd34d] mb-3">Salmos 23</h2>
-              <p className="text-slate-300 text-base md:text-lg font-medium italic line-clamp-2 pr-8">"Jehová es mi pastor; nada me faltará..."</p>
+              <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura de Hoy</p>
+              <h2 className="text-3xl font-black text-[#fcd34d] mb-3">{lecturaHoy.libro} {lecturaHoy.capitulo}</h2>
+              <p className="text-slate-300 text-base md:text-lg font-medium italic line-clamp-2 pr-8">Toca para abrir la lectura recomendada de hoy...</p>
             </div>
 
             <div className="space-y-8">
@@ -325,7 +346,8 @@ export default function App() {
               {libroActual} {capituloActual}
             </h2>
 
-            <div className="space-y-6 leading-relaxed" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.9' }}>
+            {/* ESPACIOS ACHICADOS ENTRE VERSÍCULOS */}
+            <div className="space-y-2 leading-relaxed" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>
               {versiculosActuales.map((versiculo, index) => (
                 <p key={index} className="relative group cursor-text">
                   <sup className={`absolute -left-6 top-1.5 text-[0.6em] font-black select-none ${tema === 'cym' ? 'text-[#ffd700]/60' : 'opacity-40'}`}>
