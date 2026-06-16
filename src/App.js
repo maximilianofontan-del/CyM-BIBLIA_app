@@ -116,27 +116,37 @@ export default function App() {
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
-  // EL MOTOR ARREGLADO: Solo lee capítulos reales, salteando introducciones (arregla el desfasaje)
+  // EL MOTOR BLINDADO: A prueba de errores en el JSON
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if (!libroData) return [{ numero: '', texto: "Libro no encontrado en esta versión." }];
 
-      const capitulosReales = libroData.chapters.filter(c => c.is_chapter === true);
+      if (!libroData.chapters) return [{ numero: '', texto: "Error: El libro no tiene capítulos." }];
+
+      const capitulosReales = libroData.chapters.filter(c => c && c.is_chapter === true);
       const capituloData = capitulosReales[capituloActual - 1];
       
       if (!capituloData) return [{ numero: '', texto: "Capítulo no disponible." }];
+      if (!capituloData.items) return [{ numero: '', texto: "El capítulo está vacío." }];
 
       const versiculos = capituloData.items
-        .filter(item => item.type === "verse")
-        .map(item => ({
-          numero: item.verse_numbers[0] || '',
-          texto: item.lines.join(' ')
-        }));
+        .filter(item => item && item.type === "verse")
+        .map(item => {
+          // Protecciones extremas por si algún dato del JSON viene roto
+          const numeroSeguro = (item.verse_numbers && item.verse_numbers.length > 0) ? item.verse_numbers[0] : '';
+          const textoSeguro = (item.lines && Array.isArray(item.lines)) ? item.lines.join(' ') : (item.text || 'Texto no disponible');
+          
+          return {
+            numero: numeroSeguro,
+            texto: textoSeguro
+          };
+        });
 
       return versiculos.length > 0 ? versiculos : [{ numero: '', texto: "No hay texto para este capítulo." }];
     } catch (e) {
-      return [{ numero: '', texto: 'Cargando texto...' }];
+      // Si ocurre un error, en lugar de decir "Cargando", nos va a mostrar el error real en pantalla
+      return [{ numero: '⚠️', texto: `Error detectado por la App: ${e.message}` }];
     }
   };
 
