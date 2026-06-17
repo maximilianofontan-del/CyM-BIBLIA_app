@@ -63,14 +63,14 @@ const LIBROS_MENU = [
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { font: 'Hebreos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
   { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
   { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
   { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE OPTIMIZADO
+// BUSCADOR INTELIGENTE REPARADO
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   
@@ -83,14 +83,14 @@ const encontrarLibro = (biblia, nombreBuscado) => {
     const nombreJson = limpiarTexto(b.name);
     const usfmJson = b.book_usfm ? b.book_usfm.toUpperCase() : "";
     
-    return nombreJson === buscado || 
-           nombreJson.replace("san", "") === buscado ||
-           nombreJson.includes(buscado) ||
-           (buscado === "juan" && usfmJson === "JHN") ||
-           (buscado === "mateo" && usfmJson === "MAT") ||
-           (buscado === "marcos" && usfmJson === "MRK") ||
-           (buscado === "lucas" && usfmJson === "LUK") ||
-           (buscado === "numeros" && usfmJson === "NUM");
+    // Comparación directa o por códigos estándar USFM bíblicos
+    if (nombreJson === buscado || nombreJson.replace("san", "") === buscado || nombreJson.includes(buscado)) return true;
+    if (buscado === "juan" && (usfmJson === "JHN" || usfmJson === "JOH")) return true;
+    if (buscado === "mateo" && usfmJson === "MAT") return true;
+    if (buscado === "marcos" && usfmJson === "MRK") return true;
+    if (buscado === "lucas" && usfmJson === "LUK") return true;
+    if (buscado === "numeros" && usfmJson === "NUM") return true;
+    return false;
   });
 };
 
@@ -126,7 +126,14 @@ export default function App() {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if (!libroData) return [{ numero: '', texto: "Libro no encontrado en esta versión." }];
 
-      if (!libroData.chapters) return [{ numero: '', texto: "Error: El libro no tiene capítulos." }];
+      // Si el JSON viene estructurado plano en vez de por capítulos
+      if (!libroData.chapters) {
+        if (libroData.verses) {
+          const filtrados = libroData.verses.filter(v => Number(v.chapter) === capituloActual);
+          return filtrados.map(v => ({ numero: v.verse, texto: v.text }));
+        }
+        return [{ numero: '', texto: "Capítulo no disponible." }];
+      }
 
       const capitulosReales = libroData.chapters.filter(c => c && c.is_chapter === true);
       const capituloData = capitulosReales[capituloActual - 1];
@@ -150,7 +157,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE CONFIGURADA PARA LA API ESTABLE DE GEMINI ---
+  // --- FUNCIÓN DEL ASISTENTE SOLUCIONADA PARA EL PAYLOAD DE GEMINI 1.5 ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -163,12 +170,16 @@ export default function App() {
     setCargandoIA(true);
 
     try {
+      // Usamos la variable exacta que configuraste en Vercel
       const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La llave de API (REACT_APP_GEMINI_API_KEY) no está definida en Vercel.");
+        throw new Error("La llave (REACT_APP_GEMINI_API_KEY) no está definida en las variables de entorno de Vercel.");
       }
 
+      const systemPrompt = `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable, en español y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
+
+      // Formateamos el historial al formato exacto requerido por Gemini v1
       const mensajesGemini = nuevoHistorial
         .filter((_, index) => index > 0) 
         .map(msg => ({
@@ -176,19 +187,26 @@ export default function App() {
           parts: [{ text: msg.texto }]
         }));
 
-      const systemPrompt = `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
+      // Agregamos el system instruction al inicio de los contenidos como un turno de sistema válido
+      const contentsConSystem = [
+        {
+          role: 'user',
+          parts: [{ text: `INSTRUCCIÓN DEL SISTEMA: ${systemPrompt}\n\nEntendido. Ahora responderé los mensajes bajo este rol.` }]
+        },
+        {
+          role: 'model',
+          parts: [{ text: "Entendido, asistiré al usuario de manera clara, amable y teológicamente precisa según el capítulo actual." }]
+        },
+        ...mensajesGemini
+      ];
 
-      // Hacemos la petición utilizando el endpoint v1 (Estable) de Google Gemini
       const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          contents: mensajesGemini,
+          contents: contentsConSystem,
           generationConfig: {
             temperature: 0.7
           }
@@ -198,12 +216,13 @@ export default function App() {
       const data = await respuesta.json();
       
       if (data.error) throw new Error(data.error.message);
+      if (!data.candidates || data.candidates.length === 0) throw new Error("No se recibió respuesta del modelo.");
 
       const textoAsistente = data.candidates[0].content.parts[0].text;
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
@@ -232,7 +251,14 @@ export default function App() {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if(libroData) {
-        const totalCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+        let totalCapitulos = 1;
+        if (libroData.chapters) {
+          totalCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+        } else if (libroData.verses) {
+          const caps = libroData.verses.map(v => Number(v.chapter));
+          totalCapitulos = Math.max(...caps);
+        }
+        
         let nuevoCap = capituloActual + direccion;
         if (nuevoCap >= 1 && nuevoCap <= totalCapitulos) {
           setCapituloActual(nuevoCap);
@@ -294,8 +320,13 @@ export default function App() {
                 let cantidadCapitulos = 1;
                 try {
                   const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
-                  if (libroData && libroData.chapters) {
-                    cantidadCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+                  if (libroData) {
+                    if (libroData.chapters) {
+                      cantidadCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+                    } else if (libroData.verses) {
+                      const caps = libroData.verses.map(v => Number(v.chapter));
+                      cantidadCapitulos = Math.max(...caps);
+                    }
                   }
                 } catch(e) {}
                 
@@ -419,7 +450,7 @@ export default function App() {
                 ))}
                 {cargandoIA && (
                   <div className={`self-start p-3 rounded-xl animate-pulse ${tema === 'cym' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                    Escribiendo...
+                    Pensando...
                   </div>
                 )}
               </div>
