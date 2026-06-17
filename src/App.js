@@ -167,11 +167,11 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // AQUÍ ESTÁ LA CORRECCIÓN DE LA LLAVE PARA VITE
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      // AQUÍ ESTÁ LA CORRECCIÓN DE LA LLAVE PARA CREATE REACT APP
+      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La llave de API (VITE_OPENAI_API_KEY) no está definida en Vercel o en el entorno.");
+        throw new Error("La llave de API (REACT_APP_OPENAI_API_KEY) no está definida en el entorno. Acordate de cargarla en Vercel y hacer un Redeploy.");
       }
 
       const mensajesOpenAI = nuevoHistorial.map(msg => ({
@@ -454,7 +454,7 @@ export default function App() {
           </>
         ) : (
           <div className="w-full text-center">
-            <span className="text-[10px] font-black tracking-widest uppercase opacity-40">Desarrollado por Max para Crecer y Multiplicar</span>
+            <span className="text-[10px] font-black tracking-widest uppercase opacity-40">Desarrollado por pastor Max Fontán para el ministerio Crecer y Multiplicar</span>
           </div>
         )}
       </footer>
