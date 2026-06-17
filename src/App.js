@@ -46,7 +46,7 @@ const LIBROS_MENU = [
   { nombre: 'Ester', testamento: 'Antiguo Testamento' }, { nombre: 'Job', testamento: 'Antiguo Testamento' },
   { nombre: 'Salmos', testamento: 'Antiguo Testamento' }, { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
   { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' }, { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
-  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { fontan: 'Jeremías', nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
   { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
   { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
   { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
@@ -59,7 +59,7 @@ const LIBROS_MENU = [
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
   { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
+  { fontan: 'Efesios', nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
@@ -70,19 +70,15 @@ const LIBROS_MENU = [
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE DE LIBROS REPARADO
+// BUSCADOR INTELIGENTE DE LIBROS
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
-  
   const limpiarTexto = (texto) => 
     texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").trim() : "";
-  
   const buscado = limpiarTexto(nombreBuscado);
-  
   return biblia.books.find(b => {
     const nombreJson = limpiarTexto(b.name);
     const usfmJson = b.book_usfm ? b.book_usfm.toUpperCase() : "";
-    
     if (nombreJson === buscado || nombreJson.replace("san", "") === buscado || nombreJson.includes(buscado)) return true;
     if (buscado === "juan" && (usfmJson === "JHN" || usfmJson === "JOH")) return true;
     if (buscado === "mateo" && usfmJson === "MAT") return true;
@@ -123,8 +119,7 @@ export default function App() {
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
-      if (!libroData) return [{ numero: '', texto: "Libro no encontrado en esta versión." }];
-
+      if (!libroData) return [{ numero: '', texto: "Libro no encontrado." }];
       if (!libroData.chapters) {
         if (libroData.verses) {
           const filtrados = libroData.verses.filter(v => Number(v.chapter) === capituloActual);
@@ -132,30 +127,25 @@ export default function App() {
         }
         return [{ numero: '', texto: "Capítulo no disponible." }];
       }
-
       const capitulosReales = libroData.chapters.filter(c => c && c.is_chapter === true);
       const capituloData = capitulosReales[capituloActual - 1];
-      
-      if (!capituloData) return [{ numero: '', texto: "Capítulo no disponible." }];
-      if (!capituloData.items) return [{ numero: '', texto: "El capítulo está vacío." }];
+      if (!capituloData || !capituloData.items) return [{ numero: '', texto: "Capítulo no disponible." }];
 
-      const versiculos = capituloData.items
+      return capituloData.items
         .filter(item => item && item.type === "verse")
         .map(item => {
           const numeroSeguro = (item.verse_numbers && item.verse_numbers.length > 0) ? item.verse_numbers[0] : '';
           const textoSeguro = (item.lines && Array.isArray(item.lines)) ? item.lines.join(' ') : (item.text || 'Texto no disponible');
           return { numero: numeroSeguro, texto: textoSeguro };
         });
-
-      return versiculos.length > 0 ? versiculos : [{ numero: '', texto: "No hay texto para este capítulo." }];
     } catch (e) {
-      return [{ numero: '⚠️', texto: `Error detectado por la App: ${e.message}` }];
+      return [{ numero: '⚠️', texto: `Error en lectura: ${e.message}` }];
     }
   };
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE ADAPTADA A LA URL V1BETA PARA SOPORTE TOTAL ---
+  // --- FUNCIÓN DEL ASISTENTE BLINDADA CONTRA ERRORES DE GOOGLE ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -168,12 +158,14 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+      // Intentamos capturar cualquier llave que hayas puesto en Vercel automáticamente
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      
       if (!apiKey) {
-        throw new Error("La llave (REACT_APP_GEMINI_API_KEY) no está definida en Vercel.");
+        throw new Error("Falta configurar la Clave de API en el panel de Vercel.");
       }
 
-      // Estructura limpia y estándar para la API v1beta
+      // Estructura limpia y compacta compatible con todos los proyectos gratuitos de Google Studio
       const mensajesGemini = nuevoHistorial
         .filter((_, index) => index > 0) 
         .map(msg => ({
@@ -181,32 +173,33 @@ export default function App() {
           parts: [{ text: msg.texto }]
         }));
 
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const contextPrompt = `INSTRUCCIÓN: Actúa como un consejero bíblico y teólogo experto para la app 'CyM Biblia'. Responde de forma pastoral, amable, clara y en español. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
+
+      // Insertamos el contexto de forma segura al inicio del contenido
+      const contenidoFinal = [
+        { role: 'user', parts: [{ text: `${contextPrompt}\n\nMi primera pregunta o comentario es: ${mensajesGemini[0]?.parts[0]?.text || chatInput}` }] },
+        ...mensajesGemini.slice(1)
+      ];
+
+      // Usamos el endpoint v1 con el alias 'gemini-pro' que está liberado mundialmente sin restricciones
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: mensajesGemini,
-          systemInstruction: {
-            parts: [{ text: `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable, en español y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.` }]
-          },
-          generationConfig: {
-            temperature: 0.7
-          }
+          contents: contenidoFinal,
+          generationConfig: { temperature: 0.7 }
         })
       });
 
       const data = await respuesta.json();
       
       if (data.error) throw new Error(data.error.message);
-      if (!data.candidates || data.candidates.length === 0) throw new Error("No se recibió respuesta del modelo.");
+      if (!data.candidates || data.candidates.length === 0) throw new Error("Google no devolvió respuesta.");
 
       const textoAsistente = data.candidates[0].content.parts[0].text;
-
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Nota: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
@@ -242,7 +235,6 @@ export default function App() {
           const caps = libroData.verses.map(v => Number(v.chapter));
           totalCapitulos = Math.max(...caps);
         }
-        
         let nuevoCap = capituloActual + direccion;
         if (nuevoCap >= 1 && nuevoCap <= totalCapitulos) {
           setCapituloActual(nuevoCap);
