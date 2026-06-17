@@ -345,23 +345,20 @@ export default function App() {
             {/* SECCIÓN REEMPLAZABLE: AQUÍ VA EL LINK O LOS DATOS */}
             <div className="space-y-4">
               <a 
-                href="https://link.mercadopago.com.ar/crecerymultiplicar" 
+                href="https://mpago.la/TU_LINK_CORTO_AQUI" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="block w-full py-3 bg-[#009ee3] hover:bg-[#0087c4] text-white font-black rounded-xl text-sm transition-all shadow-lg shadow-[#009ee3]/20"
               >
-                Ofrendar por Mercado Pago (Link)
+                Ofrendar por Mercado Pago (Abrir App)
               </a>
 
               <div className="p-3 rounded-xl bg-white/5 border border-current/10 text-xs space-y-1">
                 <p className="font-bold opacity-60">Transferencia Directa (Alias):</p>
-                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">MINISTERIO.CyM</p>
-                <p className="text-[10px] opacity-40">Toca el alias para copiarlo</p>
+                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">ministerio.cym</p>
+                <p className="text-[10px] opacity-40">Toca el alias para copiarlo o transferí desde tu App</p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
       {mostrarAjustes && (
         <div className={`fixed top-20 right-6 p-5 rounded-2xl shadow-2xl border w-72 z-40 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
