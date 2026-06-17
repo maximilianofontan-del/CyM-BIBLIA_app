@@ -63,31 +63,34 @@ const LIBROS_MENU = [
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { font: 'Hebreos', testamento: 'Nuevo Testamento' },
   { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
   { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
   { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE
+// BUSCADOR INTELIGENTE OPTIMIZADO
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   
-  const limpiarTexto = (texto) => texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+  const limpiarTexto = (texto) => 
+    texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").trim() : "";
   
   const buscado = limpiarTexto(nombreBuscado);
   
   return biblia.books.find(b => {
     const nombreJson = limpiarTexto(b.name);
+    const usfmJson = b.book_usfm ? b.book_usfm.toUpperCase() : "";
+    
     return nombreJson === buscado || 
-           nombreJson.replace("san ", "") === buscado ||
-           nombreJson.includes("evangelio") && nombreJson.includes(buscado) ||
-           (buscado === "juan" && b.book_usfm === "JHN") ||
-           (buscado === "mateo" && b.book_usfm === "MAT") ||
-           (buscado === "marcos" && b.book_usfm === "MRK") ||
-           (buscado === "lucas" && b.book_usfm === "LUK") ||
-           (buscado === "numeros" && b.book_usfm === "NUM");
+           nombreJson.replace("san", "") === buscado ||
+           nombreJson.includes(buscado) ||
+           (buscado === "juan" && usfmJson === "JHN") ||
+           (buscado === "mateo" && usfmJson === "MAT") ||
+           (buscado === "marcos" && usfmJson === "MRK") ||
+           (buscado === "lucas" && usfmJson === "LUK") ||
+           (buscado === "numeros" && usfmJson === "NUM");
   });
 };
 
@@ -147,7 +150,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE ACTUALIZADA PARA GOOGLE GEMINI ---
+  // --- FUNCIÓN DEL ASISTENTE CONFIGURADA PARA LA API ESTABLE DE GEMINI ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -160,15 +163,12 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // Usamos la nueva variable de entorno de Vite para Gemini
       const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
       
       if (!apiKey) {
         throw new Error("La llave de API (REACT_APP_GEMINI_API_KEY) no está definida en Vercel.");
       }
 
-      // Gemini requiere que el primer mensaje siempre sea del usuario.
-      // Omitimos el mensaje de saludo (index 0) y mapeamos a 'user' y 'model'
       const mensajesGemini = nuevoHistorial
         .filter((_, index) => index > 0) 
         .map(msg => ({
@@ -176,11 +176,10 @@ export default function App() {
           parts: [{ text: msg.texto }]
         }));
 
-      // Las instrucciones del sistema se envían en un bloque aparte
       const systemPrompt = `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
 
-      // Hacemos la petición a la API de Gemini 1.5 Flash
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      // Hacemos la petición utilizando el endpoint v1 (Estable) de Google Gemini
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -200,7 +199,6 @@ export default function App() {
       
       if (data.error) throw new Error(data.error.message);
 
-      // Navegamos por la estructura de respuesta de Gemini
       const textoAsistente = data.candidates[0].content.parts[0].text;
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
