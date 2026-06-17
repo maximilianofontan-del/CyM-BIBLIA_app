@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle, MessageCircle, X, Send, Loader2
+  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle, MessageCircle, X, Send
 } from 'lucide-react';
 
 // 1. IMPORTAMOS LAS BASES DE DATOS
@@ -35,74 +35,42 @@ const LECTURAS_DIARIAS = [
 ];
 
 const LIBROS_MENU = [
-  { nombre: 'Génesis', testamento: 'Antiguo Testamento' },
-  { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
-  { nombre: 'Levítico', testamento: 'Antiguo Testamento' },
-  { nombre: 'Números', testamento: 'Antiguo Testamento' },
-  { nombre: 'Deuteronomio', testamento: 'Antiguo Testamento' },
-  { nombre: 'Josué', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jueces', testamento: 'Antiguo Testamento' },
-  { nombre: 'Rut', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Samuel', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Samuel', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Reyes', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Reyes', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Crónicas', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Crónicas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Esdras', testamento: 'Antiguo Testamento' },
-  { nombre: 'Nehemías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Ester', testamento: 'Antiguo Testamento' },
-  { nombre: 'Job', testamento: 'Antiguo Testamento' },
-  { nombre: 'Salmos', testamento: 'Antiguo Testamento' },
-  { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
-  { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' },
-  { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
-  { nombre: 'Isaías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' },
-  { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Daniel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Joel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Amós', testamento: 'Antiguo Testamento' },
-  { nombre: 'Abdías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
-  { nombre: 'Miqueas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
-  { nombre: 'Habacuc', testamento: 'Antiguo Testamento' },
-  { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Hageo', testamento: 'Antiguo Testamento' },
-  { nombre: 'Zacarías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Malaquías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
-  { nombre: 'Marcos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Juan', testamento: 'Nuevo Testamento' },
-  { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Corintios', testamento: 'Nuevo Testamento' },
-  { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Efesios', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
-  { nombre: 'Colosenses', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' },
-  { nombre: 'Tito', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filemón', testamento: 'Nuevo Testamento' },
-  { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Santiago', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: 'Judas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
+  { nombre: 'Génesis', testamento: 'Antiguo Testamento' }, { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
+  { nombre: 'Levítico', testamento: 'Antiguo Testamento' }, { nombre: 'Números', testamento: 'Antiguo Testamento' },
+  { nombre: 'Deuteronomio', testamento: 'Antiguo Testamento' }, { nombre: 'Josué', testamento: 'Antiguo Testamento' },
+  { nombre: 'Jueces', testamento: 'Antiguo Testamento' }, { nombre: 'Rut', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Samuel', testamento: 'Antiguo Testamento' }, { nombre: '2 Samuel', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Reyes', testamento: 'Antiguo Testamento' }, { nombre: '2 Reyes', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Crónicas', testamento: 'Antiguo Testamento' }, { nombre: '2 Crónicas', testamento: 'Antiguo Testamento' },
+  { nombre: 'Esdras', testamento: 'Antiguo Testamento' }, { nombre: 'Nehemías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Ester', testamento: 'Antiguo Testamento' }, { nombre: 'Job', testamento: 'Antiguo Testamento' },
+  { nombre: 'Salmos', testamento: 'Antiguo Testamento' }, { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
+  { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' }, { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
+  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
+  { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
+  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
+  { nombre: 'Abdías', testamento: 'Antiguo Testamento' }, { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
+  { nombre: 'Miqueas', testamento: 'Antiguo Testamento' }, { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
+  { nombre: 'Habacuc', testamento: 'Antiguo Testamento' }, { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Hageo', testamento: 'Antiguo Testamento' }, { nombre: 'Zacarías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
+  { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
+  { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
+  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
+  { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
+  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
+  { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
+// BUSCADOR INTELIGENTE: Ignora tildes y encuentra libros vacíos
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   const limpiarTexto = (texto) => texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
@@ -130,26 +98,30 @@ export default function App() {
   const [tema, setTema] = useState('cym');
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
-  
-  // ESTADOS PARA LA IA
-  const [mostrarAsistente, setMostrarAsistente] = useState(false);
-  const [mensajeUsuario, setMensajeUsuario] = useState('');
-  const [chatLog, setChatLog] = useState([
-    { rol: 'asistente', texto: '¡Hola! Soy el asistente bíblico de Crecer y Multiplicar. ¿Qué duda tenés sobre la lectura de hoy?' }
-  ]);
-  const [estaCargandoIA, setEstaCargandoIA] = useState(false);
-  const chatEndRef = useRef(null);
 
+  // --- ESTADOS DEL ASISTENTE ---
+  const [mostrarAsistente, setMostrarAsistente] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [cargandoIA, setCargandoIA] = useState(false);
+  const [chatHistorial, setChatHistorial] = useState([
+    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Preguntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
+  ]);
+
+  // Calculador de días absolutos
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length];
 
+  // EL MOTOR BLINDADO
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if (!libroData) return [{ numero: '', texto: "Libro no encontrado en esta versión." }];
+
       if (!libroData.chapters) return [{ numero: '', texto: "Error: El libro no tiene capítulos." }];
+
       const capitulosReales = libroData.chapters.filter(c => c && c.is_chapter === true);
       const capituloData = capitulosReales[capituloActual - 1];
+      
       if (!capituloData) return [{ numero: '', texto: "Capítulo no disponible." }];
       if (!capituloData.items) return [{ numero: '', texto: "El capítulo está vacío." }];
 
@@ -163,11 +135,66 @@ export default function App() {
 
       return versiculos.length > 0 ? versiculos : [{ numero: '', texto: "No hay texto para este capítulo." }];
     } catch (e) {
-      return [{ numero: '⚠️', texto: `Error: ${e.message}` }];
+      return [{ numero: '⚠️', texto: `Error detectado por la App: ${e.message}` }];
     }
   };
 
   const versiculosActuales = obtenerVersiculos();
+
+  // --- FUNCIÓN DEL ASISTENTE PARA HABLAR CON OPENAI ---
+  const enviarMensaje = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const nuevoMensajeUsuario = { rol: 'usuario', texto: chatInput };
+    const nuevoHistorial = [...chatHistorial, nuevoMensajeUsuario];
+    
+    setChatHistorial(nuevoHistorial);
+    setChatInput('');
+    setCargandoIA(true);
+
+    try {
+      // AQUÍ ESTÁ LA CORRECCIÓN DE LA LLAVE PARA VITE
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("La llave de API (VITE_OPENAI_API_KEY) no está definida en Vercel o en el entorno.");
+      }
+
+      const mensajesOpenAI = nuevoHistorial.map(msg => ({
+        role: msg.rol === 'usuario' ? 'user' : 'assistant',
+        content: msg.texto
+      }));
+
+      mensajesOpenAI.unshift({
+        role: 'system',
+        content: `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`
+      });
+
+      const respuesta = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: mensajesOpenAI,
+          temperature: 0.7
+        })
+      });
+
+      const data = await respuesta.json();
+      
+      if (data.error) throw new Error(data.error.message);
+
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices[0].message.content }]);
+    } catch (error) {
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
+    } finally {
+      setCargandoIA(false);
+    }
+  };
 
   const themeStyles = {
     claro: 'bg-slate-50 text-slate-900 border-slate-200',
@@ -201,62 +228,6 @@ export default function App() {
       }
     } catch(e) {}
   };
-
-  // FUNCIÓN PARA HABLAR CON LA IA DE OPENAI
-  const enviarMensajeIA = async () => {
-    if (!mensajeUsuario.trim()) return;
-
-    // 1. Agregamos el mensaje del usuario al chat
-    const nuevosMensajes = [...chatLog, { rol: 'usuario', texto: mensajeUsuario }];
-    setChatLog(nuevosMensajes);
-    setMensajeUsuario('');
-    setEstaCargandoIA(true);
-
-    // 2. Preparamos la orden para ChatGPT
-    const systemPrompt = `Sos un asistente bíblico pastoral para la aplicación "CyM Biblia" del ministerio cristiano Crecer y Multiplicar. Respondé de manera cálida, clara y teológicamente fundamentada. El usuario está leyendo actualmente: ${libroActual} Capítulo ${capituloActual}. Usá este contexto si es necesario.`;
-
-    try {
-      const respuesta = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...nuevosMensajes.map(m => ({
-              role: m.rol === 'usuario' ? 'user' : 'assistant',
-              content: m.texto
-            }))
-          ],
-          max_tokens: 300 // Límite para no gastar tanto saldo por respuesta
-        })
-      });
-
-      const data = await respuesta.json();
-      
-      if(data.error) {
-         setChatLog([...nuevosMensajes, { rol: 'asistente', texto: `Hubo un error de conexión: ${data.error.message}` }]);
-      } else {
-         const textoRespuesta = data.choices[0].message.content;
-         setChatLog([...nuevosMensajes, { rol: 'asistente', texto: textoRespuesta }]);
-      }
-
-    } catch (error) {
-      setChatLog([...nuevosMensajes, { rol: 'asistente', texto: "Disculpá, no pude conectarme al servidor. Asegurate de tener internet y de que la llave API esté bien configurada en Vercel." }]);
-    } finally {
-      setEstaCargandoIA(false);
-    }
-  };
-
-  // Para que el chat baje automáticamente cuando hay un mensaje nuevo
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatLog, mostrarAsistente]);
 
   const librosAntiguo = LIBROS_MENU.filter((l) => l.testamento === 'Antiguo Testamento');
   const librosNuevo = LIBROS_MENU.filter((l) => l.testamento === 'Nuevo Testamento');
@@ -393,65 +364,7 @@ export default function App() {
         )}
 
         {vistaActual === 'lector' && (
-          <div className="animate-in slide-in-from-right-8 duration-300 bg-black/70 p-6 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl relative">
-            
-            {/* BOTÓN DE LA IA INTEGRADO */}
-            <div className="flex justify-center mb-6">
-               <button 
-                 onClick={() => setMostrarAsistente(!mostrarAsistente)}
-                 className={`flex items-center gap-2 px-5 py-2 rounded-full font-black text-xs md:text-sm uppercase tracking-wider transition-all shadow-lg ${mostrarAsistente ? 'bg-[#cca300] text-black border-2 border-[#ffd700]' : 'bg-[#cca300]/20 text-[#fcd34d] border border-[#cca300]/30 hover:bg-[#cca300]/30'}`}
-               >
-                 <MessageCircle size={16} /> {mostrarAsistente ? 'Cerrar Asistente' : '💡 Asistente CyM'}
-               </button>
-            </div>
-
-            {/* VENTANA DEL CHAT (Se despliega al apretar el botón) */}
-            {mostrarAsistente && (
-              <div className={`mb-10 rounded-2xl overflow-hidden border flex flex-col h-96 animate-in slide-in-from-top-4 ${tema === 'cym' ? 'bg-[#1a1a1a] border-[#cca300]/50' : 'bg-slate-100 border-slate-300'}`}>
-                 <div className={`p-3 text-center border-b font-black text-xs uppercase tracking-widest ${tema === 'cym' ? 'bg-black border-[#cca300]/50 text-[#fcd34d]' : 'bg-white border-slate-300 text-slate-800'}`}>
-                    Asistente de Estudio Bíbico
-                 </div>
-                 
-                 {/* Mensajes del chat */}
-                 <div className="flex-1 overflow-y-auto p-4 space-y-4 font-sans text-sm">
-                    {chatLog.map((msg, index) => (
-                      <div key={index} className={`flex ${msg.rol === 'usuario' ? 'justify-end' : 'justify-start'}`}>
-                         <div className={`p-3 max-w-[85%] rounded-2xl ${msg.rol === 'usuario' ? 'bg-[#cca300] text-black font-bold rounded-br-none' : (tema === 'cym' ? 'bg-black/60 text-slate-200 border border-[#cca300]/30 rounded-bl-none' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none')}`}>
-                            {msg.texto}
-                         </div>
-                      </div>
-                    ))}
-                    {estaCargandoIA && (
-                       <div className="flex justify-start">
-                          <div className={`p-3 rounded-2xl rounded-bl-none flex items-center gap-2 ${tema === 'cym' ? 'bg-black/60 text-slate-400 border border-[#cca300]/30' : 'bg-white text-slate-500 border border-slate-200'}`}>
-                             <Loader2 size={16} className="animate-spin" /> Pensando respuesta...
-                          </div>
-                       </div>
-                    )}
-                    <div ref={chatEndRef} />
-                 </div>
-
-                 {/* Barra para escribir */}
-                 <div className={`p-3 border-t flex items-center gap-2 ${tema === 'cym' ? 'bg-black border-[#cca300]/50' : 'bg-white border-slate-300'}`}>
-                    <input 
-                      type="text" 
-                      value={mensajeUsuario}
-                      onChange={(e) => setMensajeUsuario(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && enviarMensajeIA()}
-                      placeholder="Escribí tu pregunta sobre el texto..."
-                      className={`flex-1 p-3 rounded-full outline-none font-sans text-sm ${tema === 'cym' ? 'bg-[#1a1a1a] text-white border border-[#cca300]/30 focus:border-[#cca300]' : 'bg-slate-100 text-slate-900 border border-slate-200 focus:border-slate-400'}`}
-                    />
-                    <button 
-                      onClick={enviarMensajeIA}
-                      disabled={estaCargandoIA || !mensajeUsuario.trim()}
-                      className={`p-3 rounded-full transition-colors ${!mensajeUsuario.trim() ? 'opacity-50 cursor-not-allowed' : ''} ${tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700]' : 'bg-slate-800 text-white hover:bg-slate-900'}`}
-                    >
-                       <Send size={18} />
-                    </button>
-                 </div>
-              </div>
-            )}
-
+          <div className="animate-in slide-in-from-right-8 duration-300 bg-black/70 p-6 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
             <h2 className={`text-3xl font-black mb-12 text-center ${tema === 'cym' ? 'text-[#ffd700]' : ''}`} style={{ fontSize: `${tamañoFuente * 2.2}px` }}>
               {libroActual} {capituloActual}
             </h2>
@@ -472,6 +385,53 @@ export default function App() {
         )}
       </main>
 
+      {/* --- BOTÓN Y VENTANA DEL ASISTENTE IA --- */}
+      {vistaActual === 'lector' && (
+        <div className="fixed bottom-20 right-6 z-50">
+          {mostrarAsistente ? (
+            <div className={`w-80 h-96 rounded-2xl shadow-2xl flex flex-col border overflow-hidden animate-in slide-in-from-bottom-4 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
+              <div className={`p-3 flex justify-between items-center border-b ${tema === 'cym' ? 'bg-black border-[#cca300]/30' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className={tema === 'cym' ? 'text-[#ffd700]' : 'text-amber-500'} />
+                  <span className="font-bold text-sm">Asistente CyM</span>
+                </div>
+                <button onClick={() => setMostrarAsistente(false)} className="hover:opacity-70 p-1"><X size={18} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col text-sm">
+                {chatHistorial.map((msg, i) => (
+                  <div key={i} className={`p-3 rounded-xl max-w-[85%] ${msg.rol === 'usuario' ? `self-end ${tema === 'cym' ? 'bg-[#cca300] text-black' : 'bg-blue-500 text-white'}` : `self-start ${tema === 'cym' ? 'bg-white/10 text-slate-200' : 'bg-slate-100 text-slate-800'}`}`}>
+                    {msg.texto}
+                  </div>
+                ))}
+                {cargandoIA && (
+                  <div className={`self-start p-3 rounded-xl animate-pulse ${tema === 'cym' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                    Escribiendo...
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={enviarMensaje} className={`p-3 border-t flex gap-2 ${tema === 'cym' ? 'bg-black border-[#cca300]/30' : 'bg-white border-slate-200'}`}>
+                <input 
+                  type="text" 
+                  value={chatInput} 
+                  onChange={(e) => setChatInput(e.target.value)} 
+                  placeholder="Hacé una pregunta..." 
+                  className={`flex-1 rounded-full px-4 py-2 text-sm outline-none border ${tema === 'cym' ? 'bg-[#1a1a1a] border-[#cca300]/30 text-white placeholder-slate-500 focus:border-[#cca300]' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`}
+                />
+                <button type="submit" disabled={cargandoIA || !chatInput.trim()} className={`p-2 rounded-full flex-shrink-0 transition-colors ${tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}>
+                  <Send size={16} />
+                </button>
+              </form>
+            </div>
+          ) : (
+            <button onClick={() => setMostrarAsistente(true)} className={`p-4 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform ${tema === 'cym' ? 'bg-gradient-to-r from-[#ffd700] to-[#b8860b] text-black shadow-[#cca300]/40' : 'bg-blue-600 text-white shadow-blue-500/40'}`}>
+              <MessageCircle size={24} />
+            </button>
+          )}
+        </div>
+      )}
+
       <footer className={`mt-auto p-4 flex justify-between items-center backdrop-blur-md border-t relative z-10 ${navStyles[tema]}`}>
         {vistaActual === 'lector' ? (
           <>
@@ -481,7 +441,7 @@ export default function App() {
           </>
         ) : (
           <div className="w-full text-center">
-            <span className="text-[10px] font-black tracking-widest uppercase opacity-40">Desarrollado por pastor Max Fontán para el ministerio Crecer y Multiplicar</span>
+            <span className="text-[10px] font-black tracking-widest uppercase opacity-40">Desarrollado por Max para Crecer y Multiplicar</span>
           </div>
         )}
       </footer>
