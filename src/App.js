@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
-  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle
+  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle, MessageCircle, X, Send
 } from 'lucide-react';
 
-// 1. IMPORTAMOS LAS BASES DE DATOS (Asegurate de que los nombres coincidan con los de tu carpeta 'data')
+// 1. IMPORTAMOS LAS BASES DE DATOS
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
@@ -18,7 +18,7 @@ const BIBLIA_VERSIONES = {
   TLA: BibliaTLA
 };
 
-// LECTURAS DIARIAS (Lista de 35 para romper la sincronía de los meses)
+// LECTURAS DIARIAS
 const LECTURAS_DIARIAS = [
   { libro: 'Salmos', capitulo: 1 }, { libro: 'Proverbios', capitulo: 3 }, { libro: 'Juan', capitulo: 1 },
   { libro: 'Romanos', capitulo: 8 }, { libro: 'Filipenses', capitulo: 4 }, { libro: 'Salmos', capitulo: 23 },
@@ -35,85 +35,65 @@ const LECTURAS_DIARIAS = [
 ];
 
 const LIBROS_MENU = [
-  { nombre: 'Génesis', testamento: 'Antiguo Testamento' },
-  { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
-  { nombre: 'Levítico', testamento: 'Antiguo Testamento' },
-  { nombre: 'Números', testamento: 'Antiguo Testamento' },
-  { nombre: 'Deuteronomio', testamento: 'Antiguo Testamento' },
-  { nombre: 'Josué', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jueces', testamento: 'Antiguo Testamento' },
-  { nombre: 'Rut', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Samuel', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Samuel', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Reyes', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Reyes', testamento: 'Antiguo Testamento' },
-  { nombre: '1 Crónicas', testamento: 'Antiguo Testamento' },
-  { nombre: '2 Crónicas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Esdras', testamento: 'Antiguo Testamento' },
-  { nombre: 'Nehemías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Ester', testamento: 'Antiguo Testamento' },
-  { nombre: 'Job', testamento: 'Antiguo Testamento' },
-  { nombre: 'Salmos', testamento: 'Antiguo Testamento' },
-  { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
-  { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' },
-  { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
-  { nombre: 'Isaías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' },
-  { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Daniel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Joel', testamento: 'Antiguo Testamento' },
-  { nombre: 'Amós', testamento: 'Antiguo Testamento' },
-  { nombre: 'Abdías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
-  { nombre: 'Miqueas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
-  { nombre: 'Habacuc', testamento: 'Antiguo Testamento' },
-  { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Hageo', testamento: 'Antiguo Testamento' },
-  { nombre: 'Zacarías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Malaquías', testamento: 'Antiguo Testamento' },
-  { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
-  { nombre: 'Marcos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Juan', testamento: 'Nuevo Testamento' },
-  { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Corintios', testamento: 'Nuevo Testamento' },
-  { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Efesios', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
-  { nombre: 'Colosenses', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' },
-  { nombre: 'Tito', testamento: 'Nuevo Testamento' },
-  { nombre: 'Filemón', testamento: 'Nuevo Testamento' },
-  { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Santiago', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' },
-  { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
-  { nombre: 'Judas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
+  { nombre: 'Génesis', testamento: 'Antiguo Testamento' }, { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
+  { nombre: 'Levítico', testamento: 'Antiguo Testamento' }, { nombre: 'Números', testamento: 'Antiguo Testamento' },
+  { nombre: 'Deuteronomio', testamento: 'Antiguo Testamento' }, { nombre: 'Josué', testamento: 'Antiguo Testamento' },
+  { nombre: 'Jueces', testamento: 'Antiguo Testamento' }, { nombre: 'Rut', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Samuel', testamento: 'Antiguo Testamento' }, { nombre: '2 Samuel', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Reyes', testamento: 'Antiguo Testamento' }, { nombre: '2 Reyes', testamento: 'Antiguo Testamento' },
+  { nombre: '1 Crónicas', testamento: 'Antiguo Testamento' }, { nombre: '2 Crónicas', testamento: 'Antiguo Testamento' },
+  { nombre: 'Esdras', testamento: 'Antiguo Testamento' }, { nombre: 'Nehemías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Ester', testamento: 'Antiguo Testamento' }, { nombre: 'Job', testamento: 'Antiguo Testamento' },
+  { nombre: 'Salmos', testamento: 'Antiguo Testamento' }, { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
+  { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' }, { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
+  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
+  { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
+  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
+  { nombre: 'Abdías', testamento: 'Antiguo Testamento' }, { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
+  { nombre: 'Miqueas', testamento: 'Antiguo Testamento' }, { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
+  { nombre: 'Habacuc', testamento: 'Antiguo Testamento' }, { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Hageo', testamento: 'Antiguo Testamento' }, { nombre: 'Zacarías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
+  { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
+  { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
+  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
+  { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
+  { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
+  { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
+  { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE: Ignora tildes y encuentra libros vacíos
+// BUSCADOR INTELIGENTE: Ignora tildes, encuentra libros vacíos y omite la palabra "San"
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
-  const limpiarTexto = (texto) => texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+  
+  // Función para limpiar texto: pasa a minúsculas, quita acentos y espacios extra
+  const limpiarTexto = (texto) => texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+  
   const buscado = limpiarTexto(nombreBuscado);
   
-  return biblia.books.find(b => 
-    limpiarTexto(b.name) === buscado || 
-    limpiarTexto(b.book_usfm) === buscado ||
-    (buscado === "numeros" && b.book_usfm === "NUM")
-  );
+  return biblia.books.find(b => {
+    const nombreJson = limpiarTexto(b.name);
+    
+    // 1. Coincidencia exacta (ej: "genesis" === "genesis")
+    // 2. Coincidencia ignorando "san " (ej: "san juan" pasa a ser "juan")
+    // 3. Casos especiales por código universal USFM (blindaje extra)
+    return nombreJson === buscado || 
+           nombreJson.replace("san ", "") === buscado ||
+           nombreJson.includes("evangelio") && nombreJson.includes(buscado) ||
+           (buscado === "juan" && b.book_usfm === "JHN") ||
+           (buscado === "mateo" && b.book_usfm === "MAT") ||
+           (buscado === "marcos" && b.book_usfm === "MRK") ||
+           (buscado === "lucas" && b.book_usfm === "LUK") ||
+           (buscado === "numeros" && b.book_usfm === "NUM");
+  });
 };
 
 const EstrellasFondo = () => (
@@ -132,11 +112,19 @@ export default function App() {
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
-  // Calculador de días absolutos: Nunca se reinicia a 1, rota de forma continua e infinita.
+  // --- ESTADOS DEL ASISTENTE ---
+  const [mostrarAsistente, setMostrarAsistente] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [cargandoIA, setCargandoIA] = useState(false);
+  const [chatHistorial, setChatHistorial] = useState([
+    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Preguntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
+  ]);
+
+  // Calculador de días absolutos
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length];
 
-  // EL MOTOR BLINDADO: A prueba de errores en el JSON
+  // EL MOTOR BLINDADO
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
@@ -153,24 +141,73 @@ export default function App() {
       const versiculos = capituloData.items
         .filter(item => item && item.type === "verse")
         .map(item => {
-          // Protecciones extremas por si algún dato del JSON viene roto
           const numeroSeguro = (item.verse_numbers && item.verse_numbers.length > 0) ? item.verse_numbers[0] : '';
           const textoSeguro = (item.lines && Array.isArray(item.lines)) ? item.lines.join(' ') : (item.text || 'Texto no disponible');
-          
-          return {
-            numero: numeroSeguro,
-            texto: textoSeguro
-          };
+          return { numero: numeroSeguro, texto: textoSeguro };
         });
 
       return versiculos.length > 0 ? versiculos : [{ numero: '', texto: "No hay texto para este capítulo." }];
     } catch (e) {
-      // Si ocurre un error, muestra el error real en pantalla
       return [{ numero: '⚠️', texto: `Error detectado por la App: ${e.message}` }];
     }
   };
 
   const versiculosActuales = obtenerVersiculos();
+
+  // --- FUNCIÓN DEL ASISTENTE PARA HABLAR CON OPENAI ---
+  const enviarMensaje = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const nuevoMensajeUsuario = { rol: 'usuario', texto: chatInput };
+    const nuevoHistorial = [...chatHistorial, nuevoMensajeUsuario];
+    
+    setChatHistorial(nuevoHistorial);
+    setChatInput('');
+    setCargandoIA(true);
+
+    try {
+      // AQUÍ ESTÁ LA CORRECCIÓN DE LA LLAVE PARA VITE
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("La llave de API (VITE_OPENAI_API_KEY) no está definida en Vercel o en el entorno.");
+      }
+
+      const mensajesOpenAI = nuevoHistorial.map(msg => ({
+        role: msg.rol === 'usuario' ? 'user' : 'assistant',
+        content: msg.texto
+      }));
+
+      mensajesOpenAI.unshift({
+        role: 'system',
+        content: `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`
+      });
+
+      const respuesta = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: mensajesOpenAI,
+          temperature: 0.7
+        })
+      });
+
+      const data = await respuesta.json();
+      
+      if (data.error) throw new Error(data.error.message);
+
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices[0].message.content }]);
+    } catch (error) {
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
+    } finally {
+      setCargandoIA(false);
+    }
+  };
 
   const themeStyles = {
     claro: 'bg-slate-50 text-slate-900 border-slate-200',
@@ -298,7 +335,6 @@ export default function App() {
       <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-8 relative z-10">
         {vistaActual === 'home' && (
           <div className="animate-in fade-in duration-500">
-            {/* NUEVA TARJETA DINÁMICA DE LECTURA DIARIA */}
             <div onClick={() => abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo)} className="relative overflow-hidden rounded-3xl p-8 mb-10 cursor-pointer group shadow-xl transition-transform hover:scale-[1.02] border border-[#cca300]/40 backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
               <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity"><Heart size={80} color="#ffd700" /></div>
               <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura de Hoy</p>
@@ -346,7 +382,6 @@ export default function App() {
               {libroActual} {capituloActual}
             </h2>
 
-            {/* ESPACIOS ACHICADOS ENTRE VERSÍCULOS */}
             <div className="space-y-2 leading-relaxed" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>
               {versiculosActuales.map((versiculo, index) => (
                 <p key={index} className="relative group cursor-text">
@@ -363,6 +398,53 @@ export default function App() {
         )}
       </main>
 
+      {/* --- BOTÓN Y VENTANA DEL ASISTENTE IA --- */}
+      {vistaActual === 'lector' && (
+        <div className="fixed bottom-20 right-6 z-50">
+          {mostrarAsistente ? (
+            <div className={`w-80 h-96 rounded-2xl shadow-2xl flex flex-col border overflow-hidden animate-in slide-in-from-bottom-4 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
+              <div className={`p-3 flex justify-between items-center border-b ${tema === 'cym' ? 'bg-black border-[#cca300]/30' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className={tema === 'cym' ? 'text-[#ffd700]' : 'text-amber-500'} />
+                  <span className="font-bold text-sm">Asistente CyM</span>
+                </div>
+                <button onClick={() => setMostrarAsistente(false)} className="hover:opacity-70 p-1"><X size={18} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col text-sm">
+                {chatHistorial.map((msg, i) => (
+                  <div key={i} className={`p-3 rounded-xl max-w-[85%] ${msg.rol === 'usuario' ? `self-end ${tema === 'cym' ? 'bg-[#cca300] text-black' : 'bg-blue-500 text-white'}` : `self-start ${tema === 'cym' ? 'bg-white/10 text-slate-200' : 'bg-slate-100 text-slate-800'}`}`}>
+                    {msg.texto}
+                  </div>
+                ))}
+                {cargandoIA && (
+                  <div className={`self-start p-3 rounded-xl animate-pulse ${tema === 'cym' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                    Escribiendo...
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={enviarMensaje} className={`p-3 border-t flex gap-2 ${tema === 'cym' ? 'bg-black border-[#cca300]/30' : 'bg-white border-slate-200'}`}>
+                <input 
+                  type="text" 
+                  value={chatInput} 
+                  onChange={(e) => setChatInput(e.target.value)} 
+                  placeholder="Hacé una pregunta..." 
+                  className={`flex-1 rounded-full px-4 py-2 text-sm outline-none border ${tema === 'cym' ? 'bg-[#1a1a1a] border-[#cca300]/30 text-white placeholder-slate-500 focus:border-[#cca300]' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`}
+                />
+                <button type="submit" disabled={cargandoIA || !chatInput.trim()} className={`p-2 rounded-full flex-shrink-0 transition-colors ${tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}>
+                  <Send size={16} />
+                </button>
+              </form>
+            </div>
+          ) : (
+            <button onClick={() => setMostrarAsistente(true)} className={`p-4 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform ${tema === 'cym' ? 'bg-gradient-to-r from-[#ffd700] to-[#b8860b] text-black shadow-[#cca300]/40' : 'bg-blue-600 text-white shadow-blue-500/40'}`}>
+              <MessageCircle size={24} />
+            </button>
+          )}
+        </div>
+      )}
+
       <footer className={`mt-auto p-4 flex justify-between items-center backdrop-blur-md border-t relative z-10 ${navStyles[tema]}`}>
         {vistaActual === 'lector' ? (
           <>
@@ -378,4 +460,4 @@ export default function App() {
       </footer>
     </div>
   );
-} 
+}
