@@ -46,7 +46,7 @@ const LIBROS_MENU = [
   { nombre: 'Ester', testamento: 'Antiguo Testamento' }, { nombre: 'Job', testamento: 'Antiguo Testamento' },
   { nombre: 'Salmos', testamento: 'Antiguo Testamento' }, { nombre: 'Proverbios', testamento: 'Antiguo Testamento' },
   { nombre: 'Eclesiastés', testamento: 'Antiguo Testamento' }, { nombre: 'Cantares', testamento: 'Antiguo Testamento' },
-  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
+  { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { fontan: 'Jeremías', nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
   { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
   { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
   { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
@@ -70,7 +70,7 @@ const LIBROS_MENU = [
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE REPARADO
+// BUSCADOR INTELIGENTE DE LIBROS REPARADO
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   
@@ -83,7 +83,6 @@ const encontrarLibro = (biblia, nombreBuscado) => {
     const nombreJson = limpiarTexto(b.name);
     const usfmJson = b.book_usfm ? b.book_usfm.toUpperCase() : "";
     
-    // Comparación directa o por códigos estándar USFM bíblicos
     if (nombreJson === buscado || nombreJson.replace("san", "") === buscado || nombreJson.includes(buscado)) return true;
     if (buscado === "juan" && (usfmJson === "JHN" || usfmJson === "JOH")) return true;
     if (buscado === "mateo" && usfmJson === "MAT") return true;
@@ -126,7 +125,6 @@ export default function App() {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if (!libroData) return [{ numero: '', texto: "Libro no encontrado en esta versión." }];
 
-      // Si el JSON viene estructurado plano en vez de por capítulos
       if (!libroData.chapters) {
         if (libroData.verses) {
           const filtrados = libroData.verses.filter(v => Number(v.chapter) === capituloActual);
@@ -157,7 +155,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE SOLUCIONADA PARA EL PAYLOAD DE GEMINI 1.5 ---
+  // --- FUNCIÓN DEL ASISTENTE ADAPTADA A LA URL V1BETA PARA SOPORTE TOTAL ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -170,16 +168,12 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // Usamos la variable exacta que configuraste en Vercel
       const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-      
       if (!apiKey) {
-        throw new Error("La llave (REACT_APP_GEMINI_API_KEY) no está definida en las variables de entorno de Vercel.");
+        throw new Error("La llave (REACT_APP_GEMINI_API_KEY) no está definida en Vercel.");
       }
 
-      const systemPrompt = `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable, en español y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
-
-      // Formateamos el historial al formato exacto requerido por Gemini v1
+      // Estructura limpia y estándar para la API v1beta
       const mensajesGemini = nuevoHistorial
         .filter((_, index) => index > 0) 
         .map(msg => ({
@@ -187,26 +181,16 @@ export default function App() {
           parts: [{ text: msg.texto }]
         }));
 
-      // Agregamos el system instruction al inicio de los contenidos como un turno de sistema válido
-      const contentsConSystem = [
-        {
-          role: 'user',
-          parts: [{ text: `INSTRUCCIÓN DEL SISTEMA: ${systemPrompt}\n\nEntendido. Ahora responderé los mensajes bajo este rol.` }]
-        },
-        {
-          role: 'model',
-          parts: [{ text: "Entendido, asistiré al usuario de manera clara, amable y teológicamente precisa según el capítulo actual." }]
-        },
-        ...mensajesGemini
-      ];
-
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: contentsConSystem,
+          contents: mensajesGemini,
+          systemInstruction: {
+            parts: [{ text: `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable, en español y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.` }]
+          },
           generationConfig: {
             temperature: 0.7
           }
@@ -222,7 +206,7 @@ export default function App() {
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
