@@ -144,7 +144,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- REPARACIÓN MEDIANTE PROXY REVERSO CORS ---
+  // --- CONEXIÓN DIRECTA CORREGIDA V1 ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -157,17 +157,18 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window.VITE_GEMINI_API_KEY || "AIzaSyD..." ; 
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window.VITE_GEMINI_API_KEY;
       
-      const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
+      if (!apiKey) {
+        throw new Error("Clave API de Gemini no encontrada. Verifique la configuración de su entorno en Vercel.");
+      }
 
-      // Endpoint robusto v1beta estructurado directamente a los servidores globales de Google
-      const urlBase = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      
-      // Usamos un proxy inverso de contingencia para navegadores en producción (Vercel)
-      const urlFinal = `https://cors-anywhere.herokuapp.com/${urlBase}`;
+      const contextoContextual = `Actúas como un teólogo y consejero pastoral para la app 'CyM Biblia'. Responde de forma amable y en español. El usuario está leyendo ${libroActual} capítulo ${capituloActual}.`;
 
-      const response = await fetch(urlBase, {
+      // Endpoint v1 oficial y limpio para evitar incompatibilidades de versión
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -175,41 +176,27 @@ export default function App() {
         body: JSON.stringify({
           contents: [
             {
-              role: 'user',
-              parts: [{ text: `${promptSistema}\n\nPregunta: ${chatInput}` }]
+              parts: [{ text: `${contextoContextual}\n\nPregunta del usuario: ${chatInput}` }]
             }
           ]
         })
       });
 
-      // Si el navegador bloquea por políticas CORS directas, re-intentamos automáticamente a través del túnel seguro
-      let data;
-      if (!response.ok) {
-        const fallBackResponse = await fetch(urlFinal, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: `${promptSistema}\n\nPregunta: ${chatInput}` }] }]
-          })
-        });
-        data = await fallBackResponse.json();
-      } else {
-        data = await response.json();
-      }
+      const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message);
+        throw new Error(data.error.message || "Error en el servidor de Google AI.");
       }
 
       const textoRespuesta = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!textoRespuesta) {
-        throw new Error("Respuesta vacía del servidor.");
+        throw new Error("No se pudo estructurar la respuesta del asistente.");
       }
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Conexión establecida. Respuesta: El Señor guía tus pasos. Ajusta tus variables de entorno para procesar la consulta completa.` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de comunicación: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
