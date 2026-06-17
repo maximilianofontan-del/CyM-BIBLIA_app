@@ -59,7 +59,7 @@ const LIBROS_MENU = [
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
   { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { fontan: 'Efesios', nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
+  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
@@ -145,7 +145,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE BLINDADA CONTRA ERRORES DE GOOGLE ---
+  // --- FUNCIÓN DEL ASISTENTE ACTUALIZADA A LA URL OFICIAL V1 ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -158,14 +158,12 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // Intentamos capturar cualquier llave que hayas puesto en Vercel automáticamente
       const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("Falta configurar la Clave de API en el panel de Vercel.");
+        throw new Error("La clave de API no está definida en Vercel.");
       }
 
-      // Estructura limpia y compacta compatible con todos los proyectos gratuitos de Google Studio
       const mensajesGemini = nuevoHistorial
         .filter((_, index) => index > 0) 
         .map(msg => ({
@@ -175,14 +173,13 @@ export default function App() {
 
       const contextPrompt = `INSTRUCCIÓN: Actúa como un consejero bíblico y teólogo experto para la app 'CyM Biblia'. Responde de forma pastoral, amable, clara y en español. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
 
-      // Insertamos el contexto de forma segura al inicio del contenido
       const contenidoFinal = [
-        { role: 'user', parts: [{ text: `${contextPrompt}\n\nMi primera pregunta o comentario es: ${mensajesGemini[0]?.parts[0]?.text || chatInput}` }] },
+        { role: 'user', parts: [{ text: `${contextPrompt}\n\nMi pregunta es: ${mensajesGemini[0]?.parts[0]?.text || chatInput}` }] },
         ...mensajesGemini.slice(1)
       ];
 
-      // Usamos el endpoint v1 con el alias 'gemini-pro' que está liberado mundialmente sin restricciones
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
+      // CORRECCIÓN CLAVE: Usamos la ruta técnica 'gemini-1.5-flash-latest' requerida para claves v1
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -199,7 +196,7 @@ export default function App() {
       const textoAsistente = data.candidates[0].content.parts[0].text;
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Nota: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
