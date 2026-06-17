@@ -1,20 +1,22 @@
 {
-    "short_name": "CyM Biblia",
-    "name": "CyM Biblia - Crecer y Multiplicar",
-    "icons": [
-      {
-        "src": "https://i.postimg.cc/3RzYnbnB/image-11-png.png",
-        "type": "image/png",
-        "sizes": "192x192"
-      },
-      {
-        "src": "https://i.postimg.cc/3RzYnbnB/image-11-png.png",
-        "type": "image/png",
-        "sizes": "512x512"
-      }
-    ],
-    "start_url": "/",
-    "display": "standalone",
-    "theme_color": "#000000",
-    "background_color": "#000000"
-  }
+  "short_name": "CyM Biblia",
+  "name": "CyM Biblia - Crecer y Multiplicar",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/XvyM0R20/945007132573584054.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/XvyM0R20/945007132573584054.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/?v=2",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#000000"
+}
