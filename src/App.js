@@ -70,21 +70,16 @@ const LIBROS_MENU = [
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE: Ignora tildes, encuentra libros vacíos y omite la palabra "San"
+// BUSCADOR INTELIGENTE
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   
-  // Función para limpiar texto: pasa a minúsculas, quita acentos y espacios extra
   const limpiarTexto = (texto) => texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
   
   const buscado = limpiarTexto(nombreBuscado);
   
   return biblia.books.find(b => {
     const nombreJson = limpiarTexto(b.name);
-    
-    // 1. Coincidencia exacta (ej: "genesis" === "genesis")
-    // 2. Coincidencia ignorando "san " (ej: "san juan" pasa a ser "juan")
-    // 3. Casos especiales por código universal USFM (blindaje extra)
     return nombreJson === buscado || 
            nombreJson.replace("san ", "") === buscado ||
            nombreJson.includes("evangelio") && nombreJson.includes(buscado) ||
@@ -120,11 +115,9 @@ export default function App() {
     { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Preguntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
   ]);
 
-  // Calculador de días absolutos
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length];
 
-  // EL MOTOR BLINDADO
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
@@ -154,7 +147,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE PARA HABLAR CON OPENAI ---
+  // --- FUNCIÓN DEL ASISTENTE ACTUALIZADA PARA GOOGLE GEMINI ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -167,33 +160,39 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // AQUÍ ESTÁ LA CORRECCIÓN DE LA LLAVE PARA CREATE REACT APP
-      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+      // Usamos la nueva variable de entorno de Vite para Gemini
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La llave de API (REACT_APP_OPENAI_API_KEY) no está definida en el entorno. Acordate de cargarla en Vercel y hacer un Redeploy.");
+        throw new Error("La llave de API (VITE_GEMINI_API_KEY) no está definida en Vercel.");
       }
 
-      const mensajesOpenAI = nuevoHistorial.map(msg => ({
-        role: msg.rol === 'usuario' ? 'user' : 'assistant',
-        content: msg.texto
-      }));
+      // Gemini requiere que el primer mensaje siempre sea del usuario.
+      // Omitimos el mensaje de saludo (index 0) y mapeamos a 'user' y 'model'
+      const mensajesGemini = nuevoHistorial
+        .filter((_, index) => index > 0) 
+        .map(msg => ({
+          role: msg.rol === 'usuario' ? 'user' : 'model',
+          parts: [{ text: msg.texto }]
+        }));
 
-      mensajesOpenAI.unshift({
-        role: 'system',
-        content: `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`
-      });
+      // Las instrucciones del sistema se envían en un bloque aparte
+      const systemPrompt = `Eres un asistente teológico experto para la aplicación 'CyM Biblia'. Responde de forma clara, amable y basada en la Biblia. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
 
-      const respuesta = await fetch("https://api.openai.com/v1/chat/completions", {
+      // Hacemos la petición a la API de Gemini 1.5 Flash
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: mensajesOpenAI,
-          temperature: 0.7
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          contents: mensajesGemini,
+          generationConfig: {
+            temperature: 0.7
+          }
         })
       });
 
@@ -201,7 +200,10 @@ export default function App() {
       
       if (data.error) throw new Error(data.error.message);
 
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices[0].message.content }]);
+      // Navegamos por la estructura de respuesta de Gemini
+      const textoAsistente = data.candidates[0].content.parts[0].text;
+
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
     } finally {
