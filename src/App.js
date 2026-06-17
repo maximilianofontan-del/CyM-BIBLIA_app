@@ -144,7 +144,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- CONEXIÓN DIRECTA CORREGIDA V1 ---
+  // --- CONEXIÓN DIRECTA CON OPENAI CHATGPT ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -157,41 +157,41 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window.VITE_GEMINI_API_KEY;
+      const apiKey = process.env.REACT_APP_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("Clave API de Gemini no encontrada. Verifique la configuración de su entorno en Vercel.");
+        throw new Error("Clave API de OpenAI no configurada. Agréguela en las variables de entorno de Vercel.");
       }
 
-      const contextoContextual = `Actúas como un teólogo y consejero pastoral para la app 'CyM Biblia'. Responde de forma amable y en español. El usuario está leyendo ${libroActual} capítulo ${capituloActual}.`;
+      const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
 
-      // Endpoint v1 oficial y limpio para evitar incompatibilidades de versión
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-      const response = await fetch(url, {
+      // Llamada directa limpia al endpoint oficial de OpenAI
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: `${contextoContextual}\n\nPregunta del usuario: ${chatInput}` }]
-            }
-          ]
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: promptSistema },
+            { role: "user", content: chatInput }
+          ],
+          temperature: 0.7
         })
       });
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message || "Error en el servidor de Google AI.");
+        throw new Error(data.error.message || "Error en los servidores de OpenAI.");
       }
 
-      const textoRespuesta = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const textoRespuesta = data.choices?.[0]?.message?.content;
 
       if (!textoRespuesta) {
-        throw new Error("No se pudo estructurar la respuesta del asistente.");
+        throw new Error("Formato de respuesta desconocido.");
       }
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
