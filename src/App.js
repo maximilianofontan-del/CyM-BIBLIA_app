@@ -49,7 +49,7 @@ const LIBROS_MENU = [
   { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
   { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
   { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
+  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { text: 'Amós', testamento: 'Antiguo Testamento', nombre: 'Amós' },
   { nombre: 'Abdías', testamento: 'Antiguo Testamento' }, { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
   { nombre: 'Miqueas', testamento: 'Antiguo Testamento' }, { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
   { nombre: 'Habacuc', testamento: 'Antiguo Testamento' }, { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
@@ -57,7 +57,7 @@ const LIBROS_MENU = [
   { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
   { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { font: '1 Corintios', testamento: 'Nuevo Testamento', nombre: '1 Corintios' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
   { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
@@ -274,13 +274,13 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
-          {/* BOTÓN NUEVO DE MERCADO PAGO */}
+          {/* BOTÓN SUPERIOR DE OFRENDAS */}
           <button 
             onClick={() => setMostrarDonacion(true)} 
             className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"
           >
             <Heart size={14} className="fill-black" />
-            <span className="hidden xs:inline">Ofrendar</span>
+            <span>Ofrendar</span>
           </button>
 
           {vistaActual === 'lector' && (
@@ -327,7 +327,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* --- VENTANA EMERGENTE DE DONACIÓN (MERCADO PAGO) --- */}
+      {/* --- VENTANA EMERGENTE DE DONACIÓN DIRECTA --- */}
       {mostrarDonacion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className={`w-full max-w-md p-6 rounded-3xl shadow-2xl border text-center relative ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
@@ -342,23 +342,25 @@ export default function App() {
               Tu generosidad nos ayuda a mantener viva la aplicación y a expandir la palabra de Dios bajo el propósito de Crecer y Multiplicar. Puedes sembrar tu ofrenda de forma segura a través de Mercado Pago.
             </p>
 
-            {/* SECCIÓN REEMPLAZABLE: AQUÍ VA EL LINK O LOS DATOS */}
             <div className="space-y-4">
               <a 
-                href="https://mpago.la/TU_LINK_CORTO_AQUI" 
+                href="https://link.mercadopago.com.ar/crecerymultiplicar" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="block w-full py-3 bg-[#009ee3] hover:bg-[#0087c4] text-white font-black rounded-xl text-sm transition-all shadow-lg shadow-[#009ee3]/20"
               >
-                Ofrendar por Mercado Pago (Abrir App)
+                Ofrendar por Mercado Pago (Link)
               </a>
 
               <div className="p-3 rounded-xl bg-white/5 border border-current/10 text-xs space-y-1">
                 <p className="font-bold opacity-60">Transferencia Directa (Alias):</p>
-                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">ministerio.cym</p>
-                <p className="text-[10px] opacity-40">Toca el alias para copiarlo o transferí desde tu App</p>
+                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">MINISTERIO.CyM</p>
+                <p className="text-[10px] opacity-40">Toca el alias para copiarlo</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
       {mostrarAjustes && (
         <div className={`fixed top-20 right-6 p-5 rounded-2xl shadow-2xl border w-72 z-40 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
