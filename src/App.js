@@ -355,7 +355,7 @@ export default function App() {
 
               <div className="p-3 rounded-xl bg-white/5 border border-current/10 text-xs space-y-1">
                 <p className="font-bold opacity-60">Transferencia Directa (Alias):</p>
-                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">CYM.BIBLIA.MP</p>
+                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">MINISTERIO.CyM</p>
                 <p className="text-[10px] opacity-40">Toca el alias para copiarlo</p>
               </div>
             </div>
