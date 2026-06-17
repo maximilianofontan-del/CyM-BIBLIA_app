@@ -57,7 +57,7 @@ const LIBROS_MENU = [
   { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
   { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { font: '1 Corintios', testamento: 'Nuevo Testamento' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
   { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
@@ -65,7 +65,7 @@ const LIBROS_MENU = [
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
   { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
   { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
-  { fontName: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
+  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
   { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
@@ -144,7 +144,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE SOLUCIÓN DEFINITIVA (ESTRICTO V1) ---
+  // --- REPARACIÓN DEFINITIVA DE CONEXIÓN CON V1 ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -157,50 +157,47 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      // Intentamos obtener la clave tanto si usa prefijo VITE_ como REACT_APP_
-      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window._env_?.VITE_GEMINI_API_KEY;
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window.VITE_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La clave de API no está vinculada correctamente en las Variables de Entorno de Vercel.");
+        throw new Error("La clave de API (VITE_GEMINI_API_KEY) no está definida en Vercel o el entorno.");
       }
 
-      // Estructuramos el mensaje final exactamente como lo exige la documentación estable v1
-      const promptSistema = `Actúa como un consejero bíblico y teólogo pastoral experto para la aplicación 'CyM Biblia'. Responde de forma amable, clara, devocional y 100% en español. El usuario está leyendo actualmente el libro de ${libroActual}, capítulo ${capituloActual}.`;
-      
-      const cuerpoSolicitud = {
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `${promptSistema}\n\nPregunta del usuario: ${chatInput}` }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 800
-        }
-      };
+      const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
 
-      // Llamada directa limpia usando la ruta de producción v1 para gemini-1.5-flash
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cuerpoSolicitud)
+      // Llamada directa limpia estructurada para la API v1 sin dependencias externas
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `${promptSistema}\n\nPregunta: ${chatInput}` }]
+            }
+          ]
+        })
       });
 
-      const data = await respuesta.json();
-      
+      const data = await response.json();
+
       if (data.error) {
-        throw new Error(data.error.message);
+        throw new Error(data.error.message || "Error en los servidores de Google.");
       }
 
-      if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content?.parts?.[0]?.text) {
-        throw new Error("El servidor de Google no devolvió un formato de texto válido.");
+      const textoRespuesta = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!textoRespuesta) {
+        throw new Error("Formato de respuesta desconocido.");
       }
 
-      const textoAsistente = data.candidates[0].content.parts[0].text;
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error del asistente: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
@@ -250,7 +247,7 @@ export default function App() {
 
   if (mostrarPortada) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 select-none relative overflow-hidden">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
         <EstrellasFondo />
         <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-sm">
           <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Logo CyM Biblia" className="w-80 h-80 object-contain drop-shadow-[0_0_40px_rgba(204,163,0,0.6)] hover:scale-105 transition-transform duration-500"/>
@@ -323,7 +320,7 @@ export default function App() {
       </nav>
 
       {mostrarAjustes && (
-        <div className={`fixed top-20 right-6 p-5 rounded-2xl shadow-2xl border w-72 z-40 animate-in fade-in slide-in-from-top-4 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
+        <div className={`fixed top-20 right-6 p-5 rounded-2xl shadow-2xl border w-72 z-40 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
           <p className="text-[10px] font-black uppercase tracking-widest mb-3 opacity-50">Tamaño de lectura</p>
           <div className="flex items-center justify-between mb-6 bg-black/5 rounded-lg p-1 border border-current/10">
             <button onClick={() => setTamañoFuente(Math.max(14, tamañoFuente - 2))} className="p-2 hover:bg-black/10 rounded"><Type size={16} /></button>
@@ -342,7 +339,7 @@ export default function App() {
 
       <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-8 relative z-10">
         {vistaActual === 'home' && (
-          <div className="animate-in fade-in duration-500">
+          <div>
             <div onClick={() => abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo)} className="relative overflow-hidden rounded-3xl p-8 mb-10 cursor-pointer group shadow-xl transition-transform hover:scale-[1.02] border border-[#cca300]/40 backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
               <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity"><Heart size={80} color="#ffd700" /></div>
               <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura de Hoy</p>
@@ -360,7 +357,7 @@ export default function App() {
                         <div className={`p-2 rounded-full ${tema === 'cym' ? 'bg-[#cca300]/10 text-[#cca300]' : 'bg-slate-100 text-slate-500'}`}><BookOpen size={16} /></div>
                         <span className="font-bold text-lg">{libro.nombre}</span>
                       </div>
-                      <ChevronRightCircle size={18} className="opacity-30 group-hover:opacity-100 transition-opacity" />
+                      <ChevronRightCircle size={18} className="opacity-30" />
                     </button>
                   ))}
                 </div>
@@ -375,7 +372,7 @@ export default function App() {
                         <div className={`p-2 rounded-full ${tema === 'cym' ? 'bg-[#cca300]/10 text-[#cca300]' : 'bg-slate-100 text-slate-500'}`}><BookOpen size={16} /></div>
                         <span className="font-bold text-lg">{libro.nombre}</span>
                       </div>
-                      <ChevronRightCircle size={18} className="opacity-30 group-hover:opacity-100 transition-opacity" />
+                      <ChevronRightCircle size={18} className="opacity-30" />
                     </button>
                   ))}
                 </div>
@@ -385,7 +382,7 @@ export default function App() {
         )}
 
         {vistaActual === 'lector' && (
-          <div className="animate-in slide-in-from-right-8 duration-300 bg-black/70 p-6 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
+          <div className="bg-black/70 p-6 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
             <h2 className={`text-3xl font-black mb-12 text-center ${tema === 'cym' ? 'text-[#ffd700]' : ''}`} style={{ fontSize: `${tamañoFuente * 2.2}px` }}>
               {libroActual} {capituloActual}
             </h2>
@@ -410,7 +407,7 @@ export default function App() {
       {vistaActual === 'lector' && (
         <div className="fixed bottom-20 right-6 z-50">
           {mostrarAsistente ? (
-            <div className={`w-80 h-96 rounded-2xl shadow-2xl flex flex-col border overflow-hidden animate-in slide-in-from-bottom-4 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
+            <div className={`w-80 h-96 rounded-2xl shadow-2xl flex flex-col border overflow-hidden ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
               <div className={`p-3 flex justify-between items-center border-b ${tema === 'cym' ? 'bg-black border-[#cca300]/30' : 'bg-slate-50 border-slate-200'}`}>
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className={tema === 'cym' ? 'text-[#ffd700]' : 'text-amber-500'} />
@@ -426,7 +423,7 @@ export default function App() {
                   </div>
                 ))}
                 {cargandoIA && (
-                  <div className={`self-start p-3 rounded-xl animate-pulse ${tema === 'cym' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                  <div className={`self-start p-3 rounded-xl ${tema === 'cym' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
                     Pensando...
                   </div>
                 )}
