@@ -65,12 +65,11 @@ const LIBROS_MENU = [
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
   { nombre: 'Filemón', testamento: 'Nuevo Testamento' }, { nombre: 'Hebreos', testamento: 'Nuevo Testamento' },
   { nombre: 'Santiago', testamento: 'Nuevo Testamento' }, { nombre: '1 Pedro', testamento: 'Nuevo Testamento' },
-  { nombre: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
+  { fontName: '2 Pedro', testamento: 'Nuevo Testamento' }, { nombre: '1 Juan', testamento: 'Nuevo Testamento' },
   { nombre: '2 Juan', testamento: 'Nuevo Testamento' }, { nombre: '3 Juan', testamento: 'Nuevo Testamento' },
   { nombre: 'Judas', testamento: 'Nuevo Testamento' }, { nombre: 'Apocalipsis', testamento: 'Nuevo Testamento' }
 ];
 
-// BUSCADOR INTELIGENTE DE LIBROS
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
   const limpiarTexto = (texto) => 
@@ -110,7 +109,7 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [cargandoIA, setCargandoIA] = useState(false);
   const [chatHistorial, setChatHistorial] = useState([
-    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Preguntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
+    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
   ]);
 
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
@@ -145,7 +144,7 @@ export default function App() {
 
   const versiculosActuales = obtenerVersiculos();
 
-  // --- FUNCIÓN DEL ASISTENTE ACTUALIZADA A LA URL OFICIAL V1 ---
+  // --- FUNCIÓN DEL ASISTENTE SOLUCIÓN DEFINITIVA (ESTRICTO V1) ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -158,45 +157,50 @@ export default function App() {
     setCargandoIA(true);
 
     try {
-      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      // Intentamos obtener la clave tanto si usa prefijo VITE_ como REACT_APP_
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || window._env_?.VITE_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La clave de API no está definida en Vercel.");
+        throw new Error("La clave de API no está vinculada correctamente en las Variables de Entorno de Vercel.");
       }
 
-      const mensajesGemini = nuevoHistorial
-        .filter((_, index) => index > 0) 
-        .map(msg => ({
-          role: msg.rol === 'usuario' ? 'user' : 'model',
-          parts: [{ text: msg.texto }]
-        }));
+      // Estructuramos el mensaje final exactamente como lo exige la documentación estable v1
+      const promptSistema = `Actúa como un consejero bíblico y teólogo pastoral experto para la aplicación 'CyM Biblia'. Responde de forma amable, clara, devocional y 100% en español. El usuario está leyendo actualmente el libro de ${libroActual}, capítulo ${capituloActual}.`;
+      
+      const cuerpoSolicitud = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `${promptSistema}\n\nPregunta del usuario: ${chatInput}` }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800
+        }
+      };
 
-      const contextPrompt = `INSTRUCCIÓN: Actúa como un consejero bíblico y teólogo experto para la app 'CyM Biblia'. Responde de forma pastoral, amable, clara y en español. El usuario está leyendo actualmente: ${libroActual} capítulo ${capituloActual}.`;
-
-      const contenidoFinal = [
-        { role: 'user', parts: [{ text: `${contextPrompt}\n\nMi pregunta es: ${mensajesGemini[0]?.parts[0]?.text || chatInput}` }] },
-        ...mensajesGemini.slice(1)
-      ];
-
-      // CORRECCIÓN CLAVE: Usamos la ruta técnica 'gemini-1.5-flash-latest' requerida para claves v1
-      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      // Llamada directa limpia usando la ruta de producción v1 para gemini-1.5-flash
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: contenidoFinal,
-          generationConfig: { temperature: 0.7 }
-        })
+        body: JSON.stringify(cuerpoSolicitud)
       });
 
       const data = await respuesta.json();
       
-      if (data.error) throw new Error(data.error.message);
-      if (!data.candidates || data.candidates.length === 0) throw new Error("Google no devolvió respuesta.");
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content?.parts?.[0]?.text) {
+        throw new Error("El servidor de Google no devolvió un formato de texto válido.");
+      }
 
       const textoAsistente = data.candidates[0].content.parts[0].text;
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoAsistente }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de conexión: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error del asistente: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
