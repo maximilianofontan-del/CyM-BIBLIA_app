@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle, MessageCircle, X, Send
+  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, Heart, ChevronRightCircle, MessageCircle, X, Send, DollarSign
 } from 'lucide-react';
 
 // 1. IMPORTAMOS LAS BASES DE DATOS
@@ -57,7 +57,7 @@ const LIBROS_MENU = [
   { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
   { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { font: '1 Corintios', testamento: 'Nuevo Testamento', nombre: '1 Corintios' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
   { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
@@ -103,6 +103,7 @@ export default function App() {
   const [tema, setTema] = useState('cym');
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
+  const [mostrarDonacion, setMostrarDonacion] = useState(false);
 
   // --- ESTADOS DEL ASISTENTE ---
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
@@ -165,7 +166,6 @@ export default function App() {
 
       const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
 
-      // Llamada directa limpia al endpoint oficial de OpenAI
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
         headers: {
@@ -273,10 +273,19 @@ export default function App() {
           <h1 className="text-lg md:text-2xl font-black tracking-wider hidden sm:block">CyM <span className="font-light opacity-80">Biblia</span></h1>
         </div>
 
-        <div className="flex items-center gap-1 md:gap-4 relative z-10">
+        <div className="flex items-center gap-1 md:gap-3 relative z-10">
+          {/* BOTÓN NUEVO DE MERCADO PAGO */}
+          <button 
+            onClick={() => setMostrarDonacion(true)} 
+            className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"
+          >
+            <Heart size={14} className="fill-black" />
+            <span className="hidden xs:inline">Ofrendar</span>
+          </button>
+
           {vistaActual === 'lector' && (
             <>
-              <select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="bg-[#cca300]/20 rounded-full px-2 py-1 font-black text-[#fcd34d] text-xs md:text-sm outline-none cursor-pointer appearance-none text-center border border-[#cca300]/30 mr-1 md:mr-2">
+              <select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="bg-[#cca300]/20 rounded-full px-2 py-1 font-black text-[#fcd34d] text-xs md:text-sm outline-none cursor-pointer appearance-none text-center border border-[#cca300]/30 mr-1">
                 <option value="RVR1960" className="text-black">RV1960</option>
                 <option value="NTV" className="text-black">NTV</option>
                 <option value="DHH" className="text-black">DHH</option>
@@ -317,6 +326,42 @@ export default function App() {
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
         </div>
       </nav>
+
+      {/* --- VENTANA EMERGENTE DE DONACIÓN (MERCADO PAGO) --- */}
+      {mostrarDonacion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className={`w-full max-w-md p-6 rounded-3xl shadow-2xl border text-center relative ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
+            <button onClick={() => setMostrarDonacion(false)} className="absolute top-4 right-4 hover:opacity-70 p-1"><X size={20} /></button>
+            
+            <div className="mx-auto w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4 text-[#ffd700]">
+              <Heart size={32} className="fill-current" />
+            </div>
+            
+            <h3 className="text-2xl font-black mb-2 text-[#ffd700]">Apoyar al Ministerio</h3>
+            <p className="text-sm opacity-80 mb-6 leading-relaxed">
+              Tu generosidad nos ayuda a mantener viva la aplicación y a expandir la palabra de Dios bajo el propósito de Crecer y Multiplicar. Puedes sembrar tu ofrenda de forma segura a través de Mercado Pago.
+            </p>
+
+            {/* SECCIÓN REEMPLAZABLE: AQUÍ VA EL LINK O LOS DATOS */}
+            <div className="space-y-4">
+              <a 
+                href="https://link.mercadopago.com.ar/crecerymultiplicar" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-full py-3 bg-[#009ee3] hover:bg-[#0087c4] text-white font-black rounded-xl text-sm transition-all shadow-lg shadow-[#009ee3]/20"
+              >
+                Ofrendar por Mercado Pago (Link)
+              </a>
+
+              <div className="p-3 rounded-xl bg-white/5 border border-current/10 text-xs space-y-1">
+                <p className="font-bold opacity-60">Transferencia Directa (Alias):</p>
+                <p className="text-sm font-mono font-black tracking-wide text-amber-400 select-all">CYM.BIBLIA.MP</p>
+                <p className="text-[10px] opacity-40">Toca el alias para copiarlo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {mostrarAjustes && (
         <div className={`fixed top-20 right-6 p-5 rounded-2xl shadow-2xl border w-72 z-40 ${tema === 'cym' ? 'bg-[#141414] border-[#cca300]/50' : 'bg-white border-slate-200'}`}>
