@@ -161,10 +161,10 @@ export default function App() {
 
     try {
       // Usamos la nueva variable de entorno de Vite para Gemini
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("La llave de API (VITE_GEMINI_API_KEY) no está definida en Vercel.");
+        throw new Error("La llave de API (REACT_APP_GEMINI_API_KEY) no está definida en Vercel.");
       }
 
       // Gemini requiere que el primer mensaje siempre sea del usuario.
