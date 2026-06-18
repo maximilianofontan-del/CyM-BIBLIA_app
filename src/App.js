@@ -246,33 +246,32 @@ export default function App() {
 
   if (mostrarPortada) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-between p-6 py-16 text-center relative overflow-hidden select-none">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 py-12 text-center relative overflow-hidden select-none">
         <EstrellasFondo />
         
-        {/* CONTENEDOR DEL LOGO GIGANTE ASÍ COMO EN GEMINI_GENERATED_IMAGE_.PNG */}
-        <div className="relative z-10 flex flex-col items-center justify-center flex-grow w-full max-w-md">
+        {/* LOGO AMPLIADO AL DOBLE DE TAMAÑO ORIGINAL CON CONTENEDOR FLEXIBLE */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-2xl my-auto p-4">
           <img 
             src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" 
             alt="Logo CyM Biblia" 
-            className="w-72 h-72 md:w-85 md:h-85 object-contain drop-shadow-[0_0_50px_rgba(245,194,66,0.5)] transition-transform duration-500"
+            className="w-full max-w-[480px] h-[480px] object-contain drop-shadow-[0_0_60px_rgba(245,194,66,0.65)]"
           />
         </div>
 
-        {/* CONTENEDOR DE TEXTO CON DEGRADADO DORADO PREMIUM */}
-        <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-8 mt-2">
-          <div className="space-y-3">
-            <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wide bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+        {/* CONTENEDOR DE TEXTO Y BOTÓN */}
+        <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-6 mt-4 mb-4">
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wide bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
               CyM Biblia
             </h1>
-            <p className="text-sm font-bold bg-gradient-to-r from-[#ffd366] to-[#b38600] text-transparent bg-clip-text uppercase tracking-[0.25em] opacity-90 drop-shadow-sm">
+            <p className="text-xs font-bold bg-gradient-to-r from-[#ffd366] to-[#b38600] text-transparent bg-clip-text uppercase tracking-[0.25em] opacity-90 drop-shadow-sm">
               Leé, Crecé y Multiplicá
             </p>
           </div>
 
-          {/* BOTÓN REESTILIZADO: DORADO METALIZADO CON LETRAS NEGRAS */}
           <button 
             onClick={() => setMostrarPortada(false)} 
-            className="w-full max-w-xs bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-black py-3 rounded-full font-black text-sm tracking-widest shadow-xl shadow-amber-500/10 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 uppercase"
+            className="w-full max-w-xs bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-black py-3.5 rounded-full font-black text-sm tracking-widest shadow-2xl shadow-amber-500/20 hover:scale-[1.04] active:scale-[0.98] transition-all duration-300 uppercase"
           >
             Comenzar Lectura
           </button>
