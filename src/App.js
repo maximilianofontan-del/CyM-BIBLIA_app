@@ -49,7 +49,7 @@ const LIBROS_MENU = [
   { nombre: 'Isaías', testamento: 'Antiguo Testamento' }, { nombre: 'Jeremías', testamento: 'Antiguo Testamento' },
   { nombre: 'Lamentaciones', testamento: 'Antiguo Testamento' }, { nombre: 'Ezequiel', testamento: 'Antiguo Testamento' },
   { nombre: 'Daniel', testamento: 'Antiguo Testamento' }, { nombre: 'Oseas', testamento: 'Antiguo Testamento' },
-  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { text: 'Amós', testamento: 'Antiguo Testamento', nombre: 'Amós' },
+  { nombre: 'Joel', testamento: 'Antiguo Testamento' }, { nombre: 'Amós', testamento: 'Antiguo Testamento' },
   { nombre: 'Abdías', testamento: 'Antiguo Testamento' }, { nombre: 'Jonás', testamento: 'Antiguo Testamento' },
   { nombre: 'Miqueas', testamento: 'Antiguo Testamento' }, { nombre: 'Nahúm', testamento: 'Antiguo Testamento' },
   { nombre: 'Habacuc', testamento: 'Antiguo Testamento' }, { nombre: 'Sofonías', testamento: 'Antiguo Testamento' },
@@ -246,16 +246,35 @@ export default function App() {
 
   if (mostrarPortada) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-between p-6 py-16 text-center relative overflow-hidden select-none">
         <EstrellasFondo />
-        <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-sm">
-          <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Logo CyM Biblia" className="w-80 h-80 object-contain drop-shadow-[0_0_40px_rgba(204,163,0,0.6)] hover:scale-105 transition-transform duration-500"/>
-          <div className="space-y-4 mt-4">
-            <h1 className="text-5xl font-black text-[#fcd34d] tracking-widest drop-shadow-md">CyM <span className="font-light opacity-80 text-white">BIBLIA</span></h1>
-            <p className="text-xs font-black text-[#cca300] uppercase tracking-[0.3em] opacity-80 drop-shadow-md">LEÉ, CRECÉ Y MULTIPLICÁ</p>
+        
+        {/* CONTENEDOR DEL LOGO GIGANTE ASÍ COMO EN GEMINI_GENERATED_IMAGE_.PNG */}
+        <div className="relative z-10 flex flex-col items-center justify-center flex-grow w-full max-w-md">
+          <img 
+            src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" 
+            alt="Logo CyM Biblia" 
+            className="w-72 h-72 md:w-85 md:h-85 object-contain drop-shadow-[0_0_50px_rgba(245,194,66,0.5)] transition-transform duration-500"
+          />
+        </div>
+
+        {/* CONTENEDOR DE TEXTO CON DEGRADADO DORADO PREMIUM */}
+        <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-8 mt-2">
+          <div className="space-y-3">
+            <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wide bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              CyM Biblia
+            </h1>
+            <p className="text-sm font-bold bg-gradient-to-r from-[#ffd366] to-[#b38600] text-transparent bg-clip-text uppercase tracking-[0.25em] opacity-90 drop-shadow-sm">
+              Leé, Crecé y Multiplicá
+            </p>
           </div>
-          <button onClick={() => setMostrarPortada(false)} className="group w-full mt-8 bg-gradient-to-r from-[#ffd700] to-[#b8860b] text-black py-4 rounded-full font-black text-xs flex items-center justify-center gap-3 shadow-2xl shadow-[#cca300]/40 hover:scale-105 transition-all duration-300 uppercase tracking-wider">
-            Comenzar Lectura <LogIn size={18} className="group-hover:translate-x-1 transition-transform"/>
+
+          {/* BOTÓN REESTILIZADO: DORADO METALIZADO CON LETRAS NEGRAS */}
+          <button 
+            onClick={() => setMostrarPortada(false)} 
+            className="w-full max-w-xs bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-black py-3 rounded-full font-black text-sm tracking-widest shadow-xl shadow-amber-500/10 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 uppercase"
+          >
+            Comenzar Lectura
           </button>
         </div>
       </div>
@@ -274,7 +293,6 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
-          {/* BOTÓN SUPERIOR DE OFRENDAS */}
           <button 
             onClick={() => setMostrarDonacion(true)} 
             className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"
