@@ -254,7 +254,7 @@ export default function App() {
           <img 
             src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" 
             alt="Logo CyM Biblia" 
-            className="w-full max-w-[480px] h-[480px] object-contain drop-shadow-[0_0_60px_rgba(245,194,66,0.65)]"
+            className="w-full max-w-[520px] h-[520px] object-contain drop-shadow-[0_0_60px_rgba(245,194,66,0.65)]"
           />
         </div>
 
