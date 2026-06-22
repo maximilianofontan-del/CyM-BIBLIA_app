@@ -61,7 +61,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 4,
     devocional: {
       titulo: 'La Paz que lo Guarda Todo',
-      reflexion: 'El apóstol Pablo nos enseña el antídoto contra la preocupación: la oración con acción de gracias. Cuando depositamos nuestras peticiones delante del trono de la gracia con un corazón agradecido, la paz de Dios, que sobrepasa todo entendimiento humano, se activa como un escudo sobre nuestras mentes.',
+      reflexion: 'El apóstol Pablo nos teaches el antídoto contra la preocupación: la oración con acción de gracias. Cuando depositamos nuestras peticiones delante del trono de la gracia con un corazón agradecido, la paz de Dios, que sobrepasa todo entendimiento humano, se activa como un escudo sobre nuestras mentes.',
       oracion: 'Señor, hoy te entrego cada una de mis preocupaciones. Cambio mis cargas por tu paz perfecta. Guarda mis pensamientos en Cristo Jesús y recuérdame que todo lo puedo en ti que me fortaleces. Amén.'
     }
   }, 
@@ -143,6 +143,19 @@ const EstrellasFondo = () => (
   </div>
 );
 
+// --- SE COMPUSO LA UBICACIÓN DE LOS ESTILOS PARA EVITAR LA TEMPORAL DEAD ZONE EN PRODUCCIÓN ---
+const themeStyles = {
+  claro: 'bg-slate-50 text-slate-900 border-slate-200',
+  cym: 'bg-[#000000] text-slate-200 border-[#cca300]',
+  sepia: 'bg-[#fbf0d9] text-[#5f4b32] border-[#d4b886]',
+};
+
+const navStyles = {
+  claro: 'bg-white/90 border-slate-200 text-slate-800',
+  cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]',
+  sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]',
+};
+
 export default function App() {
   const [mostrarPortada, setMostrarPortada] = useState(true);
   const [vistaActual, setVistaActual] = useState('home');
@@ -155,6 +168,12 @@ export default function App() {
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [mostrarDonacion, setMostrarDonacion] = useState(false);
   const [mostrarModalDevocional, setMostrarModalDevocional] = useState(false);
+  const [mostrarAsistente, setMostrarAsistente] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [cargandoIA, setCargandoIA] = useState(false);
+  const [chatHistorial, setChatHistorial] = useState([
+    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
+  ]);
 
   const versiculoRefs = useRef({});
 
@@ -187,14 +206,6 @@ export default function App() {
       window.removeEventListener('popstate', manejarBotonAtras);
     };
   }, [mostrarPortada, vistaActual, mostrarDonacion, mostrarModalDevocional, mostrarAsistente]);
-
-  // --- ESTADOS DEL ASISTENTE ---
-  const [mostrarAsistente, setMostrarAsistente] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [cargandoIA, setCargandoIA] = useState(false);
-  const [chatHistorial, setChatHistorial] = useState([
-    { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
-  ]);
 
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
@@ -471,7 +482,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- VENTANA EMERGENTE DEL DEVOCIONAL DIARIO CON LETRA ESCALABLE --- */}
+      {/* --- VENTANA EMERGENTE DEL DEVOCIONAL DIARIO --- */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
