@@ -34,7 +34,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 3,
     devocional: {
       titulo: 'Confianza de Todo Corazón',
-      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
+      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promise es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
       oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis planes en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.'
     }
   }, 
@@ -82,7 +82,7 @@ const devocionalPorDefecto = {
   oracion: 'Señor Jesús, abre mis ojos para ver las maravillas de tu Ley. Que tu Palabra ministre mi vida hoy y me transforme a tu imagen. Amén.'
 };
 
-// --- BASE DE DATOS COMPLETA DE TODOS LOS LIBROS RESTAURADA ---
+// --- MENÚ COMPLETO RECONSTRUIDO Y CORREGIDO ---
 const LIBROS_MENU = [
   { nombre: 'Génesis', testamento: 'Antiguo Testamento' }, { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
   { nombre: 'Levítico', testamento: 'Antiguo Testamento' }, { nombre: 'Números', testamento: 'Antiguo Testamento' },
@@ -158,7 +158,7 @@ export default function App() {
 
   const versiculoRefs = useRef({});
 
-  // --- CONTROL DEL BOTÓN ATRÁS ---
+  // --- CONTROL DEL BOTÓN ATRÁS NATAL ---
   useEffect(() => {
     const manejarBotonAtras = (event) => {
       if (mostrarDonacion) {
@@ -291,7 +291,7 @@ export default function App() {
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
     } catch (error) {
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de comunicación: ${error.message}` }]);
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de communication: ${error.message}` }]);
     } finally {
       setCargandoIA(false);
     }
@@ -362,18 +362,6 @@ export default function App() {
       </div>
     );
   }
-
-  const themeStyles = {
-    claro: 'bg-slate-50 text-slate-900 border-slate-200',
-    cym: 'bg-[#000000] text-slate-200 border-[#cca300]',
-    sepia: 'bg-[#fbf0d9] text-[#5f4b32] border-[#d4b886]',
-  };
-
-  const navStyles = {
-    claro: 'bg-white/90 border-slate-200 text-slate-800',
-    cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]',
-    sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]',
-  };
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
