@@ -34,7 +34,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 3,
     devocional: {
       titulo: 'Confianza de Todo Corazón',
-      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
+      reflexion: 'Confiar en el Señor con "todo el corazón" implies rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
       oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis planes en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.'
     }
   }, 
@@ -76,7 +76,6 @@ const LECTURAS_DIARIAS = [
   }
 ];
 
-// Fallback por si la lectura no tiene devocional asignado en la lista extendida
 const devocionalPorDefecto = {
   titulo: 'Creciendo en la Palabra',
   reflexion: 'Cada porción de las Escrituras contiene aliento y dirección para nuestra vida diaria. Al meditar en los versículos de hoy, permite que el Espíritu Santo hable a tu corazón, te redarguya y siembre la semilla de fe necesaria para Crecer y Multiplicar tu influencia espiritual en tu entorno.',
@@ -106,9 +105,9 @@ const LIBROS_MENU = [
   { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
   { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento', Fil: '1 Corintios' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { font: 'Filipenses', testamento: 'Nuevo Testamento', nombre: 'Filipenses' },
+  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
@@ -154,9 +153,40 @@ export default function App() {
   const [tamañoFuente, setTamañoFuente] = useState(18);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [mostrarDonacion, setMostrarDonacion] = useState(false);
-  const [mostrarModalDevocional, setMostrarModalDevocional] = useState(false); // Estado para abrir el devocional
+  const [mostrarModalDevocional, setMostrarModalDevocional] = useState(false);
 
   const versiculoRefs = useRef({});
+
+  // --- SISTEMA INTEGADO DE CONTROL DE BOTÓN ATRÁS NATAL ---
+  useEffect(() => {
+    // Escucha los cambios del historial del dispositivo
+    const manejarBotonAtras = (event) => {
+      if (mostrarDonacion) {
+        setMostrarDonacion(false);
+        window.history.pushState(null, ''); // Mantiene el estado virtual
+      } else if (mostrarModalDevocional) {
+        setMostrarModalDevocional(false);
+        window.history.pushState(null, '');
+      } else if (mostrarAsistente) {
+        setMostrarAsistente(false);
+        window.history.pushState(null, '');
+      } else if (vistaActual === 'lector') {
+        setVistaActual('home');
+        setVersiculoActual('');
+        window.history.pushState(null, '');
+      } else if (!mostrarPortada && vistaActual === 'home') {
+        setMostrarPortada(true);
+        window.history.pushState(null, '');
+      }
+    };
+
+    window.history.pushState(null, '');
+    window.addEventListener('popstate', manejarBotonAtras);
+
+    return () => {
+      window.removeEventListener('popstate', manejarBotonAtras);
+    };
+  }, [mostrarPortada, vistaActual, mostrarDonacion, mostrarModalDevocional, mostrarAsistente]);
 
   // --- ESTADOS DEL ASISTENTE ---
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
@@ -267,18 +297,6 @@ export default function App() {
     }
   };
 
-  const themeStyles = {
-    claro: 'bg-slate-50 text-slate-900 border-slate-200',
-    cym: 'bg-[#000000] text-slate-200 border-[#cca300]',
-    sepia: 'bg-[#fbf0d9] text-[#5f4b32] border-[#d4b886]',
-  };
-
-  const navStyles = {
-    claro: 'bg-white/90 border-slate-200 text-slate-800',
-    cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]',
-    sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]',
-  };
-
   const abrirLibro = (nombreLibro, capitulo = 1) => {
     setLibroActual(nombreLibro);
     setCapituloActual(capitulo);
@@ -350,7 +368,7 @@ export default function App() {
       {tema === 'cym' && <EstrellasFondo />}
 
       <nav className={`sticky top-0 z-50 px-2 md:px-6 py-3 shadow-md flex items-center justify-between backdrop-blur-md border-b ${navStyles[tema]}`}>
-        <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setVistaActual('home')}>
+        <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => { setVistaActual('home'); setVersiculoActual(''); }}>
           {vistaActual === 'lector' && <ArrowLeft size={20} className="mr-1" />}
           <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Logo CyM" className="w-10 h-10 md:w-16 md:h-16 object-contain drop-shadow-[0_0_12px_rgba(204,163,0,0.5)]" />
           <h1 className="text-lg md:text-2xl font-black tracking-wider hidden sm:block">CyM <span className="font-light opacity-80">Biblia</span></h1>
@@ -411,7 +429,7 @@ export default function App() {
                 className="bg-[#cca300]/10 border border-[#cca300]/30 rounded px-1.5 py-0.5 text-[#fcd34d] font-bold text-xs md:text-sm outline-none cursor-pointer appearance-none text-center"
               >
                 <option value="" className="text-black">Ver.</option>
-                {versiculosActuales.map((v) => (
+                {versiculosales => versiculosActuales.map((v) => (
                   <option key={v.numero} value={v.numero} className="text-black">{v.numero}</option>
                 ))}
               </select>
@@ -511,7 +529,6 @@ export default function App() {
       <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-8 relative z-10">
         {vistaActual === 'home' && (
           <div>
-            {/* COMPONENTE DE LA LECTURA DIARIA MEJORADO CON DOS BOTONES */}
             <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 mb-10 shadow-xl border border-[#cca300]/40 backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
               <div className="absolute top-0 right-0 p-6 opacity-10"><Heart size={80} color="#ffd700" /></div>
               <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura Recomendada</p>
