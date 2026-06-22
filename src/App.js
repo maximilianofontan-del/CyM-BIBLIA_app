@@ -34,8 +34,8 @@ const LECTURAS_DIARIAS = [
     capitulo: 3,
     devocional: {
       titulo: 'Confianza de Todo Corazón',
-      reflexion: 'Confiar en el Señor con "todo el corazón" implies rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
-      oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis planes en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.'
+      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
+      oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis plans en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.'
     }
   }, 
   { 
@@ -105,9 +105,9 @@ const LIBROS_MENU = [
   { nombre: 'Malaquías', testamento: 'Antiguo Testamento' }, { nombre: 'Mateo', testamento: 'Nuevo Testamento' },
   { nombre: 'Marcos', testamento: 'Nuevo Testamento' }, { nombre: 'Lucas', testamento: 'Nuevo Testamento' },
   { nombre: 'Juan', testamento: 'Nuevo Testamento' }, { nombre: 'Hechos', testamento: 'Nuevo Testamento' },
-  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento', Fil: '1 Corintios' },
+  { nombre: 'Romanos', testamento: 'Nuevo Testamento' }, { nombre: '1 Corintios', testamento: 'Nuevo Testamento' },
   { nombre: '2 Corintios', testamento: 'Nuevo Testamento' }, { nombre: 'Gálatas', testamento: 'Nuevo Testamento' },
-  { nombre: 'Efesios', testamento: 'Nuevo Testamento' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
+  { font: 'Efesios', testamento: 'Nuevo Testamento', nombre: 'Efesios' }, { nombre: 'Filipenses', testamento: 'Nuevo Testamento' },
   { nombre: 'Colosenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Tesalonicenses', testamento: 'Nuevo Testamento' },
   { nombre: '2 Tesalonicenses', testamento: 'Nuevo Testamento' }, { nombre: '1 Timoteo', testamento: 'Nuevo Testamento' },
   { nombre: '2 Timoteo', testamento: 'Nuevo Testamento' }, { nombre: 'Tito', testamento: 'Nuevo Testamento' },
@@ -157,13 +157,12 @@ export default function App() {
 
   const versiculoRefs = useRef({});
 
-  // --- SISTEMA INTEGADO DE CONTROL DE BOTÓN ATRÁS NATAL ---
+  // --- CONTROL DE BOTÓN ATRÁS ---
   useEffect(() => {
-    // Escucha los cambios del historial del dispositivo
     const manejarBotonAtras = (event) => {
       if (mostrarDonacion) {
         setMostrarDonacion(false);
-        window.history.pushState(null, ''); // Mantiene el estado virtual
+        window.history.pushState(null, '');
       } else if (mostrarModalDevocional) {
         setMostrarModalDevocional(false);
         window.history.pushState(null, '');
@@ -363,6 +362,18 @@ export default function App() {
     );
   }
 
+  const themeStyles = {
+    claro: 'bg-slate-50 text-slate-900 border-slate-200',
+    cym: 'bg-[#000000] text-slate-200 border-[#cca300]',
+    sepia: 'bg-[#fbf0d9] text-[#5f4b32] border-[#d4b886]',
+  };
+
+  const navStyles = {
+    claro: 'bg-white/90 border-slate-200 text-slate-800',
+    cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]',
+    sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]',
+  };
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
       {tema === 'cym' && <EstrellasFondo />}
@@ -429,7 +440,7 @@ export default function App() {
                 className="bg-[#cca300]/10 border border-[#cca300]/30 rounded px-1.5 py-0.5 text-[#fcd34d] font-bold text-xs md:text-sm outline-none cursor-pointer appearance-none text-center"
               >
                 <option value="" className="text-black">Ver.</option>
-                {versiculosales => versiculosActuales.map((v) => (
+                {versiculosActuales.map((v) => (
                   <option key={v.numero} value={v.numero} className="text-black">{v.numero}</option>
                 ))}
               </select>
@@ -471,7 +482,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- NUEVA VENTANA EMERGENTE DEL DEVOCIONAL DIARIO --- */}
+      {/* --- VENTANA EMERGENTE DEL DEVOCIONAL DIARIO CON LETRA ESCALABLE --- */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -483,17 +494,18 @@ export default function App() {
             </h3>
             <p className="text-xs font-bold opacity-60 mb-6 italic">En base a la lectura de {lecturaHoy.libro} {lecturaHoy.capitulo}</p>
             
-            <div className="space-y-6">
+            {/* SE CORRIGIÓ EL TAMAÑO DE LA FUENTE INTEGRANDO LA VARIABLE DE CONFIGURACIÓN */}
+            <div className="space-y-6" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.6' }}>
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2"><FileText size={14} /> Reflexión Pastoral</h4>
-                <p className="text-sm md:text-base leading-relaxed opacity-90 font-medium whitespace-pre-line">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2" style={{ fontSize: `${Math.max(12, tamañoFuente * 0.75)}px` }}><FileText size={14} /> Reflexión Pastoral</h4>
+                <p className="opacity-90 font-medium whitespace-pre-line">
                   {devocionalHoy.reflexion}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-amber-500/5 border border-[#cca300]/20 italic">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2"><Heart size={14} className="fill-current" /> Oración de Hoy</h4>
-                <p className="text-sm md:text-base leading-relaxed opacity-90 font-serif">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2" style={{ fontSize: `${Math.max(12, tamañoFuente * 0.75)}px` }}><Heart size={14} className="fill-current" /> Oración de Hoy</h4>
+                <p className="opacity-90 font-serif">
                   "{devocionalHoy.oracion}"
                 </p>
               </div>
