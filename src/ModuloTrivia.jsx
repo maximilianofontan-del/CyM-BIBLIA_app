@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, CheckCircle2, XCircle, ChevronRight, Timer, Medal } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, ChevronRight, Timer, Medal } from 'lucide-react';
 
 const PREGUNTAS = [
   { pregunta: "¿Qué mar cruzó Moisés con el pueblo de Israel?", opciones: ["Mar Muerto", "Mar Rojo", "Mar de Galilea"], correcta: 1, referencia: "Éxodo 14:21" },
@@ -85,7 +85,7 @@ export default function ModuloTrivia({ tema, onVolver }) {
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${claseBoton}`}
                 >
                   <span>{opcion}</span>
-                  {respondido && esCorrecta && <CheckCircle2 size={18} className="text-emerald-500" />}
+                  {respondido && esCorrecta && <CheckCircle size={18} className="text-emerald-500" />}
                   {respondido && fueElegida && !esCorrecta && <XCircle size={18} className="text-red-500" />}
                 </button>
               );

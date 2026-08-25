@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, 
-  Heart, ChevronRightCircle, MessageCircle, X, Send, DollarSign, FileText, 
+  Heart, MessageCircle, X, Send, DollarSign, FileText, 
   Youtube, Volume2, Square, Trophy, Crown, ShieldCheck
 } from 'lucide-react';
 
-// IMPORTAMOS LOS MÓDULOS NUEVOS (Asegurate de tener ModuloTrivia.jsx y ModuloClub.jsx en la misma carpeta)
+// IMPORTAMOS LOS MÓDULOS NUEVOS
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
 
@@ -88,7 +88,6 @@ const devocionalPorDefecto = {
   oracion: 'Señor Jesús, abre mis ojos para ver las maravillas de tu Ley. Que tu Palabra ministre mi vida hoy y me transforme a tu imagen. Amén.'
 };
 
-// --- MENÚ COMPLETO RECONSTRUIDO Y CORREGIDO ---
 const LIBROS_MENU = [
   { nombre: 'Génesis', testamento: 'Antiguo Testamento' }, { nombre: 'Éxodo', testamento: 'Antiguo Testamento' },
   { nombre: 'Levítico', testamento: 'Antiguo Testamento' }, { nombre: 'Números', testamento: 'Antiguo Testamento' },
@@ -149,7 +148,6 @@ const EstrellasFondo = () => (
   </div>
 );
 
-// --- SE COMPUSO LA UBICACIÓN DE LOS ESTILOS PARA EVITAR LA TEMPORAL DEAD ZONE EN PRODUCCIÓN ---
 const themeStyles = {
   claro: 'bg-slate-50 text-slate-900 border-slate-200',
   cym: 'bg-[#000000] text-slate-200 border-[#cca300]',
@@ -163,18 +161,16 @@ const navStyles = {
 };
 
 export default function App() {
-  // --- USUARIO ACTUAL (Simulación hasta que tengas Firebase) ---
   const [usuarioActual, setUsuarioActual] = useState({
-    email: 'maxdelanus@gmail.com', // Cambiar esto simula diferentes usuarios
-    suscripcion: 'GRATIS', // Puede ser GRATIS, BRONCE, PLATA, ORO, DIAMANTE
+    email: 'maxdelanus@gmail.com', 
+    suscripcion: 'GRATIS',
   });
 
-  // IDENTIFICACIÓN DEL MODO DIOS (OWNER)
   const isOwner = usuarioActual.email === 'maxdelanus@gmail.com' || usuarioActual.email === 'maximiliano.fontan@newsan.com.ar';
   const isPremium = isOwner || usuarioActual.suscripcion !== 'GRATIS';
 
   const [mostrarPortada, setMostrarPortada] = useState(true);
-  const [vistaActual, setVistaActual] = useState('home'); // home, lector, trivia, club
+  const [vistaActual, setVistaActual] = useState('home'); 
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
   const [capituloActual, setCapituloActual] = useState(1);
@@ -185,7 +181,6 @@ export default function App() {
   const [mostrarDonacion, setMostrarDonacion] = useState(false);
   const [mostrarModalDevocional, setMostrarModalDevocional] = useState(false);
   
-  // ESTADOS DE LA IA Y EL AUDIO
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
   const [leyendoAudio, setLeyendoAudio] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -194,28 +189,24 @@ export default function App() {
     { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
   ]);
 
-  // LÍMITE DE LA IA
   const [creditosIA, setCreditosIA] = useState(() => {
     if (isOwner) return 9999;
     const guardado = localStorage.getItem('cym_ia_limite');
-    return guardado !== null ? parseInt(guardado) : 3; // Arrancan con 3 preguntas gratis
+    return guardado !== null ? parseInt(guardado) : 3;
   });
 
   const versiculoRefs = useRef({});
 
-  // --- EFECTO: CANCELAR AUDIO SI SE CAMBIA DE VISTA O CAPÍTULO ---
   useEffect(() => {
     window.speechSynthesis.cancel();
     setLeyendoAudio(false);
   }, [capituloActual, libroActual, vistaActual]);
 
-  // --- FUNCIÓN: REPRODUCIR BIBLIA EN AUDIO ---
   const toggleLecturaAudio = () => {
     if (!isPremium) {
-      setVistaActual('club'); // Si es gratis, lo mandamos al muro de pago
+      setVistaActual('club'); 
       return;
     }
-
     if (leyendoAudio) {
       window.speechSynthesis.cancel();
       setLeyendoAudio(false);
@@ -236,7 +227,6 @@ export default function App() {
     setLeyendoAudio(true);
   };
 
-  // --- CONTROL DEL BOTÓN ATRÁS NATAL ---
   useEffect(() => {
     const manejarBotonAtras = (event) => {
       if (mostrarDonacion) {
@@ -310,12 +300,10 @@ export default function App() {
     }
   }, [versiculoActual, capituloActual, libroActual]);
 
-  // --- CONEXIÓN DIRECTA CON OPENAI CHATGPT Y CONTROL DE LÍMITES ---
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    // VERIFICACIÓN DEL LÍMITE (El Owner ignora esto)
     if (!isOwner && creditosIA <= 0) {
       setChatHistorial([...chatHistorial, { 
         rol: 'asistente', 
@@ -371,7 +359,6 @@ export default function App() {
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
       
-      // RESTAMOS 1 AL LÍMITE SI NO ES EL OWNER
       if (!isOwner) {
         const nuevoLimite = creditosIA - 1;
         setCreditosIA(nuevoLimite);
@@ -474,7 +461,6 @@ export default function App() {
 
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
           
-          {/* BOTÓN YOUTUBE NAVBAR */}
           <a 
             href="https://www.youtube.com/@crecerymultiplicar" 
             target="_blank" 
@@ -486,7 +472,6 @@ export default function App() {
             <span className="hidden sm:inline">YouTube</span>
           </a>
 
-          {/* BOTÓN TRIVIA (GAMIFICACIÓN) */}
           <button 
             onClick={() => setVistaActual('trivia')} 
             className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"
@@ -496,7 +481,6 @@ export default function App() {
             <span className="hidden sm:inline">Jugar</span>
           </button>
 
-          {/* BOTÓN CLUB DE SOCIOS (REEMPLAZA A OFRENDAR) */}
           <button 
             onClick={() => setVistaActual('club')} 
             className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"
@@ -655,7 +639,7 @@ export default function App() {
                         <div className={`p-2 rounded-full ${tema === 'cym' ? 'bg-[#cca300]/10 text-[#cca300]' : 'bg-slate-100 text-slate-500'}`}><BookOpen size={16} /></div>
                         <span className="font-bold text-lg">{libro.nombre}</span>
                       </div>
-                      <ChevronRightCircle size={18} className="opacity-30" />
+                      <ChevronRight size={18} className="opacity-30" />
                     </button>
                   ))}
                 </div>
@@ -670,7 +654,7 @@ export default function App() {
                         <div className={`p-2 rounded-full ${tema === 'cym' ? 'bg-[#cca300]/10 text-[#cca300]' : 'bg-slate-100 text-slate-500'}`}><BookOpen size={16} /></div>
                         <span className="font-bold text-lg">{libro.nombre}</span>
                       </div>
-                      <ChevronRightCircle size={18} className="opacity-30" />
+                      <ChevronRight size={18} className="opacity-30" />
                     </button>
                   ))}
                 </div>
@@ -784,7 +768,7 @@ export default function App() {
                   disabled={cargandoIA || !chatInput.trim() || (!isOwner && creditosIA <= 0)} 
                   className={`p-2 rounded-full flex-shrink-0 transition-colors ${!isOwner && creditosIA <= 0 ? 'bg-red-600 text-white cursor-not-allowed' : tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}
                 >
-                  {!isOwner && creditosIA <= 0 ? <Lock size={16} /> : <Send size={16} />}
+                  {(!isOwner && creditosIA <= 0) ? <Lock size={16} /> : <Send size={16} />}
                 </button>
               </form>
             </div>
