@@ -27,7 +27,6 @@ const firebaseConfig = {
   appId: "1:31778840496:web:a0dda4c372b560298e0075"
 };
 
-// EL PARCHE DE FIREBASE PARA EVITAR LA PANTALLA NEGRA
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
