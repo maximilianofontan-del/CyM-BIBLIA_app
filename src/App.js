@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, ArrowLeft, 
-  Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown
+  Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown,
+  Loader2, LogOut, Lock
 } from 'lucide-react';
+
+// --- FIREBASE IMPORTS ---
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 // 1. IMPORTAMOS LOS MÓDULOS NUEVOS
 import ModuloTrivia from './ModuloTrivia';
@@ -14,6 +20,20 @@ import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
 import BibliaLBLA from './data/LBLA.json';
 import BibliaTLA from './data/TLA.json';
+
+// --- CONFIGURACIÓN DE FIREBASE (Usando tu proyecto existente) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDWDfPiIIwYbuuSvaPq2OVCZi1CINXMqY4",
+  authDomain: "controllogisticonewsan.firebaseapp.com",
+  projectId: "controllogisticonewsan",
+  messagingSenderId: "264933112146",
+  appId: "1:264933112146:web:3fa64d97e32a463dd6a28b"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 const BIBLIA_VERSIONES = {
   RVR1960: BibliaRVR,
@@ -160,15 +180,11 @@ const navStyles = {
 };
 
 export default function App() {
-  const [usuarioActual, setUsuarioActual] = useState({
-    email: 'maxdelanus@gmail.com', 
-    suscripcion: 'GRATIS',
-  });
+  // --- ESTADOS DE FIREBASE AUTH ---
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  const isOwner = usuarioActual.email === 'maxdelanus@gmail.com' || usuarioActual.email === 'maximiliano.fontan@newsan.com.ar';
-  const isPremium = isOwner || usuarioActual.suscripcion !== 'GRATIS';
-
-  const [mostrarPortada, setMostrarPortada] = useState(true);
+  // --- ESTADOS DE LA APP ---
   const [vistaActual, setVistaActual] = useState('home'); 
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
@@ -188,14 +204,68 @@ export default function App() {
     { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia o el capítulo que estás leyendo.' }
   ]);
 
-  const [creditosIA, setCreditosIA] = useState(() => {
-    if (isOwner) return 9999;
-    const guardado = localStorage.getItem('cym_ia_limite');
-    return guardado !== null ? parseInt(guardado) : 3;
-  });
-
   const versiculoRefs = useRef({});
 
+  // --- LÓGICA DE AUTENTICACIÓN FIREBASE ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const emailLower = user.email.toLowerCase();
+        const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
+        const userRef = doc(db, 'cym_usuarios', user.uid);
+        
+        try {
+          const userSnap = await getDoc(userRef);
+          let userData;
+
+          if (userSnap.exists()) {
+            userData = userSnap.data();
+            // Si es Owner, pisamos los datos locales para asegurar acceso total
+            if (isGodMode) {
+              userData.role = 'OWNER';
+              userData.suscripcion = 'DIAMANTE';
+              userData.creditosIA = 9999;
+            }
+          } else {
+            // Usuario Nuevo
+            userData = {
+              email: emailLower,
+              nombre: user.displayName || 'Hermano/a',
+              role: isGodMode ? 'OWNER' : 'USER',
+              suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS',
+              creditosIA: isGodMode ? 9999 : 3, // 3 preguntas de regalo
+              fechaRegistro: new Date().toISOString()
+            };
+            await setDoc(userRef, userData);
+          }
+          setCurrentUser({ uid: user.uid, photoURL: user.photoURL, ...userData });
+        } catch (error) {
+          console.error("Error cargando perfil:", error);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setIsLoadingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    try { await signInWithPopup(auth, googleProvider); } 
+    catch (error) { console.error("Error de login:", error); }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setVistaActual('home');
+  };
+
+  // VERIFICACIONES DE PERMISOS
+  const isOwner = currentUser?.role === 'OWNER';
+  const isPremium = isOwner || (currentUser?.suscripcion !== 'GRATIS' && currentUser?.suscripcion !== undefined);
+
+  // --- EFECTO: CANCELAR AUDIO ---
   useEffect(() => {
     window.speechSynthesis.cancel();
     setLeyendoAudio(false);
@@ -211,17 +281,12 @@ export default function App() {
       setLeyendoAudio(false);
       return;
     }
-
     const textoCompleto = obtenerVersiculos().map(v => v.texto).join('. ');
     const utterance = new SpeechSynthesisUtterance(textoCompleto);
     utterance.lang = 'es-ES'; 
     utterance.rate = 0.9;
     utterance.pitch = 1;
-
-    utterance.onend = () => {
-      setLeyendoAudio(false);
-    };
-
+    utterance.onend = () => setLeyendoAudio(false);
     window.speechSynthesis.speak(utterance);
     setLeyendoAudio(true);
   };
@@ -229,31 +294,19 @@ export default function App() {
   useEffect(() => {
     const manejarBotonAtras = (event) => {
       if (mostrarDonacion) {
-        setMostrarDonacion(false);
-        window.history.pushState(null, '');
+        setMostrarDonacion(false); window.history.pushState(null, '');
       } else if (mostrarModalDevocional) {
-        setMostrarModalDevocional(false);
-        window.history.pushState(null, '');
+        setMostrarModalDevocional(false); window.history.pushState(null, '');
       } else if (mostrarAsistente) {
-        setMostrarAsistente(false);
-        window.history.pushState(null, '');
+        setMostrarAsistente(false); window.history.pushState(null, '');
       } else if (vistaActual === 'lector' || vistaActual === 'trivia' || vistaActual === 'club') {
-        setVistaActual('home');
-        setVersiculoActual('');
-        window.history.pushState(null, '');
-      } else if (!mostrarPortada && vistaActual === 'home') {
-        setMostrarPortada(true);
-        window.history.pushState(null, '');
+        setVistaActual('home'); setVersiculoActual(''); window.history.pushState(null, '');
       }
     };
-
     window.history.pushState(null, '');
     window.addEventListener('popstate', manejarBotonAtras);
-
-    return () => {
-      window.removeEventListener('popstate', manejarBotonAtras);
-    };
-  }, [mostrarPortada, vistaActual, mostrarDonacion, mostrarModalDevocional, mostrarAsistente]);
+    return () => window.removeEventListener('popstate', manejarBotonAtras);
+  }, [vistaActual, mostrarDonacion, mostrarModalDevocional, mostrarAsistente]);
 
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
@@ -291,10 +344,7 @@ export default function App() {
   useEffect(() => {
     if (versiculoActual && versiculoRefs.current[versiculoActual]) {
       setTimeout(() => {
-        versiculoRefs.current[versiculoActual].scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+        versiculoRefs.current[versiculoActual].scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     }
   }, [versiculoActual, capituloActual, libroActual]);
@@ -303,7 +353,7 @@ export default function App() {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    if (!isOwner && creditosIA <= 0) {
+    if (!isOwner && currentUser.creditosIA <= 0) {
       setChatHistorial([...chatHistorial, { 
         rol: 'asistente', 
         texto: '⚠️ Has agotado tus consultas. Para seguir disfrutando del Asistente CyM con Inteligencia Artificial, adquiere tu Pase Premium en el Club de Socios.' 
@@ -321,19 +371,13 @@ export default function App() {
 
     try {
       const apiKey = process.env.REACT_APP_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error("Clave API de OpenAI no configurada. Agréguela en las variables de entorno de Vercel.");
-      }
+      if (!apiKey) throw new Error("Clave API de OpenAI no configurada.");
 
       const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [
@@ -345,23 +389,18 @@ export default function App() {
       });
 
       const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error.message || "Error en los servidores de OpenAI.");
-      }
+      if (data.error) throw new Error(data.error.message || "Error en los servidores de OpenAI.");
 
       const textoRespuesta = data.choices?.[0]?.message?.content;
-
-      if (!textoRespuesta) {
-        throw new Error("Formato de respuesta desconocido.");
-      }
+      if (!textoRespuesta) throw new Error("Formato de respuesta desconocido.");
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
       
+      // RESTAMOS 1 AL LÍMITE EN FIREBASE SI NO ES OWNER
       if (!isOwner) {
-        const nuevoLimite = creditosIA - 1;
-        setCreditosIA(nuevoLimite);
-        localStorage.setItem('cym_ia_limite', nuevoLimite.toString());
+        const nuevoLimite = currentUser.creditosIA - 1;
+        setCurrentUser({...currentUser, creditosIA: nuevoLimite});
+        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite });
       }
     } catch (error) {
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de comunicación: ${error.message}` }]);
@@ -371,11 +410,7 @@ export default function App() {
   };
 
   const abrirLibro = (nombreLibro, capitulo = 1) => {
-    setLibroActual(nombreLibro);
-    setCapituloActual(capitulo);
-    setVersiculoActual('');
-    setVistaActual('lector');
-    window.scrollTo(0, 0);
+    setLibroActual(nombreLibro); setCapituloActual(capitulo); setVersiculoActual(''); setVistaActual('lector'); window.scrollTo(0, 0);
   };
 
   const cambiarCapitulo = (direccion) => {
@@ -391,9 +426,7 @@ export default function App() {
         }
         let nuevoCap = capituloActual + direccion;
         if (nuevoCap >= 1 && nuevoCap <= totalCapitulos) {
-          setCapituloActual(nuevoCap);
-          setVersiculoActual('');
-          window.scrollTo(0, 0);
+          setCapituloActual(nuevoCap); setVersiculoActual(''); window.scrollTo(0, 0);
         }
       }
     } catch(e) {}
@@ -402,19 +435,25 @@ export default function App() {
   const librosAntiguo = LIBROS_MENU.filter((l) => l.testamento === 'Antiguo Testamento');
   const librosNuevo = LIBROS_MENU.filter((l) => l.testamento === 'Nuevo Testamento');
 
-  if (mostrarPortada) {
+  // --- PANTALLA DE CARGA ---
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center">
+        <EstrellasFondo />
+        <Loader2 size={48} className="text-[#ffd700] animate-spin mb-4 relative z-10" />
+        <p className="text-[#ffd700] font-black tracking-widest uppercase relative z-10">Conectando al Ministerio...</p>
+      </div>
+    );
+  }
+
+  // --- PANTALLA DE LOGIN (Si no hay usuario) ---
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 py-12 text-center relative overflow-hidden select-none">
         <EstrellasFondo />
-        
         <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-2xl my-auto p-4">
-          <img 
-            src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" 
-            alt="Logo CyM Biblia" 
-            className="w-full max-w-[480px] h-[480px] object-contain drop-shadow-[0_0_60px_rgba(245,194,66,0.65)]"
-          />
+          <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Logo CyM Biblia" className="w-full max-w-[480px] h-[480px] object-contain drop-shadow-[0_0_60px_rgba(245,194,66,0.65)]" />
         </div>
-
         <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4 mt-4 mb-4">
           <div className="space-y-2 mb-2">
             <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wide bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
@@ -424,28 +463,15 @@ export default function App() {
               Leé, Crecé y Multiplicá
             </p>
           </div>
-
-          <button 
-            onClick={() => setMostrarPortada(false)} 
-            className="w-full max-w-xs bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-black py-3.5 rounded-full font-black text-sm tracking-widest shadow-2xl shadow-amber-500/20 hover:scale-[1.04] active:scale-[0.98] transition-all duration-300 uppercase"
-          >
-            Comenzar Lectura
+          <button onClick={handleLogin} className="w-full max-w-xs flex items-center justify-center gap-3 bg-white text-black py-4 rounded-full font-black text-sm tracking-widest shadow-2xl shadow-amber-500/20 hover:scale-[1.04] active:scale-[0.98] transition-all duration-300 uppercase">
+            <LogIn size={18}/> Ingresar con Google
           </button>
-
-          <a 
-            href="https://www.youtube.com/@crecerymultiplicar" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="w-full max-w-xs flex items-center justify-center gap-2 bg-black/50 text-white py-3.5 rounded-full font-black text-sm tracking-widest shadow-2xl hover:bg-red-600/80 border border-red-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-300 uppercase mt-2"
-          >
-            <PlayCircle size={18} className="text-red-500" />
-            Conocer el Ministerio
-          </a>
         </div>
       </div>
     );
   }
 
+  // --- APP PRINCIPAL ---
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
       {tema === 'cym' && <EstrellasFondo />}
@@ -458,34 +484,16 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
-          
-          <a 
-            href="https://www.youtube.com/@crecerymultiplicar" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-red-600 text-white shadow-md hover:scale-105 transition-transform"
-            title="Visitar nuestro canal"
-          >
-            <PlayCircle size={14} />
-            <span className="hidden sm:inline">YouTube</span>
+          <a href="https://www.youtube.com/@crecerymultiplicar" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-red-600 text-white shadow-md hover:scale-105 transition-transform" title="Visitar nuestro canal">
+            <PlayCircle size={14} /> <span className="hidden sm:inline">YouTube</span>
           </a>
 
-          <button 
-            onClick={() => setVistaActual('trivia')} 
-            className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"
-            title="Jugar Desafío Bíblico"
-          >
-            <Trophy size={14} />
-            <span className="hidden sm:inline">Jugar</span>
+          <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-blue-600 text-white shadow-md hover:scale-105 transition-transform" title="Jugar Desafío Bíblico">
+            <Trophy size={14} /> <span className="hidden sm:inline">Jugar</span>
           </button>
 
-          <button 
-            onClick={() => setVistaActual('club')} 
-            className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"
-            title="Club de Socios"
-          >
-            <Crown size={14} className="fill-black" />
-            <span className="hidden sm:inline">Club CyM</span>
+          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform" title="Club de Socios">
+            <Crown size={14} className="fill-black" /> <span className="hidden sm:inline">Club CyM</span>
           </button>
 
           {vistaActual === 'lector' && (
@@ -508,40 +516,27 @@ export default function App() {
                 try {
                   const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
                   if (libroData) {
-                    if (libroData.chapters) {
-                      cantidadCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
-                    } else if (libroData.verses) {
-                      const caps = libroData.verses.map(v => Number(v.chapter));
-                      cantidadCapitulos = Math.max(...caps);
-                    }
+                    if (libroData.chapters) cantidadCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+                    else if (libroData.verses) cantidadCapitulos = Math.max(...libroData.verses.map(v => Number(v.chapter)));
                   }
                 } catch(e) {}
-                
                 return (
                   <select value={capituloActual} onChange={(e) => { setCapituloActual(Number(e.target.value)); setVersiculoActual(''); }} className="bg-transparent font-bold text-xs md:text-base outline-none cursor-pointer appearance-none hidden sm:block">
-                    {Array.from({ length: cantidadCapitulos }, (_, i) => i + 1).map(num => (
-                      <option key={num} value={num} className="text-black">Cap. {num}</option>
-                    ))}
+                    {Array.from({ length: cantidadCapitulos }, (_, i) => i + 1).map(num => <option key={num} value={num} className="text-black">Cap. {num}</option>)}
                   </select>
                 );
               })()}
 
               <span className="opacity-50 font-black hidden sm:inline">:</span>
 
-              <select 
-                value={versiculoActual} 
-                onChange={(e) => setVersiculoActual(e.target.value)} 
-                className="bg-[#cca300]/10 border border-[#cca300]/30 rounded px-1.5 py-0.5 text-[#fcd34d] font-bold text-xs md:text-sm outline-none cursor-pointer appearance-none text-center hidden sm:block"
-              >
+              <select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="bg-[#cca300]/10 border border-[#cca300]/30 rounded px-1.5 py-0.5 text-[#fcd34d] font-bold text-xs md:text-sm outline-none cursor-pointer appearance-none text-center hidden sm:block">
                 <option value="" className="text-black">Ver.</option>
-                {versiculosActuales.map((v) => (
-                  <option key={v.numero} value={v.numero} className="text-black">{v.numero}</option>
-                ))}
+                {versiculosActuales.map((v) => <option key={v.numero} value={v.numero} className="text-black">{v.numero}</option>)}
               </select>
             </>
           )}
-
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
+          <button onClick={handleLogout} className="p-2 rounded-full hover:bg-red-500/20 text-red-500 transition-colors"><LogOut size={18} /></button>
         </div>
       </nav>
 
@@ -568,33 +563,22 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
             <button onClick={() => setMostrarModalDevocional(false)} className="absolute top-5 right-5 hover:opacity-70 p-1"><X size={22} /></button>
-            
             <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5"><Sparkles size={12} /> Alimento Espiritual</p>
             <h3 className="text-2xl md:text-3xl font-serif font-black mb-1 bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] text-transparent bg-clip-text">
               {devocionalHoy.titulo}
             </h3>
             <p className="text-xs font-bold opacity-60 mb-6 italic">En base a la lectura de {lecturaHoy.libro} {lecturaHoy.capitulo}</p>
-            
             <div className="space-y-6" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.6' }}>
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2" style={{ fontSize: `${Math.max(12, tamañoFuente * 0.75)}px` }}><FileText size={14} /> Reflexión Pastoral</h4>
-                <p className="opacity-90 font-medium whitespace-pre-line">
-                  {devocionalHoy.reflexion}
-                </p>
+                <p className="opacity-90 font-medium whitespace-pre-line">{devocionalHoy.reflexion}</p>
               </div>
-
               <div className="p-4 rounded-2xl bg-amber-500/5 border border-[#cca300]/20 italic">
                 <h4 className="text-xs font-black uppercase tracking-wider text-[#ffd700] mb-2 flex items-center gap-2" style={{ fontSize: `${Math.max(12, tamañoFuente * 0.75)}px` }}><Heart size={14} className="fill-current" /> Oración de Hoy</h4>
-                <p className="opacity-90 font-serif">
-                  "{devocionalHoy.oracion}"
-                </p>
+                <p className="opacity-90 font-serif">"{devocionalHoy.oracion}"</p>
               </div>
             </div>
-
-            <button 
-              onClick={() => { setMostrarModalDevocional(false); abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo); }}
-              className="w-full mt-6 bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-lg"
-            >
+            <button onClick={() => { setMostrarModalDevocional(false); abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo); }} className="w-full mt-6 bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-lg">
               Ir a la Lectura Bíblica
             </button>
           </div>
@@ -610,18 +594,11 @@ export default function App() {
               <div className="absolute top-0 right-0 p-6 opacity-10"><Heart size={80} color="#ffd700" /></div>
               <p className="text-[#cca300] font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Sparkles size={12} /> Lectura Recomendada</p>
               <h2 className="text-3xl font-black text-[#fcd34d] mb-4">{lecturaHoy.libro} {lecturaHoy.capitulo}</h2>
-              
               <div className="flex flex-col sm:flex-row gap-3 w-full">
-                <button 
-                  onClick={() => abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo)}
-                  className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors border border-white/10"
-                >
+                <button onClick={() => abrirLibro(lecturaHoy.libro, lecturaHoy.capitulo)} className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors border border-white/10">
                   <BookOpen size={16} /> Abrir Capítulo
                 </button>
-                <button 
-                  onClick={() => setMostrarModalDevocional(true)}
-                  className="flex-1 bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-md shadow-amber-500/10"
-                >
+                <button onClick={() => setMostrarModalDevocional(true)} className="flex-1 bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-md shadow-amber-500/10">
                   <Sparkles size={16} /> Leer Devocional de Hoy
                 </button>
               </div>
@@ -663,21 +640,11 @@ export default function App() {
 
         {vistaActual === 'lector' && (
           <div className="bg-black/70 p-6 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
-            
-            {/* TÍTULO Y BOTÓN DE BIBLIA EN AUDIO */}
             <div className="mb-12 text-center flex flex-col items-center">
               <h2 className={`text-3xl font-black mb-6 ${tema === 'cym' ? 'text-[#ffd700]' : ''}`} style={{ fontSize: `${tamañoFuente * 2.2}px` }}>
                 {libroActual} {capituloActual}
               </h2>
-              
-              <button 
-                onClick={toggleLecturaAudio}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
-                  leyendoAudio 
-                    ? 'bg-red-600 text-white animate-pulse' 
-                    : tema === 'cym' ? 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40' : 'bg-slate-200 text-slate-800 hover:bg-slate-300'
-                }`}
-              >
+              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : tema === 'cym' ? 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40' : 'bg-slate-200 text-slate-800 hover:bg-slate-300'}`}>
                 {leyendoAudio ? <Square size={16} fill="currentColor"/> : <Volume2 size={16} />}
                 {leyendoAudio ? 'Detener Lectura' : 'Escuchar Capítulo'}
                 {!isPremium && <Crown size={14} className="ml-1 opacity-70" />}
@@ -689,11 +656,7 @@ export default function App() {
               {versiculosActuales.map((versiculo, index) => {
                 const esVersiculoResaltado = versiculo.numero === versiculoActual;
                 return (
-                  <p 
-                    key={index} 
-                    ref={el => versiculoRefs.current[versiculo.numero] = el}
-                    className="relative group cursor-text transition-all duration-500"
-                  >
+                  <p key={index} ref={el => versiculoRefs.current[versiculo.numero] = el} className="relative group cursor-text transition-all duration-500">
                     <sup className={`absolute -left-6 top-1.5 text-[0.6em] font-black select-none ${esVersiculoResaltado ? 'text-amber-400 text-sm' : tema === 'cym' ? 'text-[#ffd700]/60' : 'opacity-40'}`}>
                       {versiculo.numero}
                     </sup>
@@ -731,8 +694,8 @@ export default function App() {
                   <Sparkles size={16} className={tema === 'cym' ? 'text-[#ffd700]' : 'text-amber-500'} />
                   <div className="flex flex-col">
                     <span className="font-bold text-sm leading-tight">Asistente CyM</span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${!isOwner && creditosIA === 0 ? 'text-red-500' : tema === 'cym' ? 'text-[#cca300]/70' : 'text-slate-500'}`}>
-                      {isOwner ? '👑 MODO OWNER' : creditosIA > 0 ? `${creditosIA} disp.` : 'Pase Requerido'}
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${!isOwner && currentUser.creditosIA === 0 ? 'text-red-500' : tema === 'cym' ? 'text-[#cca300]/70' : 'text-slate-500'}`}>
+                      {isOwner ? '👑 MODO OWNER' : currentUser.creditosIA > 0 ? `${currentUser.creditosIA} disp.` : 'Pase Requerido'}
                     </span>
                   </div>
                 </div>
@@ -758,15 +721,15 @@ export default function App() {
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
                   placeholder="Hacé una pregunta..." 
-                  disabled={!isOwner && creditosIA <= 0}
+                  disabled={!isOwner && currentUser.creditosIA <= 0}
                   className={`flex-1 rounded-full px-4 py-2 text-sm outline-none border disabled:opacity-50 ${tema === 'cym' ? 'bg-[#1a1a1a] border-[#cca300]/30 text-white placeholder-slate-500 focus:border-[#cca300]' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`}
                 />
                 <button 
                   type="submit" 
-                  disabled={cargandoIA || !chatInput.trim() || (!isOwner && creditosIA <= 0)} 
-                  className={`p-2 rounded-full flex-shrink-0 transition-colors ${!isOwner && creditosIA <= 0 ? 'bg-red-600 text-white cursor-not-allowed' : tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}
+                  disabled={cargandoIA || !chatInput.trim() || (!isOwner && currentUser.creditosIA <= 0)} 
+                  className={`p-2 rounded-full flex-shrink-0 transition-colors ${!isOwner && currentUser.creditosIA <= 0 ? 'bg-red-600 text-white cursor-not-allowed' : tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}
                 >
-                  {!isOwner && creditosIA <= 0 ? <MessageCircle size={16} /> : <Send size={16} />}
+                  {!isOwner && currentUser.creditosIA <= 0 ? <Lock size={16} /> : <Send size={16} />}
                 </button>
               </form>
             </div>
