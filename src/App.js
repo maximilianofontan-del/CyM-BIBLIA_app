@@ -208,41 +208,56 @@ export default function App() {
 
   const versiculoRefs = useRef({});
 
+  // --- FUNCIÓN PARA CARGAR O CREAR EL PERFIL DEL USUARIO ---
+  const cargarOcrearUsuario = async (user) => {
+    if (!user) return null;
+    const emailLower = user.email.toLowerCase();
+    const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
+    const userRef = doc(db, 'cym_usuarios', user.uid);
+    
+    try {
+      const userSnap = await getDoc(userRef);
+      let userData;
+
+      if (userSnap.exists()) {
+        userData = userSnap.data();
+        if (isGodMode) {
+          userData.role = 'OWNER';
+          userData.suscripcion = 'DIAMANTE';
+          userData.creditosIA = 9999;
+        }
+      } else {
+        // Usuario Nuevo en Firestore
+        userData = {
+          email: emailLower,
+          nombre: user.displayName || 'Hermano/a',
+          role: isGodMode ? 'OWNER' : 'USER',
+          suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS',
+          creditosIA: isGodMode ? 9999 : 3, // 3 preguntas de bienvenida
+          fechaRegistro: new Date().toISOString()
+        };
+        await setDoc(userRef, userData);
+      }
+      return { uid: user.uid, photoURL: user.photoURL, ...userData };
+    } catch (error) {
+      console.error("Error cargando perfil:", error);
+      return {
+        uid: user.uid,
+        email: emailLower,
+        nombre: user.displayName || 'Hermano/a',
+        role: isGodMode ? 'OWNER' : 'USER',
+        suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS',
+        creditosIA: isGodMode ? 9999 : 3
+      };
+    }
+  };
+
   // --- LÓGICA DE AUTENTICACIÓN FIREBASE Y CONTROL DE MODOS ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const emailLower = user.email.toLowerCase();
-        const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
-        const userRef = doc(db, 'cym_usuarios', user.uid);
-        
-        try {
-          const userSnap = await getDoc(userRef);
-          let userData;
-
-          if (userSnap.exists()) {
-            userData = userSnap.data();
-            if (isGodMode) {
-              userData.role = 'OWNER';
-              userData.suscripcion = 'DIAMANTE';
-              userData.creditosIA = 9999;
-            }
-          } else {
-            // Usuario Nuevo en Firestore
-            userData = {
-              email: emailLower,
-              nombre: user.displayName || 'Hermano/a',
-              role: isGodMode ? 'OWNER' : 'USER',
-              suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS',
-              creditosIA: isGodMode ? 9999 : 3, // 3 preguntas de bienvenida
-              fechaRegistro: new Date().toISOString()
-            };
-            await setDoc(userRef, userData);
-          }
-          setCurrentUser({ uid: user.uid, photoURL: user.photoURL, ...userData });
-        } catch (error) {
-          console.error("Error cargando perfil:", error);
-        }
+        const perfil = await cargarOcrearUsuario(user);
+        setCurrentUser(perfil);
       } else {
         setCurrentUser(null);
       }
@@ -253,12 +268,24 @@ export default function App() {
   }, []);
 
   const handleLogin = async () => {
-    try { await signInWithPopup(auth, googleProvider); } 
-    catch (error) { console.error("Error de login:", error); }
+    try { 
+      setIsLoadingAuth(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        const perfil = await cargarOcrearUsuario(result.user);
+        setCurrentUser(perfil);
+      }
+    } 
+    catch (error) { 
+      console.error("Error de login:", error); 
+    } finally {
+      setIsLoadingAuth(false);
+    }
   };
 
   const handleLogout = async () => {
     await signOut(auth);
+    setCurrentUser(null);
     setVistaActual('home');
   };
 
