@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, LogIn, ArrowLeft, 
-  Heart, MessageCircle, X, Send, DollarSign, FileText, 
-  Youtube, Volume2, Square, Trophy, Crown, ShieldCheck
+  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, ArrowLeft, 
+  Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown
 } from 'lucide-react';
 
-// IMPORTAMOS LOS MÓDULOS NUEVOS
+// 1. IMPORTAMOS LOS MÓDULOS NUEVOS
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
 
-// 1. IMPORTAMOS LAS BASES DE DATOS
+// 2. IMPORTAMOS LAS BASES DE DATOS
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
@@ -49,7 +48,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 1,
     devocional: {
       titulo: 'La Luz que Prevalece',
-      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o en nuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
+      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o enuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
       oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Que tu luz brille hoy a través de mí para iluminar a aquellos que caminan en desánimo y confusión. Amén.'
     }
   },
@@ -324,7 +323,7 @@ export default function App() {
       const apiKey = process.env.REACT_APP_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
       
       if (!apiKey) {
-        throw new Error("Clave API de OpenAI no configurada.");
+        throw new Error("Clave API de OpenAI no configurada. Agréguela en las variables de entorno de Vercel.");
       }
 
       const promptSistema = `Actúas como un teólogo y consejero pastoral experto para la app 'CyM Biblia'. Responde de forma amable, clara y en español. El usuario está leyendo el libro de ${libroActual}, capítulo ${capituloActual}.`;
@@ -364,7 +363,6 @@ export default function App() {
         setCreditosIA(nuevoLimite);
         localStorage.setItem('cym_ia_limite', nuevoLimite.toString());
       }
-
     } catch (error) {
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error de comunicación: ${error.message}` }]);
     } finally {
@@ -440,7 +438,7 @@ export default function App() {
             rel="noopener noreferrer"
             className="w-full max-w-xs flex items-center justify-center gap-2 bg-black/50 text-white py-3.5 rounded-full font-black text-sm tracking-widest shadow-2xl hover:bg-red-600/80 border border-red-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-300 uppercase mt-2"
           >
-            <Youtube size={18} className="text-red-500" />
+            <PlayCircle size={18} className="text-red-500" />
             Conocer el Ministerio
           </a>
         </div>
@@ -468,7 +466,7 @@ export default function App() {
             className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase tracking-wider bg-red-600 text-white shadow-md hover:scale-105 transition-transform"
             title="Visitar nuestro canal"
           >
-            <Youtube size={14} />
+            <PlayCircle size={14} />
             <span className="hidden sm:inline">YouTube</span>
           </a>
 
@@ -768,7 +766,7 @@ export default function App() {
                   disabled={cargandoIA || !chatInput.trim() || (!isOwner && creditosIA <= 0)} 
                   className={`p-2 rounded-full flex-shrink-0 transition-colors ${!isOwner && creditosIA <= 0 ? 'bg-red-600 text-white cursor-not-allowed' : tema === 'cym' ? 'bg-[#cca300] text-black hover:bg-[#ffd700] disabled:opacity-50' : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50'}`}
                 >
-                  {(!isOwner && creditosIA <= 0) ? <Lock size={16} /> : <Send size={16} />}
+                  {!isOwner && creditosIA <= 0 ? <MessageCircle size={16} /> : <Send size={16} />}
                 </button>
               </form>
             </div>
