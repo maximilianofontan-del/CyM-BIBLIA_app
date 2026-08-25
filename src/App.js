@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, ArrowLeft, 
   Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown,
-  Loader2, LogOut, Lock
+  Loader2, LogOut, Lock, LogIn
 } from 'lucide-react';
 
 // --- FIREBASE IMPORTS ---
@@ -21,14 +21,16 @@ import BibliaDHH from './data/DHH.json';
 import BibliaLBLA from './data/LBLA.json';
 import BibliaTLA from './data/TLA.json';
 
-// --- CONFIGURACIÓN DE FIREBASE (Usando tu proyecto existente) ---
+// --- CONFIGURACIÓN OFICIAL DE FIREBASE (Proyecto CyM Biblia) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDWDfPiIIwYbuuSvaPq2OVCZi1CINXMqY4",
-  authDomain: "controllogisticonewsan.firebaseapp.com",
-  projectId: "controllogisticonewsan",
-  messagingSenderId: "264933112146",
-  appId: "1:264933112146:web:3fa64d97e32a463dd6a28b"
+  apiKey: "AIzaSyD2ya4X0gJZg9eaD7sYs7DOz43cu4Q83lQ",
+  authDomain: "cym-biblia.firebaseapp.com",
+  projectId: "cym-biblia",
+  storageBucket: "cym-biblia.firebasestorage.app",
+  messagingSenderId: "31778840496",
+  appId: "1:31778840496:web:a0dda4c372b560298e0075"
 };
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -59,7 +61,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 3,
     devocional: {
       titulo: 'Confianza de Todo Corazón',
-      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafía a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promise es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
+      reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafíos a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.',
       oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis planes en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.'
     }
   }, 
@@ -68,7 +70,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 1,
     devocional: {
       titulo: 'La Luz que Prevalece',
-      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o enuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
+      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o en nuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
       oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Que tu luz brille hoy a través de mí para iluminar a aquellos que caminan en desánimo y confusión. Amén.'
     }
   },
@@ -86,7 +88,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 4,
     devocional: {
       titulo: 'La Paz que lo Guarda Todo',
-      reflexion: 'El apóstol Pablo nos teaches el antídoto contra la preocupación: la oración con acción de gracias. Cuando depositamos nuestras peticiones delante del trono de la gracia con un corazón agradecido, la paz de Dios, que sobrepasa todo entendimiento humano, se activa como un escudo sobre nuestras mentes.',
+      reflexion: 'El apóstol Pablo nos enseña el antídoto contra la preocupación: la oración con acción de gracias. Cuando depositamos nuestras peticiones delante del trono de la gracia con un corazón agradecido, la paz de Dios, que sobrepasa todo entendimiento humano, se activa como un escudo sobre nuestras mentes.',
       oracion: 'Señor, hoy te entrego cada una de mis preocupaciones. Cambio mis cargas por tu paz perfecta. Guarda mis pensamientos en Cristo Jesús y recuérdame que todo lo puedo en ti que me fortaleces. Amén.'
     }
   }, 
@@ -206,7 +208,7 @@ export default function App() {
 
   const versiculoRefs = useRef({});
 
-  // --- LÓGICA DE AUTENTICACIÓN FIREBASE ---
+  // --- LÓGICA DE AUTENTICACIÓN FIREBASE Y CONTROL DE MODOS ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -220,20 +222,19 @@ export default function App() {
 
           if (userSnap.exists()) {
             userData = userSnap.data();
-            // Si es Owner, pisamos los datos locales para asegurar acceso total
             if (isGodMode) {
               userData.role = 'OWNER';
               userData.suscripcion = 'DIAMANTE';
               userData.creditosIA = 9999;
             }
           } else {
-            // Usuario Nuevo
+            // Usuario Nuevo en Firestore
             userData = {
               email: emailLower,
               nombre: user.displayName || 'Hermano/a',
               role: isGodMode ? 'OWNER' : 'USER',
               suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS',
-              creditosIA: isGodMode ? 9999 : 3, // 3 preguntas de regalo
+              creditosIA: isGodMode ? 9999 : 3, // 3 preguntas de bienvenida
               fechaRegistro: new Date().toISOString()
             };
             await setDoc(userRef, userData);
@@ -265,7 +266,7 @@ export default function App() {
   const isOwner = currentUser?.role === 'OWNER';
   const isPremium = isOwner || (currentUser?.suscripcion !== 'GRATIS' && currentUser?.suscripcion !== undefined);
 
-  // --- EFECTO: CANCELAR AUDIO ---
+  // --- EFECTO: CANCELAR AUDIO SI SE CAMBIA DE VISTA ---
   useEffect(() => {
     window.speechSynthesis.cancel();
     setLeyendoAudio(false);
@@ -396,7 +397,7 @@ export default function App() {
 
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: textoRespuesta }]);
       
-      // RESTAMOS 1 AL LÍMITE EN FIREBASE SI NO ES OWNER
+      // RESTAR 1 CRÉDITO Y ACTUALIZAR EN FIRESTORE
       if (!isOwner) {
         const nuevoLimite = currentUser.creditosIA - 1;
         setCurrentUser({...currentUser, creditosIA: nuevoLimite});
@@ -418,12 +419,8 @@ export default function App() {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
       if(libroData) {
         let totalCapitulos = 1;
-        if (libroData.chapters) {
-          totalCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
-        } else if (libroData.verses) {
-          const caps = libroData.verses.map(v => Number(v.chapter));
-          totalCapitulos = Math.max(...caps);
-        }
+        if (libroData.chapters) totalCapitulos = libroData.chapters.filter(c => c.is_chapter === true).length;
+        else if (libroData.verses) totalCapitulos = Math.max(...libroData.verses.map(v => Number(v.chapter)));
         let nuevoCap = capituloActual + direccion;
         if (nuevoCap >= 1 && nuevoCap <= totalCapitulos) {
           setCapituloActual(nuevoCap); setVersiculoActual(''); window.scrollTo(0, 0);
@@ -446,7 +443,7 @@ export default function App() {
     );
   }
 
-  // --- PANTALLA DE LOGIN (Si no hay usuario) ---
+  // --- PANTALLA DE LOGIN (Pantalla de Bloqueo) ---
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 py-12 text-center relative overflow-hidden select-none">
@@ -471,7 +468,7 @@ export default function App() {
     );
   }
 
-  // --- APP PRINCIPAL ---
+  // --- APLICACIÓN PRINCIPAL ---
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
       {tema === 'cym' && <EstrellasFondo />}
@@ -536,7 +533,7 @@ export default function App() {
             </>
           )}
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
-          <button onClick={handleLogout} className="p-2 rounded-full hover:bg-red-500/20 text-red-500 transition-colors"><LogOut size={18} /></button>
+          <button onClick={handleLogout} className="p-2 rounded-full hover:bg-red-500/20 text-red-500 transition-colors" title="Cerrar Sesión"><LogOut size={18} /></button>
         </div>
       </nav>
 
