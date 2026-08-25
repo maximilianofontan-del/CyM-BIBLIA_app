@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 
+// ¡IMPORTANTE! PEGÁ TUS 100 PREGUNTAS ADENTRO DE ESTOS CORCHETES [ ]
 const PREGUNTAS_LOCALES = [
+  { "pregunta": "¿Quién fue tragado por un gran pez?", "opciones": ["Moisés", "Jonás", "David", "Pedro"], "respuestaCorrecta": "Jonás" },
+  { "pregunta": "¿Cuántos días y noches llovió en el diluvio?", "opciones": ["40", "7", "12", "100"], "respuestaCorrecta": "40" },
   { "pregunta": "¿Quién fue tragado por un gran pez?", "opciones": ["Moisés", "Jonás", "David", "Pedro"], "respuestaCorrecta": "Jonás" },
   { "pregunta": "¿Cuántos días y noches llovió en el diluvio?", "opciones": ["40", "7", "12", "100"], "respuestaCorrecta": "40" },
   { "pregunta": "¿Quién derrotó a Goliat?", "opciones": ["Saúl", "Salomón", "David", "Sansón"], "respuestaCorrecta": "David" },
@@ -100,7 +103,8 @@ const PREGUNTAS_LOCALES = [
   { "pregunta": "¿En qué idioma se escribió originalmente la mayor parte del Nuevo Testamento?", "opciones": ["Hebreo", "Arameo", "Griego", "Latín"], "respuestaCorrecta": "Griego" },
   { "pregunta": "¿Cómo se llamaba el ciego de Jericó al que Jesús sanó?", "opciones": ["Zaqueo", "Bartimeo", "Simón", "Lázaro"], "respuestaCorrecta": "Bartimeo" },
   { "pregunta": "¿Qué discípulo dijo: 'Señor, no solo mis pies, sino también las manos y la cabeza'?", "opciones": ["Juan", "Tomás", "Pedro", "Mateo"], "respuestaCorrecta": "Pedro" },
-  { "pregunta": "¿Qué mujer judía llegó a ser reina del Imperio Persa?", "opciones": ["Vasti", "Ester", "Rut", "Débora"], "respuestaCorrecta": "Ester" }
+  { "pregunta": "¿Qué mujer judía llegó a ser reina del Imperio Persa?", "opciones": ["Vasti", "Ester", "Rut", "Débora"], "respuestaCorrecta": "Ester" },
+  { "pregunta": "¿Quién derrotó a Goliat?", "opciones": ["Saúl", "Salomón", "David", "Sansón"], "respuestaCorrecta": "David" }
 ];
 
 export default function ModuloTrivia({ currentUser, db, onVolver }) {
@@ -108,34 +112,40 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [puntosSesion, setPuntosSesion] = useState(0);
   const [juegoTerminado, setJuegoTerminado] = useState(false);
   const [preguntasMezcladas, setPreguntasMezcladas] = useState([]);
+  const [estadoRespuesta, setEstadoRespuesta] = useState(null); // Nuevo: Controla colores y pausas
 
   useEffect(() => {
-    // Le sacamos el ".slice(0,15)" para que cargue TODAS las preguntas y sea infinito
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
     setPreguntasMezcladas(mezcladas);
   }, []);
 
   const manejarRespuesta = async (opcionSeleccionada) => {
+    // Si ya respondió, ignorar clics hasta que pase a la siguiente
+    if (estadoRespuesta) return; 
+
     const esCorrecta = opcionSeleccionada === preguntasMezcladas[preguntaActual].respuestaCorrecta;
     
+    // Mostramos colores
+    setEstadoRespuesta({ seleccion: opcionSeleccionada, correcta: preguntasMezcladas[preguntaActual].respuestaCorrecta });
+
     if (esCorrecta) {
       setPuntosSesion(prev => prev + 10);
-      
-      // GUARDADO INSTANTÁNEO EN LA BASE DE DATOS
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
-        currentUser.puntosTrivia = puntosTotales; // Actualizamos el perfil local en el momento
-        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
-          puntosTrivia: puntosTotales
-        });
+        currentUser.puntosTrivia = puntosTotales;
+        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { puntosTrivia: puntosTotales });
       }
     }
 
-    if (preguntaActual + 1 < preguntasMezcladas.length) {
-      setPreguntaActual(preguntaActual + 1);
-    } else {
-      setJuegoTerminado(true);
-    }
+    // Espera 1.5 segundos para mostrar el resultado y luego cambia
+    setTimeout(() => {
+      if (preguntaActual + 1 < preguntasMezcladas.length) {
+        setPreguntaActual(preguntaActual + 1);
+        setEstadoRespuesta(null); // Resetea colores para la próxima
+      } else {
+        setJuegoTerminado(true);
+      }
+    }, 1500);
   };
 
   if (preguntasMezcladas.length === 0) {
@@ -145,11 +155,9 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   if (juegoTerminado) {
     return (
       <div className="bg-blue-950/80 border border-blue-500/40 p-8 rounded-3xl text-center shadow-xl">
-        <h2 className="text-4xl font-black text-white mb-4">¡Impresionante, completaste todas las preguntas!</h2>
-        <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> en esta sesión.</p>
-        <button onClick={onVolver} className="bg-blue-600 text-white font-black py-4 px-8 rounded-xl w-full uppercase tracking-widest hover:scale-105 transition-transform">
-          Volver al Inicio
-        </button>
+        <h2 className="text-4xl font-black text-white mb-4">¡Completaste todas las preguntas!</h2>
+        <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> hoy.</p>
+        <button onClick={onVolver} className="bg-blue-600 text-white font-black py-4 px-8 rounded-xl w-full uppercase tracking-widest hover:scale-105 transition-transform">Volver al Inicio</button>
       </div>
     );
   }
@@ -160,26 +168,30 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     <div className="bg-black/80 border border-blue-500/40 p-6 md:p-10 rounded-3xl text-center shadow-2xl">
       <div className="flex justify-between items-center mb-6 border-b border-blue-500/30 pb-4">
         <span className="text-blue-300 font-bold uppercase tracking-widest text-sm">Pregunta {preguntaActual + 1}</span>
-        <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">Ganado hoy: {puntosSesion} Pts</span>
+        <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">Ganado: {puntosSesion} Pts</span>
       </div>
       
       <h3 className="text-2xl md:text-3xl font-black text-white mb-10 leading-tight">{pregunta.pregunta}</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {pregunta.opciones.map((opcion, index) => (
-          <button 
-            key={index} 
-            onClick={() => manejarRespuesta(opcion)}
-            className="bg-[#1a1a1a] border border-slate-600 text-white font-bold py-5 px-4 rounded-xl hover:bg-blue-600 hover:border-blue-400 transition-colors shadow-md"
-          >
-            {opcion}
-          </button>
-        ))}
+        {pregunta.opciones.map((opcion, index) => {
+          // Lógica de colores al responder
+          let colorBoton = "bg-[#1a1a1a] border-slate-600 text-white hover:bg-blue-600";
+          if (estadoRespuesta) {
+            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; // Correcta en Verde
+            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; // Incorrecta en Rojo
+            else colorBoton = "bg-slate-800 border-slate-700 text-slate-500 opacity-50"; // Las demás se apagan
+          }
+
+          return (
+            <button key={index} onClick={() => manejarRespuesta(opcion)} disabled={estadoRespuesta !== null} className={`border font-bold py-5 px-4 rounded-xl transition-all shadow-md ${colorBoton}`}>
+              {opcion}
+            </button>
+          );
+        })}
       </div>
 
-      <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">
-        Volver al Inicio (Tus puntos ya están guardados)
-      </button>
+      <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">Volver al Inicio (Tus puntos ya están guardados)</button>
     </div>
   );
 }
