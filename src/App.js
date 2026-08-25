@@ -850,7 +850,36 @@ export default function App() {
 
         {/* MÓDULOS DE TRIVIA Y CLUB CYM */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
-        {vistaActual === 'club' && <ModuloClub tema={tema} onVolver={() => setVistaActual('home')} onSuscribir={() => window.open('https://link.mercadopago.com.ar/crecerymultiplicar', '_blank')} />}
+        
+        {vistaActual === 'club' && (
+          <ModuloClub 
+            tema={tema} 
+            onVolver={() => setVistaActual('home')} 
+            onSuscribir={(planElegido) => {
+              
+              let linkPago = "https://link.mercadopago.com.ar/crecerymultiplicar"; 
+              
+              // TUS LINKS OFICIALES DE SUSCRIPCIÓN (DÉBITO AUTOMÁTICO)
+              if (planElegido === 'BRONCE') linkPago = "https://mpago.la/1QrMEYF";
+              if (planElegido === 'PLATA') linkPago = "https://mpago.la/2mEVGiW";
+              if (planElegido === 'ORO') linkPago = "https://mpago.la/1jwezU4";
+              if (planElegido === 'DIAMANTE') linkPago = "https://mpago.la/2X5GusX";
+
+              // Abre MercadoPago en otra pestaña
+              window.open(linkPago, '_blank');
+
+              // A los 3 segundos le pregunta si pagó y te manda el WhatsApp
+              setTimeout(() => {
+                const confirmo = window.confirm("¿Pudiste completar tu suscripción mensual en MercadoPago? Si tocás 'Aceptar', se abrirá WhatsApp para enviar tu comprobante y activar tu membresía.");
+                if (confirmo) {
+                  const mensaje = `Hola pastor Max! Acabo de suscribirme mensualmente al plan *${planElegido}*. Mi email en la app es: *${currentUser.email}*. Te dejo el comprobante para que me actives la membresía!`;
+                  // REEMPLAZÁ ESTE NÚMERO POR EL TUYO REAL (ej: 5491122334455)
+                  window.open(`https://api.whatsapp.com/send?phone=5491128745169&text=${encodeURIComponent(mensaje)}`, '_blank');
+                }
+              }, 3000);
+            }} 
+          />
+        )}
       </main>
 
       {/* ASISTENTE CON IA PASTORAL */}

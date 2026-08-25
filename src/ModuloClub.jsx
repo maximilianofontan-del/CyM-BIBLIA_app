@@ -5,10 +5,10 @@ export default function ModuloClub({ tema, onVolver, onSuscribir }) {
   const isCym = tema === 'cym';
 
   const PLANES = [
-    { nivel: 'Bronce', precio: 5, color: 'from-amber-700 to-amber-900', icon: Star, beneficios: ['300 preguntas IA / mes', 'Biblia en Audio desbloqueada', 'Insignia Bronce en perfil'] },
-    { nivel: 'Plata', precio: 10, color: 'from-slate-400 to-slate-600', icon: ShieldCheck, beneficios: ['IA Ilimitada', 'Bosquejos en PDF', 'Insignia Plata'] },
-    { nivel: 'Oro', precio: 15, color: 'from-yellow-400 to-yellow-600', icon: Crown, beneficios: ['Todo lo anterior', 'Zoom mensual Q&A con Pastor', 'Nombre dorado en app'] },
-    { nivel: 'Diamante', precio: 30, color: 'from-cyan-400 to-blue-600', icon: Sparkles, beneficios: ['Mención como Patrocinador', 'Muro de Oración Prioritario', 'Acceso total sin límites'] }
+    { nivel: 'Bronce', precio: 5.000, color: 'from-amber-700 to-amber-900', icon: Star, beneficios: ['300 preguntas IA / mes', 'Biblia en Audio desbloqueada', 'Insignia Bronce en perfil'] },
+    { nivel: 'Plata', precio: 10.000, color: 'from-slate-400 to-slate-600', icon: ShieldCheck, beneficios: ['IA Ilimitada', 'Bosquejos en PDF', 'Insignia Plata'] },
+    { nivel: 'Oro', precio: 20.000, color: 'from-yellow-400 to-yellow-600', icon: Crown, beneficios: ['Todo lo anterior', 'Zoom mensual Q&A con Pastor', 'Nombre dorado en app'] },
+    { nivel: 'Diamante', precio: 30.000, color: 'from-cyan-400 to-blue-600', icon: Sparkles, beneficios: ['Mención como Patrocinador', 'Muro de Oración Prioritario', 'Acceso total sin límites'] }
   ];
 
   return (
