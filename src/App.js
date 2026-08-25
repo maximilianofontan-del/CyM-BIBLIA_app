@@ -5,7 +5,7 @@ import {
   Loader2, LogOut, Lock, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, Search, UserPlus
 } from 'lucide-react';
 
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion } from 'firebase/firestore';
 
@@ -27,7 +27,8 @@ const firebaseConfig = {
   appId: "1:31778840496:web:a0dda4c372b560298e0075"
 };
 
-const app = initializeApp(firebaseConfig);
+// EL PARCHE DE FIREBASE PARA EVITAR LA PANTALLA NEGRA
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
@@ -94,7 +95,6 @@ export default function App() {
   const [cargandoIA, setCargandoIA] = useState(false);
   const [chatHistorial, setChatHistorial] = useState([{ rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites.' }]);
   
-  // Novedad: Amigos y Foto
   const [listaAmigos, setListaAmigos] = useState([]);
   const [emailBuscar, setEmailBuscar] = useState('');
   const inputRefFoto = useRef(null);
@@ -129,16 +129,15 @@ export default function App() {
         await setDoc(userRef, userData);
       }
 
-      // --- MAGIA DEL LINK DE WHATSAPP ---
+      if (!userData.amigos) userData.amigos = [];
+
       const params = new URLSearchParams(window.location.search);
       const amigoRefId = params.get('ref');
       if (amigoRefId && amigoRefId !== user.uid) {
-        // Te agrega a vos el amigo
         await updateDoc(userRef, { amigos: arrayUnion(amigoRefId) });
-        // Le agrega a tu amigo tu usuario
         await updateDoc(doc(db, 'cym_usuarios', amigoRefId), { amigos: arrayUnion(user.uid) });
         userData.amigos.push(amigoRefId);
-        window.history.replaceState(null, '', window.location.pathname); // Limpia el link
+        window.history.replaceState(null, '', window.location.pathname); 
       }
 
       cargarAmigos(userData.amigos);
@@ -338,7 +337,6 @@ export default function App() {
         
         {vistaActual === 'home' && (
           <div className="space-y-8">
-            {/* PERFIL */}
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current.click()}>
@@ -354,34 +352,17 @@ export default function App() {
               </div>
             </div>
 
-            {/* SELECTOR BÍBLICO GLOBAL */}
             <div className="bg-black/70 border border-[#cca300]/30 p-6 rounded-3xl">
               <div className="flex items-center gap-2 mb-4"><BookOpen size={22} className="text-[#ffd700]" /><h3 className="text-[#ffd700] font-black text-base uppercase">Investigación Bíblica</h3></div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-3 rounded-xl font-bold text-sm outline-none">
-                  <option value="RVR1960">Reina Valera 1960</option>
-                  <option value="NTV">NTV</option>
-                  <option value="DHH">DHH</option>
-                  <option value="LBLA">LBLA</option>
-                  <option value="TLA">TLA</option>
-                </select>
-                <select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-3 rounded-xl font-bold text-sm outline-none">
-                  {LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}
-                </select>
-                <select value={capituloActual} onChange={(e) => setCapituloActual(Number(e.target.value))} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-3 rounded-xl font-bold text-sm outline-none">
-                  {Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}
-                </select>
-                <select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-3 rounded-xl font-bold text-sm outline-none">
-                  <option value="">Todo el cap.</option>
-                  {versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}
-                </select>
+                <select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-3 rounded-xl font-bold text-sm outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="DHH">DHH</option><option value="LBLA">LBLA</option><option value="TLA">TLA</option></select>
+                <select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-3 rounded-xl font-bold text-sm outline-none">{LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}</select>
+                <select value={capituloActual} onChange={(e) => setCapituloActual(Number(e.target.value))} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-3 rounded-xl font-bold text-sm outline-none">{Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select>
+                <select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-3 rounded-xl font-bold text-sm outline-none"><option value="">Todo el cap.</option>{versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}</select>
               </div>
-              <button onClick={() => setVistaActual('lector')} className="w-full bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-4 rounded-xl text-sm uppercase flex items-center justify-center gap-2">
-                <BookOpen size={18} /> Abrir Lectura Seleccionada
-              </button>
+              <button onClick={() => setVistaActual('lector')} className="w-full bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-4 rounded-xl text-sm uppercase flex items-center justify-center gap-2"><BookOpen size={18} /> Abrir Lectura Seleccionada</button>
             </div>
 
-            {/* TRIVIA, COMUNIDAD Y CLUB */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-blue-950/60 to-black border border-blue-500/40 p-6 rounded-3xl flex flex-col justify-between">
                 <div>
@@ -405,7 +386,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* DEVOCIONAL */}
             <div className="relative overflow-hidden rounded-3xl p-6 shadow-xl border border-[#cca300]/40" style={{background: 'linear-gradient(135deg, rgba(30,25,0,0.85) 0%, rgba(0,0,0,0.85) 100%)'}}>
               <div className="absolute top-0 right-0 p-6 opacity-10"><Heart size={80} color="#ffd700" /></div>
               <p className="text-[#cca300] font-black text-[10px] uppercase mb-2"><Sparkles size={12} className="inline mr-1"/> Lectura Recomendada</p>
@@ -416,7 +396,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* LISTA DE LIBROS */}
             <div className="space-y-8">
               <div>
                 <h3 className="text-[11px] font-black text-[#cca300] uppercase tracking-[0.2em] mb-3 bg-black/60 p-2 rounded inline-block">Antiguo Testamento</h3>
@@ -444,12 +423,9 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA COMUNIDAD (AMIGOS / RANKING) --- */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
-            
-            {/* NUEVO BOTÓN DE WHATSAPP */}
             <button 
               onClick={() => {
                 const url = `${window.location.origin}?ref=${currentUser.uid}`;
@@ -460,12 +436,10 @@ export default function App() {
             >
               Invitar amigos por WhatsApp
             </button>
-
             <div className="flex flex-col md:flex-row gap-2 mb-6">
               <input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" />
               <button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button>
             </div>
-
             <div className="space-y-3">
               {listaAmigos.length === 0 ? (
                 <p className="text-slate-400 text-center py-6">Todavía no tenés amigos. ¡Mandales un WhatsApp con el botón verde de arriba!</p>
@@ -485,10 +459,8 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA LECTOR BÍBLICO (CON SELECTORES ADENTRO) --- */}
         {vistaActual === 'lector' && (
           <div className="bg-black/70 p-4 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
-            {/* SELECTORES IN-READER */}
             <div className="mb-8 p-4 bg-black/50 border border-[#cca300]/30 rounded-2xl">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-2 rounded-lg font-bold text-sm outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="TLA">TLA</option></select>
@@ -499,12 +471,8 @@ export default function App() {
             </div>
 
             <div className="mb-12 text-center flex flex-col items-center">
-              <h2 className="text-3xl font-black mb-6 text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>
-                {libroActual} {capituloActual} <span className="opacity-60">({versionActual})</span>
-              </h2>
-              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>
-                {leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} {leyendoAudio ? 'Detener' : 'Escuchar Capítulo'}
-              </button>
+              <h2 className="text-3xl font-black mb-6 text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>{libroActual} {capituloActual} <span className="opacity-60">({versionActual})</span></h2>
+              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}><Square size={18} fill="currentColor"/> {leyendoAudio ? 'Detener' : 'Escuchar Capítulo'}</button>
             </div>
 
             <div className="space-y-4 leading-relaxed text-left" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>
@@ -521,32 +489,20 @@ export default function App() {
           </div>
         )}
 
-        {/* MODULOS EXTERNOS */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />}
         {vistaActual === 'club' && <ModuloClub onVolver={() => setVistaActual('home')} onSuscribir={() => window.open('https://link.mercadopago.com.ar/crecerymultiplicar', '_blank')} />}
       </main>
 
-      {/* ASISTENTE IA */}
       {vistaActual === 'lector' && (
         <div className="fixed bottom-20 right-4 md:right-6 z-50">
           {mostrarAsistente ? (
             <div className="w-80 h-[400px] rounded-2xl shadow-2xl flex flex-col border overflow-hidden bg-[#141414] border-[#cca300]/50">
-              <div className="p-4 flex justify-between items-center border-b bg-black border-[#cca300]/30">
-                <div className="flex items-center gap-2"><Sparkles size={18} className="text-[#ffd700]" /><span className="font-bold text-sm text-white">Asistente CyM</span></div>
-                <button onClick={() => setMostrarAsistente(false)} className="text-white p-2"><X size={20} /></button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col text-sm">
-                {chatHistorial.map((msg, i) => (<div key={i} className={`p-3 rounded-xl max-w-[85%] ${msg.rol === 'usuario' ? 'self-end bg-[#cca300] text-black font-bold' : 'self-start bg-white/10 text-slate-200'}`}>{msg.texto}</div>))}
-              </div>
-              <form onSubmit={enviarMensaje} className="p-3 border-t flex gap-2 bg-black border-[#cca300]/30">
-                <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Preguntale a la IA..." className="flex-1 rounded-full px-4 py-3 text-sm outline-none bg-[#1a1a1a] text-white" />
-                <button type="submit" className="p-3 rounded-full bg-[#cca300] text-black"><Send size={18} /></button>
-              </form>
+              <div className="p-4 flex justify-between items-center border-b bg-black border-[#cca300]/30"><div className="flex items-center gap-2"><Sparkles size={18} className="text-[#ffd700]" /><span className="font-bold text-sm text-white">Asistente CyM</span></div><button onClick={() => setMostrarAsistente(false)} className="text-white p-2"><X size={20} /></button></div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col text-sm">{chatHistorial.map((msg, i) => (<div key={i} className={`p-3 rounded-xl max-w-[85%] ${msg.rol === 'usuario' ? 'self-end bg-[#cca300] text-black font-bold' : 'self-start bg-white/10 text-slate-200'}`}>{msg.texto}</div>))}</div>
+              <form onSubmit={enviarMensaje} className="p-3 border-t flex gap-2 bg-black border-[#cca300]/30"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Preguntale a la IA..." className="flex-1 rounded-full px-4 py-3 text-sm outline-none bg-[#1a1a1a] text-white" /><button type="submit" className="p-3 rounded-full bg-[#cca300] text-black"><Send size={18} /></button></form>
             </div>
           ) : (
-            <button onClick={() => setMostrarAsistente(true)} className="p-5 rounded-full shadow-2xl bg-gradient-to-r from-[#ffd700] to-[#b8860b] text-black hover:scale-110 transition-transform">
-              <MessageCircle size={28} />
-            </button>
+            <button onClick={() => setMostrarAsistente(true)} className="p-5 rounded-full shadow-2xl bg-gradient-to-r from-[#ffd700] to-[#b8860b] text-black hover:scale-110 transition-transform"><MessageCircle size={28} /></button>
           )}
         </div>
       )}
