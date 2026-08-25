@@ -224,6 +224,8 @@ export default function App() {
   const cargarOcrearUsuario = async (user) => {
     if (!user) return null;
     const emailLower = user.email.toLowerCase();
+    
+    // AQUÍ CORREGIMOS EL ROL OWNER
     const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
     const userRef = doc(db, 'cym_usuarios', user.uid);
     
@@ -233,10 +235,13 @@ export default function App() {
 
       if (userSnap.exists()) {
         userData = userSnap.data();
-        if (isGodMode) {
+        
+        // Si sos vos, te fuerza el rol y actualiza Firestore
+        if (isGodMode && userData.role !== 'OWNER') {
           userData.role = 'OWNER';
           userData.suscripcion = 'DIAMANTE';
           userData.creditosIA = 9999;
+          await updateDoc(userRef, { role: 'OWNER', suscripcion: 'DIAMANTE', creditosIA: 9999 });
         }
       } else {
         userData = {
@@ -267,23 +272,19 @@ export default function App() {
 
       cargarAmigos(userData.amigos);
       
-      // FIJAMOS LA FOTO AQUÍ PARA QUE NO LA PISE FIREBASE AL RECARGAR
-      const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
+      // FIJAMOS LA FOTO AQUÍ PARA QUE NO LA PISE FIREBASE
+      const fotoFinal = userData.photoURL || user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png";
       return { uid: user.uid, ...userData, photoURL: fotoFinal };
     } catch (error) {
       console.error("Error cargando perfil:", error);
-      return { uid: user.uid, email: emailLower, nombre: user.displayName, role: 'USER', suscripcion: 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL };
+      return { uid: user.uid, email: emailLower, nombre: user.displayName, role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL };
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const perfil = await cargarOcrearUsuario(user);
-        setCurrentUser(perfil);
-      } else {
-        setCurrentUser(null);
-      }
+      if (user) setCurrentUser(await cargarOcrearUsuario(user)); 
+      else setCurrentUser(null);
       setIsLoadingAuth(false);
     });
     return () => unsubscribe();
@@ -295,10 +296,7 @@ export default function App() {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) setCurrentUser(await cargarOcrearUsuario(result.user));
     } 
-    catch (error) { 
-      console.error("Error de login:", error);
-      setIsLoadingAuth(false);
-    }
+    catch (error) { setIsLoadingAuth(false); }
   };
 
   const handleLogout = async () => {
@@ -307,7 +305,7 @@ export default function App() {
     setVistaActual('home');
   };
 
-  // --- ACÁ ESTÁ EL COMPRESOR DE IMÁGENES AUTOMÁTICO ---
+  // --- ACÁ ESTÁ EL COMPRESOR DE IMÁGENES AUTOMÁTICO PARA QUE LA FOTO QUEDE PUESTA ---
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -315,33 +313,30 @@ export default function App() {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = async () => {
-          // Crea un lienzo invisible para comprimirla
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400; // La achica a un tamaño perfecto
-          const MAX_HEIGHT = 400;
+          const MAX_SIZE = 250;
           let width = img.width;
           let height = img.height;
 
           if (width > height) {
-            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
           } else {
-            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
           }
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // La comprime a formato JPG super liviano (calidad 70%)
-          const base64String = canvas.toDataURL('image/jpeg', 0.7);
+          const base64String = canvas.toDataURL('image/jpeg', 0.6);
           
           try {
             await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { photoURL: base64String });
-            setCurrentUser({...currentUser, photoURL: base64String});
+            setCurrentUser(prev => ({...prev, photoURL: base64String}));
             alert("¡Foto de perfil actualizada correctamente!");
           } catch (error) {
             console.error("Error guardando foto:", error);
-            alert("Hubo un error al comunicarse con la base de datos.");
+            alert("Hubo un error al guardar la foto.");
           }
         };
         img.src = event.target.result;

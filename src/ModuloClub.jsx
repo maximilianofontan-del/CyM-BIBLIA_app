@@ -6,7 +6,7 @@ export default function ModuloClub({ tema, onVolver, onSuscribir }) {
     { 
       id: 'BRONCE', nombre: 'Socio Bronce', precio: '$5.000', 
       icono: <Star className="text-[#cd7f32] w-12 h-12 mb-4 mx-auto" />,
-      beneficios: ["Apoyo básico al ministerio", "Lectura bíblica sin publicidad", "Acceso a devocionales"]
+      beneficios: ["Apoyo directo al ministerio", "Insignia de colaborador", "Acceso a devocionales"]
     },
     { 
       id: 'PLATA', nombre: 'Socio Plata', precio: '$10.000', 

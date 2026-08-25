@@ -112,36 +112,41 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [puntosSesion, setPuntosSesion] = useState(0);
   const [juegoTerminado, setJuegoTerminado] = useState(false);
   const [preguntasMezcladas, setPreguntasMezcladas] = useState([]);
-  const [estadoRespuesta, setEstadoRespuesta] = useState(null); // Nuevo: Controla colores y pausas
+  const [estadoRespuesta, setEstadoRespuesta] = useState(null);
 
   useEffect(() => {
+    // Mezcla de preguntas para que siempre sean aleatorias
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
     setPreguntasMezcladas(mezcladas);
   }, []);
 
-  const manejarRespuesta = async (opcionSeleccionada) => {
-    // Si ya respondió, ignorar clics hasta que pase a la siguiente
+  const manejarRespuesta = (opcionSeleccionada) => {
+    // Si ya tocó una opción, bloquea los botones para que no toque dos veces
     if (estadoRespuesta) return; 
 
     const esCorrecta = opcionSeleccionada === preguntasMezcladas[preguntaActual].respuestaCorrecta;
     
-    // Mostramos colores
+    // Muestra los colores verde/rojo
     setEstadoRespuesta({ seleccion: opcionSeleccionada, correcta: preguntasMezcladas[preguntaActual].respuestaCorrecta });
 
     if (esCorrecta) {
       setPuntosSesion(prev => prev + 10);
+      
+      // GUARDA EN FIREBASE EN SEGUNDO PLANO (sin trabar la app)
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
-        currentUser.puntosTrivia = puntosTotales;
-        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { puntosTrivia: puntosTotales });
+        currentUser.puntosTrivia = puntosTotales; // Actualiza puntaje visual rápido
+        updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { 
+          puntosTrivia: puntosTotales 
+        }).catch(err => console.error("Error guardando puntos en silencio:", err));
       }
     }
 
-    // Espera 1.5 segundos para mostrar el resultado y luego cambia
+    // Espera 1.5 segundos justos y pasa a la próxima pregunta sin trabarse
     setTimeout(() => {
       if (preguntaActual + 1 < preguntasMezcladas.length) {
         setPreguntaActual(preguntaActual + 1);
-        setEstadoRespuesta(null); // Resetea colores para la próxima
+        setEstadoRespuesta(null);
       } else {
         setJuegoTerminado(true);
       }
@@ -178,13 +183,18 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
           // Lógica de colores al responder
           let colorBoton = "bg-[#1a1a1a] border-slate-600 text-white hover:bg-blue-600";
           if (estadoRespuesta) {
-            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; // Correcta en Verde
-            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; // Incorrecta en Rojo
+            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; // Correcta
+            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; // Incorrecta
             else colorBoton = "bg-slate-800 border-slate-700 text-slate-500 opacity-50"; // Las demás se apagan
           }
 
           return (
-            <button key={index} onClick={() => manejarRespuesta(opcion)} disabled={estadoRespuesta !== null} className={`border font-bold py-5 px-4 rounded-xl transition-all shadow-md ${colorBoton}`}>
+            <button 
+              key={index} 
+              onClick={() => manejarRespuesta(opcion)} 
+              disabled={estadoRespuesta !== null} 
+              className={`border font-bold py-5 px-4 rounded-xl transition-all shadow-md ${colorBoton}`}
+            >
               {opcion}
             </button>
           );
