@@ -194,6 +194,7 @@ export default function App() {
       reader.readAsDataURL(file);
     }
   };
+
   const buscarYAgregarAmigo = async () => {
     if(!emailBuscar) return;
     try {
@@ -395,6 +396,24 @@ export default function App() {
               </div>
             </div>
 
+            {/* CAJA VIP DE ORACIÓN (Solo Oro, Diamante u Owner) */}
+            {(currentUser?.role === 'OWNER' || currentUser?.suscripcion === 'ORO' || currentUser?.suscripcion === 'DIAMANTE') && (
+              <div className="bg-gradient-to-r from-emerald-900/60 to-black border border-emerald-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between shadow-xl">
+                <div className="mb-4 md:mb-0 text-center md:text-left">
+                  <h3 className="text-emerald-400 font-black text-lg flex items-center justify-center md:justify-start gap-2 mb-1">
+                    <Heart size={20} className="fill-emerald-400" /> Grupo de Oración VIP
+                  </h3>
+                  <p className="text-slate-300 text-sm">Espacio exclusivo para compartir tus peticiones.</p>
+                </div>
+                <button 
+                  onClick={() => window.open('https://chat.whatsapp.com/JNGHYMGAXK8BTht9MZUCU2?s=sh&p=a&ilr=1', '_blank')}
+                  className="bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-3 px-6 rounded-xl text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform flex items-center gap-2 w-full md:w-auto justify-center"
+                >
+                  <MessageCircle size={18} /> Entrar al Grupo
+                </button>
+              </div>
+            )}
+
             <div className="bg-black/70 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
               <div className="flex items-center gap-2 mb-4"><BookOpen size={22} className="text-[#ffd700]" /><h3 className="text-[#ffd700] font-black text-base uppercase tracking-wider">Investigación Bíblica</h3></div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -448,7 +467,7 @@ export default function App() {
                     <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
-                        <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-2 object-cover ${estiloAmigo.colorAro}`} alt="foto" />
+                        <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
                         <div>
                           <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
