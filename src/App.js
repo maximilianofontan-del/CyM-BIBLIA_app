@@ -71,7 +71,7 @@ const LECTURAS_DIARIAS = [
     capitulo: 1,
     devocional: {
       titulo: 'La Luz que Prevalece',
-      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o en nuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
+      reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a contra alrededor o en nuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.',
       oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Que tu luz brille hoy a través de mí para iluminar a aquellos que caminan en desánimo y confusión. Amén.'
     }
   },
@@ -183,11 +183,9 @@ const navStyles = {
 };
 
 export default function App() {
-  // --- ESTADOS DE FIREBASE AUTH ---
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  // --- ESTADOS DE LA APP ---
   const [vistaActual, setVistaActual] = useState('home'); 
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
@@ -207,13 +205,11 @@ export default function App() {
     { rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia.' }
   ]);
 
-  // Novedad: Amigos y Foto
   const [listaAmigos, setListaAmigos] = useState([]);
   const [emailBuscar, setEmailBuscar] = useState('');
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
 
-  // Cargar lista de amigos
   const cargarAmigos = async (amigosIds) => {
     if (!amigosIds || amigosIds.length === 0) return;
     const datos = [];
@@ -225,7 +221,6 @@ export default function App() {
     setListaAmigos(datos);
   };
 
-  // --- CARGAR O CREAR PERFIL FIRESTORE ---
   const cargarOcrearUsuario = async (user) => {
     if (!user) return null;
     const emailLower = user.email.toLowerCase();
@@ -271,12 +266,16 @@ export default function App() {
       }
 
       cargarAmigos(userData.amigos);
-      return { uid: user.uid, photoURL: user.photoURL, ...userData };
+      
+      // FIJAMOS LA FOTO AQUÍ PARA QUE NO LA PISE FIREBASE AL RECARGAR
+      const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
+      return { uid: user.uid, ...userData, photoURL: fotoFinal };
     } catch (error) {
       console.error("Error cargando perfil:", error);
-      return { uid: user.uid, email: emailLower, nombre: user.displayName, role: 'USER', suscripcion: 'GRATIS', creditosIA: 3, puntosTrivia: 0 };
+      return { uid: user.uid, email: emailLower, nombre: user.displayName, role: 'USER', suscripcion: 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL };
     }
   };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -287,7 +286,6 @@ export default function App() {
       }
       setIsLoadingAuth(false);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -295,9 +293,7 @@ export default function App() {
     try { 
       setIsLoadingAuth(true);
       const result = await signInWithPopup(auth, googleProvider);
-      if (result.user) {
-        setCurrentUser(await cargarOcrearUsuario(result.user));
-      }
+      if (result.user) setCurrentUser(await cargarOcrearUsuario(result.user));
     } 
     catch (error) { 
       console.error("Error de login:", error);
@@ -311,20 +307,48 @@ export default function App() {
     setVistaActual('home');
   };
 
+  // --- ACÁ ESTÁ EL COMPRESOR DE IMÁGENES AUTOMÁTICO ---
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 1048576) { alert("La imagen es muy pesada. Elegí una que pese menos de 1MB."); return; }
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result;
-        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { photoURL: base64String });
-        setCurrentUser({...currentUser, photoURL: base64String});
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          // Crea un lienzo invisible para comprimirla
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400; // La achica a un tamaño perfecto
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          } else {
+            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // La comprime a formato JPG super liviano (calidad 70%)
+          const base64String = canvas.toDataURL('image/jpeg', 0.7);
+          
+          try {
+            await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { photoURL: base64String });
+            setCurrentUser({...currentUser, photoURL: base64String});
+            alert("¡Foto de perfil actualizada correctamente!");
+          } catch (error) {
+            console.error("Error guardando foto:", error);
+            alert("Hubo un error al comunicarse con la base de datos.");
+          }
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
   };
-
   const buscarYAgregarAmigo = async () => {
     if(!emailBuscar) return;
     try {
@@ -873,7 +897,6 @@ export default function App() {
                 const confirmo = window.confirm("¿Pudiste completar tu suscripción mensual en MercadoPago? Si tocás 'Aceptar', se abrirá WhatsApp para enviar tu comprobante y activar tu membresía.");
                 if (confirmo) {
                   const mensaje = `Hola pastor Max! Acabo de suscribirme mensualmente al plan *${planElegido}*. Mi email en la app es: *${currentUser.email}*. Te dejo el comprobante para que me actives la membresía!`;
-                  // REEMPLAZÁ ESTE NÚMERO POR EL TUYO REAL (ej: 5491122334455)
                   window.open(`https://api.whatsapp.com/send?phone=5491128745169&text=${encodeURIComponent(mensaje)}`, '_blank');
                 }
               }, 3000);

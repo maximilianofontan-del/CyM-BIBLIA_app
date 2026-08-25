@@ -110,29 +110,31 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [preguntasMezcladas, setPreguntasMezcladas] = useState([]);
 
   useEffect(() => {
+    // Le sacamos el ".slice(0,15)" para que cargue TODAS las preguntas y sea infinito
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
-    setPreguntasMezcladas(mezcladas.slice(0, 15));
+    setPreguntasMezcladas(mezcladas);
   }, []);
 
   const manejarRespuesta = async (opcionSeleccionada) => {
     const esCorrecta = opcionSeleccionada === preguntasMezcladas[preguntaActual].respuestaCorrecta;
-    let nuevosPuntosSesion = puntosSesion;
     
     if (esCorrecta) {
-      nuevosPuntosSesion += 10;
-      setPuntosSesion(nuevosPuntosSesion);
+      setPuntosSesion(prev => prev + 10);
+      
+      // GUARDADO INSTANTÁNEO EN LA BASE DE DATOS
+      if (currentUser && db) {
+        const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
+        currentUser.puntosTrivia = puntosTotales; // Actualizamos el perfil local en el momento
+        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
+          puntosTrivia: puntosTotales
+        });
+      }
     }
 
     if (preguntaActual + 1 < preguntasMezcladas.length) {
       setPreguntaActual(preguntaActual + 1);
     } else {
       setJuegoTerminado(true);
-      if (currentUser && db) {
-        const puntosTotales = (currentUser.puntosTrivia || 0) + nuevosPuntosSesion;
-        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
-          puntosTrivia: puntosTotales
-        });
-      }
     }
   };
 
@@ -143,8 +145,8 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   if (juegoTerminado) {
     return (
       <div className="bg-blue-950/80 border border-blue-500/40 p-8 rounded-3xl text-center shadow-xl">
-        <h2 className="text-4xl font-black text-white mb-4">¡Desafío Completado!</h2>
-        <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> a tu cuenta global.</p>
+        <h2 className="text-4xl font-black text-white mb-4">¡Impresionante, completaste todas las preguntas!</h2>
+        <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> en esta sesión.</p>
         <button onClick={onVolver} className="bg-blue-600 text-white font-black py-4 px-8 rounded-xl w-full uppercase tracking-widest hover:scale-105 transition-transform">
           Volver al Inicio
         </button>
@@ -157,8 +159,8 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   return (
     <div className="bg-black/80 border border-blue-500/40 p-6 md:p-10 rounded-3xl text-center shadow-2xl">
       <div className="flex justify-between items-center mb-6 border-b border-blue-500/30 pb-4">
-        <span className="text-blue-300 font-bold uppercase tracking-widest text-sm">Pregunta {preguntaActual + 1} / {preguntasMezcladas.length}</span>
-        <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">{puntosSesion} Pts</span>
+        <span className="text-blue-300 font-bold uppercase tracking-widest text-sm">Pregunta {preguntaActual + 1}</span>
+        <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">Ganado hoy: {puntosSesion} Pts</span>
       </div>
       
       <h3 className="text-2xl md:text-3xl font-black text-white mb-10 leading-tight">{pregunta.pregunta}</h3>
@@ -176,7 +178,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
       </div>
 
       <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">
-        Abandonar Partida
+        Volver al Inicio (Tus puntos ya están guardados)
       </button>
     </div>
   );
