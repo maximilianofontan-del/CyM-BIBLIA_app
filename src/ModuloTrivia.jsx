@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Mic, MicOff, Volume2, Square, Trophy, Star, ChevronLeft, CheckCircle2, XCircle, Loader2, Sparkles } from 'lucide-react';
 
-// TUS 100 PREGUNTAS ORIGINALES COMPLETAS
+// ¡TUS 100 PREGUNTAS ORIGINALES COMPLETAS!
 const PREGUNTAS_LOCALES = [
     { "pregunta": "¿En cuántos días creó Dios los cielos y la tierra?", "opciones": ["7", "6", "3", "40"], "respuestaCorrecta": "6" },
     { "pregunta": "¿Qué ave envió Noé por primera vez desde el arca?", "opciones": ["Una paloma", "Un cuervo", "Un gorrión", "Un águila"], "respuestaCorrecta": "Un cuervo" },
@@ -192,7 +192,281 @@ const PREGUNTAS_LOCALES = [
     { "pregunta": "¿En qué idioma se escribió originalmente la mayor parte del Nuevo Testamento?", "opciones": ["Hebreo", "Arameo", "Griego", "Latín"], "respuestaCorrecta": "Griego" },
     { "pregunta": "¿Cómo se llamaba el ciego de Jericó al que Jesús sanó?", "opciones": ["Zaqueo", "Bartimeo", "Simón", "Lázaro"], "respuestaCorrecta": "Bartimeo" },
     { "pregunta": "¿Qué discípulo dijo: 'Señor, no solo mis pies, sino también las manos y la cabeza'?", "opciones": ["Juan", "Tomás", "Pedro", "Mateo"], "respuestaCorrecta": "Pedro" },
-    { "pregunta": "¿Qué mujer judía llegó a ser reina del Imperio Persa?", "opciones": ["Vasti", "Ester", "Rut", "Débora"], "respuestaCorrecta": "Ester" }
+    { "pregunta": "¿Qué mujer judía llegó a ser reina del Imperio Persa?", "opciones": ["Vasti", "Ester", "Rut", "Débora"], "respuestaCorrecta": "Ester" },
+    { "pregunta": "¿Qué creó Dios en el primer día?", "opciones": ["La luz", "Los animales", "El sol", "El hombre"], "respuestaCorrecta": "La luz" },
+  { "pregunta": "¿Quién fue el tercer hijo de Adán y Eva?", "opciones": ["Enós", "Set", "Cainán", "Lamec"], "respuestaCorrecta": "Set" },
+  { "pregunta": "¿Cuántos años vivió Adán?", "opciones": ["930", "900", "950", "990"], "respuestaCorrecta": "930" },
+  { "pregunta": "¿De qué ciudad llamó Dios a Abraham?", "opciones": ["Babilonia", "Nínive", "Ur de los caldeos", "Harán"], "respuestaCorrecta": "Ur de los caldeos" },
+  { "pregunta": "¿Cómo se llamó el hijo de Abraham y Agar?", "opciones": ["Isaac", "Ismael", "Zimrán", "Madián"], "respuestaCorrecta": "Ismael" },
+  { "pregunta": "¿Qué significa el nombre Isaac?", "opciones": ["Salvación", "Risa", "Promesa", "Paz"], "respuestaCorrecta": "Risa" },
+  { "pregunta": "¿A qué monte mandó Dios a Abraham para sacrificar a Isaac?", "opciones": ["Sinaí", "Moriah", "Carmelo", "Nebo"], "respuestaCorrecta": "Moriah" },
+  { "pregunta": "¿Cómo se llamaba el padre de Rebeca?", "opciones": ["Betuel", "Labán", "Taré", "Nacor"], "respuestaCorrecta": "Betuel" },
+  { "pregunta": "¿Qué robó Raquel a su padre Labán?", "opciones": ["Sus ovejas", "Su oro", "Sus ídolos", "Su tienda"], "respuestaCorrecta": "Sus ídolos" },
+  { "pregunta": "¿Qué nombre le puso Raquel a Benjamín antes de morir?", "opciones": ["Benoni", "Rubén", "José", "Dan"], "respuestaCorrecta": "Benoni" },
+  { "pregunta": "¿Quién fue el primogénito de Jacob?", "opciones": ["José", "Judá", "Rubén", "Simeón"], "respuestaCorrecta": "Rubén" },
+  { "pregunta": "¿A quiénes masacraron Simeón y Leví?", "opciones": ["A los madianitas", "A los de Siquem", "A los egipcios", "A los filisteos"], "respuestaCorrecta": "A los de Siquem" },
+  { "pregunta": "¿Qué soñó José en su primer sueño?", "opciones": ["Manjos de trigo", "El sol y la luna", "Siete vacas", "Siete espigas"], "respuestaCorrecta": "Manjos de trigo" },
+  { "pregunta": "¿A quién fue vendido José en Egipto?", "opciones": ["Al Faraón", "A Potifar", "A un panadero", "A un copero"], "respuestaCorrecta": "A Potifar" },
+  { "pregunta": "¿De qué acusó la esposa de Potifar a José?", "opciones": ["De robo", "De intento de abuso", "De asesinato", "De traición"], "respuestaCorrecta": "De intento de abuso" },
+  { "pregunta": "¿A quién perdonó la vida el Faraón según el sueño que interpretó José?", "opciones": ["Al panadero", "Al jefe de la guardia", "Al copero", "A su hermano"], "respuestaCorrecta": "Al copero" },
+  { "pregunta": "¿Qué edad tenía José cuando se presentó ante Faraón?", "opciones": ["20 años", "30 años", "40 años", "50 años"], "respuestaCorrecta": "30 años" },
+  { "pregunta": "¿Cómo se llamaron los hijos de José?", "opciones": ["Efraín y Manasés", "Gersón y Eliezer", "Pérez y Zera", "Jacob y Esaú"], "respuestaCorrecta": "Efraín y Manasés" },
+  { "pregunta": "¿En qué tierra de Egipto habitaron los israelitas?", "opciones": ["Tebas", "Menfis", "Gosén", "Alejandría"], "respuestaCorrecta": "Gosén" },
+  { "pregunta": "¿Cuántos años vivió José?", "opciones": ["100", "110", "120", "130"], "respuestaCorrecta": "110" },
+  { "pregunta": "¿A qué tribu pertenecían los padres de Moisés?", "opciones": ["Judá", "Leví", "Benjamín", "Dan"], "respuestaCorrecta": "Leví" },
+  { "pregunta": "¿Cómo se llamaba la hermana de Moisés?", "opciones": ["Jocabed", "Séfora", "María", "Ester"], "respuestaCorrecta": "María" },
+  { "pregunta": "¿Quién encontró al bebé Moisés en el río?", "opciones": ["La hija del Faraón", "Una sierva egipcia", "Jocabed", "Miriam"], "respuestaCorrecta": "La hija del Faraón" },
+  { "pregunta": "¿A qué tierra huyó Moisés?", "opciones": ["Canaán", "Madián", "Moab", "Edom"], "respuestaCorrecta": "Madián" },
+  { "pregunta": "¿Quién fue el suegro de Moisés?", "opciones": ["Jetro", "Balaam", "Balac", "Melquisedec"], "respuestaCorrecta": "Jetro" },
+  { "pregunta": "¿Qué excusa dio Moisés a Dios para no ir a Egipto?", "opciones": ["Soy muy viejo", "Soy tardo de habla", "Tengo miedo", "No conozco el camino"], "respuestaCorrecta": "Soy tardo de habla" },
+  { "pregunta": "¿Qué plaga vino después del agua convertida en sangre?", "opciones": ["Piojos", "Moscas", "Ranas", "Úlceras"], "respuestaCorrecta": "Ranas" },
+  { "pregunta": "¿Qué plaga fue la novena?", "opciones": ["Granizo", "Oscuridad", "Langostas", "Muerte de primogénitos"], "respuestaCorrecta": "Oscuridad" },
+  { "pregunta": "¿De qué debían pintar los dinteles de las puertas en la Pascua?", "opciones": ["Aceite", "Agua", "Sangre de cordero", "Vino"], "respuestaCorrecta": "Sangre de cordero" },
+  { "pregunta": "¿Cuántos años estuvieron los israelitas en Egipto?", "opciones": ["400", "430", "450", "480"], "respuestaCorrecta": "430" },
+  { "pregunta": "¿Qué guiaba a los israelitas de día en el desierto?", "opciones": ["Una columna de fuego", "Una estrella", "Un ángel", "Una columna de nube"], "respuestaCorrecta": "Una columna de nube" },
+  { "pregunta": "¿En qué lugar encontraron 12 fuentes de agua y 70 palmeras?", "opciones": ["Mara", "Elim", "Sinaí", "Refidim"], "respuestaCorrecta": "Elim" },
+  { "pregunta": "¿Qué caía del cielo junto con el rocío de la mañana?", "opciones": ["Maná", "Codornices", "Nieve", "Miel"], "respuestaCorrecta": "Maná" },
+  { "pregunta": "¿Quiénes sostuvieron las manos de Moisés en la batalla contra Amalec?", "opciones": ["Aarón y Hur", "Josué y Caleb", "Eldad y Medad", "Nadab y Abiú"], "respuestaCorrecta": "Aarón y Hur" },
+  { "pregunta": "¿Qué mandamiento es el quinto?", "opciones": ["No matarás", "Honra a tu padre y a tu madre", "No robarás", "No codiciarás"], "respuestaCorrecta": "Honra a tu padre y a tu madre" },
+  { "pregunta": "¿Qué mueble del tabernáculo estaba en el Lugar Santísimo?", "opciones": ["La fuente de bronce", "El altar del incienso", "El Arca del Pacto", "La mesa de los panes"], "respuestaCorrecta": "El Arca del Pacto" },
+  { "pregunta": "¿Quiénes fueron consumidos por fuego por ofrecer fuego extraño?", "opciones": ["Coré y Datán", "Nadab y Abiú", "Ofni y Finees", "Ananías y Safira"], "respuestaCorrecta": "Nadab y Abiú" },
+  { "pregunta": "¿Qué tribu fue censada aparte de las demás?", "opciones": ["Judá", "Simeón", "Leví", "Benjamín"], "respuestaCorrecta": "Leví" },
+  { "pregunta": "¿Por qué castigó Dios a María con lepra?", "opciones": ["Por murmurar contra Moisés", "Por robar oro", "Por adorar ídolos", "Por no guardar el sábado"], "respuestaCorrecta": "Por murmurar contra Moisés" },
+  { "pregunta": "¿Quién lideró la rebelión contra Moisés y fue tragado por la tierra?", "opciones": ["Datán", "Coré", "Abiram", "Balac"], "respuestaCorrecta": "Coré" },
+  { "pregunta": "¿De quién era la vara que reverdeció y dio almendras?", "opciones": ["Moisés", "Aarón", "Josué", "Caleb"], "respuestaCorrecta": "Aarón" },
+  { "pregunta": "¿Qué rey de Moab contrató a Balaam para maldecir a Israel?", "opciones": ["Og", "Sehón", "Balac", "Eglón"], "respuestaCorrecta": "Balac" },
+  { "pregunta": "¿Qué ángel se interpuso en el camino del asna de Balaam?", "opciones": ["El Ángel de Jehová", "Gabriel", "Miguel", "Rafael"], "respuestaCorrecta": "El Ángel de Jehová" },
+  { "pregunta": "¿Dónde hizo Moisés un resumen de la ley antes de morir?", "opciones": ["Éxodo", "Deuteronomio", "Levítico", "Números"], "respuestaCorrecta": "Deuteronomio" },
+  { "pregunta": "¿Cuántos años tenía Moisés cuando murió?", "opciones": ["100", "110", "120", "130"], "respuestaCorrecta": "120" },
+  { "pregunta": "¿Qué ciudad amurallada fue la primera en ser conquistada por Josué?", "opciones": ["Hai", "Hebrón", "Jericó", "Siquem"], "respuestaCorrecta": "Jericó" },
+  { "pregunta": "¿Qué robó Acán de Jericó?", "opciones": ["Plata y oro", "Un manto babilónico, plata y oro", "Armas", "Alimentos"], "respuestaCorrecta": "Un manto babilónico, plata y oro" },
+  { "pregunta": "¿A qué tribu pertenecía Josué?", "opciones": ["Judá", "Efraín", "Manasés", "Benjamín"], "respuestaCorrecta": "Efraín" },
+  { "pregunta": "¿Con qué pueblo hizo Josué un pacto engañado por sus ropas viejas?", "opciones": ["Los gabaonitas", "Los filisteos", "Los madianitas", "Los jebuseos"], "respuestaCorrecta": "Los gabaonitas" },
+  { "pregunta": "¿A quién le dio Josué la ciudad de Hebrón como heredad?", "opciones": ["Caleb", "Otoniel", "Fineés", "Eleazar"], "respuestaCorrecta": "Caleb" },
+  { "pregunta": "¿Qué juez mató al rey Eglón, un hombre muy obeso?", "opciones": ["Aod", "Gedeón", "Otoniel", "Sansón"], "respuestaCorrecta": "Aod" },
+  { "pregunta": "¿Qué usó Samgar para matar al rey Eglón?", "opciones": ["Una lanza", "Un puñal de dos filos", "Una honda", "Una flecha"], "respuestaCorrecta": "Un puñal de dos filos" },
+  { "pregunta": "¿Qué juez mató a 600 filisteos con una aguijada de bueyes?", "opciones": ["Jefté", "Samgar", "Aod", "Gedeón"], "respuestaCorrecta": "Samgar" },
+  { "pregunta": "¿Bajo qué árbol se sentaba Débora a juzgar a Israel?", "opciones": ["Un roble", "Un cedro", "Una palmera", "Un olivo"], "respuestaCorrecta": "Una palmera" },
+  { "pregunta": "¿A qué general llamó Débora para la batalla?", "opciones": ["Gedeón", "Barac", "Jefté", "Abimelec"], "respuestaCorrecta": "Barac" },
+  { "pregunta": "¿Qué señal pidió Gedeón a Dios con un vellón de lana?", "opciones": ["Que el vellón estuviera mojado y la tierra seca", "Que se quemara", "Que volara", "Que cambiara de color"], "respuestaCorrecta": "Que el vellón estuviera mojado y la tierra seca" },
+  { "pregunta": "¿Con cuántos hombres derrotó Gedeón a Madián?", "opciones": ["32000", "10000", "300", "3000"], "respuestaCorrecta": "300" },
+  { "pregunta": "¿Qué usaron los hombres de Gedeón en la batalla?", "opciones": ["Espadas y escudos", "Cántaros, antorchas y trompetas", "Arcos y flechas", "Hondas"], "respuestaCorrecta": "Cántaros, antorchas y trompetas" },
+  { "pregunta": "¿Qué juez hizo un voto insensato que le costó la vida a su hija?", "opciones": ["Sansón", "Gedeón", "Jefté", "Ibzán"], "respuestaCorrecta": "Jefté" },
+  { "pregunta": "¿Qué animal mató Sansón con sus propias manos?", "opciones": ["Un oso", "Un león", "Un lobo", "Una serpiente"], "respuestaCorrecta": "Un león" },
+  { "pregunta": "¿Con qué mató Sansón a mil filisteos?", "opciones": ["Con una quijada de asno", "Con una espada", "Con una honda", "Con un palo"], "respuestaCorrecta": "Con una quijada de asno" },
+  { "pregunta": "¿A qué dios adoraban los filisteos en el templo que destruyó Sansón?", "opciones": ["Baal", "Asera", "Dagón", "Moloc"], "respuestaCorrecta": "Dagón" },
+  { "pregunta": "¿Cómo se llamaba el marido de Noemí?", "opciones": ["Elimelec", "Mahlón", "Quelión", "Booz"], "respuestaCorrecta": "Elimelec" },
+  { "pregunta": "¿En qué ciudad se instalaron Rut y Noemí al volver de Moab?", "opciones": ["Jerusalén", "Jericó", "Belén", "Hebrón"], "respuestaCorrecta": "Belén" },
+  { "pregunta": "¿Quién fue el padre de Booz?", "opciones": ["Salmón", "Elimelec", "Obed", "No se menciona"], "respuestaCorrecta": "Salmón" },
+  { "pregunta": "¿Cómo se llamó el hijo de Rut y Booz?", "opciones": ["David", "Isaí", "Obed", "Salomón"], "respuestaCorrecta": "Obed" },
+  { "pregunta": "¿Cómo se llamaban los hijos malvados del sacerdote Elí?", "opciones": ["Nadab y Abiú", "Ofni y Finees", "Coré y Datán", "Eldad y Medad"], "respuestaCorrecta": "Ofni y Finees" },
+  { "pregunta": "¿Qué objeto sagrado robaron los filisteos en la batalla de Afec?", "opciones": ["La mesa de los panes", "El altar", "El Arca del Pacto", "El efod"], "respuestaCorrecta": "El Arca del Pacto" },
+  { "pregunta": "¿Qué le pasó al ídolo Dagón cuando pusieron el Arca a su lado?", "opciones": ["Se derritió", "Cayó postrado sin cabeza ni manos", "Desapareció", "Habló"], "respuestaCorrecta": "Cayó postrado sin cabeza ni manos" },
+  { "pregunta": "¿A qué tribu pertenecía el rey Saúl?", "opciones": ["Judá", "Benjamín", "Efraín", "Dan"], "respuestaCorrecta": "Benjamín" },
+  { "pregunta": "¿Qué gigante desafió al ejército de Israel durante 40 días?", "opciones": ["Og", "Goliat", "Lahmi", "Sif"], "respuestaCorrecta": "Goliat" },
+  { "pregunta": "¿De qué ciudad era Goliat?", "opciones": ["Asdod", "Gat", "Ascalón", "Ecrón"], "respuestaCorrecta": "Gat" },
+  { "pregunta": "¿Cuántas piedras lisas recogió David del arroyo?", "opciones": ["1", "3", "5", "7"], "respuestaCorrecta": "5" },
+  { "pregunta": "¿Quién era la hija de Saúl que fue esposa de David?", "opciones": ["Mical", "Merab", "Abigail", "Ahinoam"], "respuestaCorrecta": "Mical" },
+  { "pregunta": "¿A qué ciudad huyó David y se hizo el loco para que no lo mataran?", "opciones": ["Ecrón", "Gat", "Jericó", "Siquem"], "respuestaCorrecta": "Gat" },
+  { "pregunta": "¿A quién consultó Saúl la noche antes de su muerte?", "opciones": ["A Samuel", "A la adivina de Endor", "A David", "A Natán"], "respuestaCorrecta": "A la adivina de Endor" },
+  { "pregunta": "¿En qué monte murieron Saúl y Jonatán?", "opciones": ["Carmelo", "Gilboa", "Sinaí", "Tabor"], "respuestaCorrecta": "Gilboa" },
+  { "pregunta": "¿Cómo se llamaba el general del ejército de David?", "opciones": ["Abner", "Amad", "Joab", "Amasa"], "respuestaCorrecta": "Joab" },
+  { "pregunta": "¿Cómo se llamaba la mujer de Urías heteo que David tomó?", "opciones": ["Betsabé", "Abigail", "Mical", "Maaca"], "respuestaCorrecta": "Betsabé" },
+  { "pregunta": "¿Qué profeta confrontó a David por su pecado con Betsabé?", "opciones": ["Samuel", "Elías", "Gad", "Natán"], "respuestaCorrecta": "Natán" },
+  { "pregunta": "¿Qué le pidió Salomón a Dios cuando comenzó a reinar?", "opciones": ["Riquezas", "Vida larga", "Sabiduría", "Muerte de sus enemigos"], "respuestaCorrecta": "Sabiduría" },
+  { "pregunta": "¿Cuántos años tardó Salomón en construir el Templo?", "opciones": ["3", "7", "10", "40"], "respuestaCorrecta": "7" },
+  { "pregunta": "¿Bajo qué rey se dividió el reino de Israel en dos?", "opciones": ["Salomón", "Roboam", "Jeroboam", "Acab"], "respuestaCorrecta": "Roboam" },
+  { "pregunta": "¿Quién fue el peor rey de Israel del norte?", "opciones": ["Omri", "Baasa", "Acab", "Zimri"], "respuestaCorrecta": "Acab" },
+  { "pregunta": "¿Cómo se llamaba la malvada esposa de Acab?", "opciones": ["Atalía", "Jezabel", "Dalila", "Herodías"], "respuestaCorrecta": "Jezabel" },
+  { "pregunta": "¿Qué profeta desafió a los 450 profetas de Baal en el monte Carmelo?", "opciones": ["Eliseo", "Elías", "Isaías", "Jeremías"], "respuestaCorrecta": "Elías" },
+  { "pregunta": "¿Quién era el rey de Siria que asedió Samaria en tiempos de Eliseo?", "opciones": ["Senaquerib", "Ben-adad", "Hazael", "Ciro"], "respuestaCorrecta": "Ben-adad" },
+  { "pregunta": "¿A quién le cayó la lepra de Naamán por codicioso?", "opciones": ["Giezi", "Eliseo", "Acab", "Jeroboam"], "respuestaCorrecta": "Giezi" },
+  { "pregunta": "¿Qué imperio destruyó el reino del norte (Israel)?", "opciones": ["Babilonia", "Egipto", "Asiria", "Roma"], "respuestaCorrecta": "Asiria" },
+  { "pregunta": "¿Qué imperio destruyó el reino del sur (Judá) y el Templo?", "opciones": ["Asiria", "Persia", "Babilonia", "Egipto"], "respuestaCorrecta": "Babilonia" },
+  { "pregunta": "¿Qué rey descubrió el Libro de la Ley perdido en el templo?", "opciones": ["Ezequías", "Josías", "Joás", "Uziías"], "respuestaCorrecta": "Josías" },
+  { "pregunta": "¿Qué rey persa firmó el decreto para reconstruir el Templo?", "opciones": ["Ciro", "Darío", "Artajerjes", "Asuero"], "respuestaCorrecta": "Ciro" },
+  { "pregunta": "¿En cuántos días reconstruyó Nehemías los muros de Jerusalén?", "opciones": ["40", "52", "100", "7"], "respuestaCorrecta": "52" },
+  { "pregunta": "¿Quién era la reina de Persia antes que Ester?", "opciones": ["Jezabel", "Vasti", "Zeres", "Hadasa"], "respuestaCorrecta": "Vasti" },
+  { "pregunta": "¿Cómo se llamaba el primo que crio a Ester?", "opciones": ["Amán", "Mardoqueo", "Esdras", "Nehemías"], "respuestaCorrecta": "Mardoqueo" },
+  { "pregunta": "¿De dónde era Job?", "opciones": ["Babilonia", "Uz", "Canaán", "Egipto"], "respuestaCorrecta": "Uz" },
+  { "pregunta": "¿Cómo se llamaban las hijas de Job al final de su prueba?", "opciones": ["Jemima, Cesia y Keren-hapuc", "Sara, Rebeca y Raquel", "Lea, Zilpa y Bilha", "Rut, Noemí y Orfa"], "respuestaCorrecta": "Jemima, Cesia y Keren-hapuc" },
+  { "pregunta": "¿A quién se le atribuye la autoría del libro de Proverbios?", "opciones": ["David", "Asaf", "Salomón", "Ezequías"], "respuestaCorrecta": "Salomón" },
+  { "pregunta": "Según Proverbios 1:7, ¿cuál es el principio de la sabiduría?", "opciones": ["La obediencia", "El temor de Jehová", "El conocimiento", "El amor"], "respuestaCorrecta": "El temor de Jehová" },
+  { "pregunta": "¿A qué profeta le purificó los labios un serafín con un carbón encendido?", "opciones": ["Jeremías", "Ezequiel", "Daniel", "Isaías"], "respuestaCorrecta": "Isaías" },
+  { "pregunta": "¿Qué profeta vio una visión de Dios con ruedas llenas de ojos?", "opciones": ["Daniel", "Zacarías", "Ezequiel", "Isaías"], "respuestaCorrecta": "Ezequiel" },
+  { "pregunta": "¿Cómo se llamaban los tres amigos de Daniel?", "opciones": ["Misael, Ananías, Azarías", "Josué, Caleb, Otoniel", "Pedro, Jacobo, Juan", "Sadrac, Mesac, Abed-nego"], "respuestaCorrecta": "Sadrac, Mesac, Abed-nego" },
+  { "pregunta": "¿Qué animal representaba a Grecia en la visión de Daniel?", "opciones": ["Un león", "Un oso", "Un leopardo", "Un macho cabrío"], "respuestaCorrecta": "Un macho cabrío" },
+  { "pregunta": "¿A qué profeta se lo conoce como el predicador de la justicia social?", "opciones": ["Amós", "Oseas", "Jonás", "Habacuc"], "respuestaCorrecta": "Amós" },
+  { "pregunta": "¿Qué libro profético es de un solo capítulo?", "opciones": ["Abdías", "Jonás", "Miqueas", "Nahúm"], "respuestaCorrecta": "Abdías" },
+  { "pregunta": "¿En qué ciudad nació Juan el Bautista?", "opciones": ["Jerusalén", "Belén", "Región montañosa de Judea", "Nazaret"], "respuestaCorrecta": "Región montañosa de Judea" },
+  { "pregunta": "¿Cómo se llamaba la madre de Juan el Bautista?", "opciones": ["María", "Ana", "Elisabet", "Marta"], "respuestaCorrecta": "Elisabet" },
+  { "pregunta": "¿Quién era el César en Roma cuando nació Jesús?", "opciones": ["Augusto", "Tiberio", "Nerón", "Calígula"], "respuestaCorrecta": "Augusto" },
+  { "pregunta": "¿A quién le prometió el Espíritu Santo que no moriría sin ver al Cristo?", "opciones": ["Zacarías", "Simeón", "José", "Juan"], "respuestaCorrecta": "Simeón" },
+  { "pregunta": "¿Qué profetisa de 84 años habló del niño Jesús en el templo?", "opciones": ["Débora", "Ana", "Elisabet", "María"], "respuestaCorrecta": "Ana" },
+  { "pregunta": "¿A dónde huyó José con María y Jesús para escapar de Herodes?", "opciones": ["A Siria", "A Babilonia", "A Egipto", "A Moab"], "respuestaCorrecta": "A Egipto" },
+  { "pregunta": "¿En qué fiesta se quedó Jesús en el templo a los 12 años?", "opciones": ["Pentecostés", "La Pascua", "Los Tabernáculos", "Purim"], "respuestaCorrecta": "La Pascua" },
+  { "pregunta": "¿Qué comía Juan el Bautista en el desierto?", "opciones": ["Maná y miel", "Pan y peces", "Langostas y miel silvestre", "Frutas y verduras"], "respuestaCorrecta": "Langostas y miel silvestre" },
+  { "pregunta": "¿Qué forma tomó el Espíritu Santo al bajar sobre Jesús?", "opciones": ["De nube", "De fuego", "De paloma", "De viento"], "respuestaCorrecta": "De paloma" },
+  { "pregunta": "¿A qué apóstol encontró Jesús sentado al banco de los tributos públicos?", "opciones": ["Pedro", "Mateo", "Juan", "Judas"], "respuestaCorrecta": "Mateo" },
+  { "pregunta": "¿Quiénes eran conocidos como 'Hijos del trueno'?", "opciones": ["Pedro y Andrés", "Jacobo y Juan", "Felipe y Bartolomé", "Tomás y Mateo"], "respuestaCorrecta": "Jacobo y Juan" },
+  { "pregunta": "¿Dónde hizo Jesús su primer milagro?", "opciones": ["Jerusalén", "Caná de Galilea", "Capernaúm", "Jericó"], "respuestaCorrecta": "Caná de Galilea" },
+  { "pregunta": "¿A quién le dijo Jesús: 'Te haré pescador de hombres'?", "opciones": ["A Mateo", "A Juan", "A Pedro", "A Felipe"], "respuestaCorrecta": "A Pedro" },
+  { "pregunta": "¿Qué milagro hizo Jesús en el estanque de Betesda?", "opciones": ["Sanó a un ciego", "Sanó a un paralítico que llevaba 38 años enfermo", "Resucitó a un niño", "Caminó sobre el agua"], "respuestaCorrecta": "Sanó a un paralítico que llevaba 38 años enfermo" },
+  { "pregunta": "¿Cuántos cestos sobraron cuando Jesús alimentó a los 5000?", "opciones": ["7", "10", "12", "0"], "respuestaCorrecta": "12" },
+  { "pregunta": "¿En qué monte se transfiguró Jesús?", "opciones": ["Sinaí", "Hermón", "Tabor", "Calvario"], "respuestaCorrecta": "Tabor" },
+  { "pregunta": "¿A qué cobrador de impuestos de baja estatura llamó Jesús desde un árbol?", "opciones": ["Mateo", "Zaqueo", "Nicodemo", "Bartimeo"], "respuestaCorrecta": "Zaqueo" },
+  { "pregunta": "¿Qué ungüento derramó María sobre los pies de Jesús?", "opciones": ["Nardo puro", "Mirra", "Incienso", "Aceite de oliva"], "respuestaCorrecta": "Nardo puro" },
+  { "pregunta": "¿Qué discípulo criticó que se gastara dinero en perfume en lugar de darlo a los pobres?", "opciones": ["Tomás", "Pedro", "Judas Iscariote", "Felipe"], "respuestaCorrecta": "Judas Iscariote" },
+  { "pregunta": "¿A quién prometió Jesús: 'Hoy estarás conmigo en el paraíso'?", "opciones": ["A Juan", "A su madre", "Al ladrón arrepentido", "Al centurión"], "respuestaCorrecta": "Al ladrón arrepentido" },
+  { "pregunta": "¿Qué sucedió en el templo cuando Jesús murió?", "opciones": ["Se derrumbó", "El velo se rasgó en dos", "Se llenó de humo", "El altar se rompió"], "respuestaCorrecta": "El velo se rasgó en dos" },
+  { "pregunta": "¿Quién era el padre de Santiago y Juan?", "opciones": ["Zebedeo", "Alfeo", "Jonás", "Zacarías"], "respuestaCorrecta": "Zebedeo" },
+  { "pregunta": "¿De qué región era la mujer que le pidió a Jesús agua junto al pozo?", "opciones": ["Judea", "Galilea", "Samaria", "Decápolis"], "respuestaCorrecta": "Samaria" },
+  { "pregunta": "¿Qué nombre significa 'Cráneo' o 'Calavera'?", "opciones": ["Gólgota", "Getsemaní", "Sión", "Betania"], "respuestaCorrecta": "Gólgota" },
+  { "pregunta": "¿A quién le dijo Jesús: 'Apacienta mis ovejas' después de resucitar?", "opciones": ["Juan", "Tomás", "Pedro", "Jacobo"], "respuestaCorrecta": "Pedro" },
+  { "pregunta": "¿Cuántos días estuvo Jesús en la tierra entre su resurrección y su ascensión?", "opciones": ["3", "7", "40", "50"], "respuestaCorrecta": "40" },
+  { "pregunta": "¿Dónde debían esperar los discípulos la promesa del Espíritu Santo?", "opciones": ["Nazaret", "Belén", "Galilea", "Jerusalén"], "respuestaCorrecta": "Jerusalén" },
+  { "pregunta": "¿Cuántas personas se convirtieron en Pentecostés tras el sermón de Pedro?", "opciones": ["1000", "3000", "5000", "120"], "respuestaCorrecta": "3000" },
+  { "pregunta": "¿En qué puerta del templo Pedro y Juan sanaron a un cojo?", "opciones": ["La puerta de las ovejas", "La puerta Hermosa", "La puerta Dorada", "La puerta del Rey"], "respuestaCorrecta": "La puerta Hermosa" },
+  { "pregunta": "¿Quién era el rabino que aconsejó al Sanedrín no matar a los apóstoles?", "opciones": ["Caifás", "Gamaliel", "Anás", "Nicodemo"], "respuestaCorrecta": "Gamaliel" },
+  { "pregunta": "¿Cómo se llamaba el mago que quiso comprar el poder del Espíritu Santo?", "opciones": ["Elimas", "Simón", "Apolos", "Balaam"], "respuestaCorrecta": "Simón" },
+  { "pregunta": "¿A quién le predicó Felipe en un carruaje en el desierto?", "opciones": ["A un centurión", "A un etíope eunuco", "A un procónsul", "A un fariseo"], "respuestaCorrecta": "A un etíope eunuco" },
+  { "pregunta": "¿Qué discípulo fue resucitado por Pedro en Jope?", "opciones": ["Eutico", "Lázaro", "Dorcas (Tabita)", "Lidia"], "respuestaCorrecta": "Dorcas (Tabita)" },
+  { "pregunta": "¿Cómo murió el apóstol Jacobo, hermano de Juan?", "opciones": ["Crucificado", "A espada por Herodes", "Apedreado", "En el exilio"], "respuestaCorrecta": "A espada por Herodes" },
+  { "pregunta": "¿Quién liberó a Pedro de la cárcel en el libro de los Hechos?", "opciones": ["Un ángel", "Pablo", "Juan", "Un terremoto"], "respuestaCorrecta": "Un ángel" },
+  { "pregunta": "¿Qué dios pensaban en Listra que era Bernabé?", "opciones": ["Mercurio", "Apolo", "Júpiter", "Zeus"], "respuestaCorrecta": "Júpiter" },
+  { "pregunta": "¿Qué oficio tenían Priscila y Aquila?", "opciones": ["Pescadores", "Hacedores de tiendas", "Alfareros", "Herreros"], "respuestaCorrecta": "Hacedores de tiendas" },
+  { "pregunta": "¿En qué ciudad predicó Pablo sobre 'El Dios no conocido'?", "opciones": ["Roma", "Corinto", "Atenas", "Éfeso"], "respuestaCorrecta": "Atenas" },
+  { "pregunta": "¿Qué platero provocó un alboroto contra Pablo en Éfeso?", "opciones": ["Alejandro", "Demetrio", "Simón", "Diotrefes"], "respuestaCorrecta": "Demetrio" },
+  { "pregunta": "¿Qué gobernador romano le dijo a Pablo: 'Por poco me persuades a ser cristiano'?", "opciones": ["Félix", "Festos", "Agripa", "Pilato"], "respuestaCorrecta": "Agripa" },
+  { "pregunta": "¿A qué emperador apeló Pablo su caso para ser juzgado?", "opciones": ["César", "Herodes", "Tiberio", "Augusto"], "respuestaCorrecta": "César" },
+  { "pregunta": "¿A qué animal sacudió Pablo de su mano en la isla de Malta?", "opciones": ["Un escorpión", "Una víbora", "Una araña", "Un murciélago"], "respuestaCorrecta": "Una víbora" },
+  { "pregunta": "¿En qué epístola se encuentra el 'Salón de la fama de la fe'?", "opciones": ["Romanos", "Efesios", "Hebreos", "Santiago"], "respuestaCorrecta": "Hebreos" },
+  { "pregunta": "¿Qué libro dice que 'Dios es amor'?", "opciones": ["1 Juan", "Apocalipsis", "Romanos", "Salmos"], "respuestaCorrecta": "1 Juan" },
+  { "pregunta": "¿Qué epístola fue escrita a un dueño de esclavos?", "opciones": ["Tito", "Gálatas", "Filemón", "Colosenses"], "respuestaCorrecta": "Filemón" },
+  { "pregunta": "¿En qué libro advierte Pablo sobre el anticristo y el 'hombre de pecado'?", "opciones": ["Romanos", "2 Tesalonicenses", "1 Corintios", "Apocalipsis"], "respuestaCorrecta": "2 Tesalonicenses" },
+  { "pregunta": "¿Qué es 'la certeza de lo que se espera, la convicción de lo que no se ve'?", "opciones": ["La esperanza", "El amor", "La fe", "La paz"], "respuestaCorrecta": "La fe" },
+  { "pregunta": "¿Qué escritor bíblico llama a los cristianos 'real sacerdocio, nación santa'?", "opciones": ["Pablo", "Pedro", "Juan", "Santiago"], "respuestaCorrecta": "Pedro" },
+  { "pregunta": "¿Qué libro del Nuevo Testamento trata exclusivamente de visiones del fin de los tiempos?", "opciones": ["Hechos", "Hebreos", "Judas", "Apocalipsis"], "respuestaCorrecta": "Apocalipsis" },
+  { "pregunta": "¿Cuántos ancianos vio Juan sentados alrededor del trono de Dios?", "opciones": ["12", "144", "24", "7"], "respuestaCorrecta": "24" },
+  { "pregunta": "¿Qué representan los siete candeleros de oro en Apocalipsis?", "opciones": ["Los siete espíritus", "Las siete iglesias", "Los siete ángeles", "Las siete trompetas"], "respuestaCorrecta": "Las siete iglesias" },
+  { "pregunta": "¿Qué ciudad es mencionada primero en las cartas de Apocalipsis?", "opciones": ["Esmirna", "Pérgamo", "Éfeso", "Laodicea"], "respuestaCorrecta": "Éfeso" },
+  { "pregunta": "¿A qué iglesia le dijo el Señor que era 'tibia'?", "opciones": ["Tiatira", "Filadelfia", "Laodicea", "Sardis"], "respuestaCorrecta": "Laodicea" },
+  { "pregunta": "¿Qué número es la marca de la bestia?", "opciones": ["777", "144", "666", "1000"], "respuestaCorrecta": "666" },
+  { "pregunta": "¿Cómo será el cielo y la tierra nueva según Apocalipsis 21?", "opciones": ["Como el Edén", "De oro puro", "No habrá mar", "Volverá el sol"], "respuestaCorrecta": "No habrá mar" },
+  { "pregunta": "¿Quién es el autor del último libro de la Biblia?", "opciones": ["Pablo", "Jesús", "Juan", "Pedro"], "respuestaCorrecta": "Juan" },
+  { "pregunta": "¿Qué forma tiene la Nueva Jerusalén?", "opciones": ["Esférica", "Pirámide", "Cuadrangular", "Cilíndrica"], "respuestaCorrecta": "Cuadrangular" },
+  { "pregunta": "¿Con qué material están hechas las calles de la Nueva Jerusalén?", "opciones": ["Plata", "Mármol", "Diamantes", "Oro puro como cristal transparente"], "respuestaCorrecta": "Oro puro como cristal transparente" },
+  { "pregunta": "¿De quién es la espada que usó David para decapitar a Goliat?", "opciones": ["De Jonatán", "De Saúl", "Del mismo Goliat", "No tenía espada"], "respuestaCorrecta": "Del mismo Goliat" },
+  { "pregunta": "¿Cómo se llamaba el pozo donde Jesús sanó al ciego de nacimiento?", "opciones": ["Betesda", "Siloé", "Jacob", "Jordán"], "respuestaCorrecta": "Siloé" },
+  { "pregunta": "¿Qué ave cantó cuando Pedro negó a Jesús?", "opciones": ["Un cuervo", "Una paloma", "Un gallo", "Un ruiseñor"], "respuestaCorrecta": "Un gallo" },
+  { "pregunta": "¿Qué rey mandó construir la estatua de oro de 60 codos?", "opciones": ["Belsasar", "Darío", "Nabucodonosor", "Ciro"], "respuestaCorrecta": "Nabucodonosor" },
+  { "pregunta": "¿Quién subió al monte Sinaí con Moisés a recibir las tablas?", "opciones": ["Aarón", "Josué", "Hur", "Nadie, subió solo"], "respuestaCorrecta": "Nadie, subió solo" },
+  { "pregunta": "¿Qué animal proveyó una moneda para que Pedro pagara el impuesto?", "opciones": ["Un pez", "Un cordero", "Una paloma", "Un asno"], "respuestaCorrecta": "Un pez" },
+  { "pregunta": "¿Qué libro de la Biblia termina con un signo de interrogación?", "opciones": ["Amós", "Jonás", "Sofonías", "Malaquías"], "respuestaCorrecta": "Jonás" },
+  { "pregunta": "¿Qué reina malvada fue arrojada por una ventana y devorada por perros?", "opciones": ["Atalía", "Jezabel", "Vasti", "Zeres"], "respuestaCorrecta": "Jezabel" },
+  { "pregunta": "¿En qué día de la creación hizo Dios las aves y los peces?", "opciones": ["Tercero", "Cuarto", "Quinto", "Sexto"], "respuestaCorrecta": "Quinto" },
+  { "pregunta": "¿Cómo se llamaba la suegra de Pedro?", "opciones": ["Marta", "No se menciona su nombre", "Ana", "María"], "respuestaCorrecta": "No se menciona su nombre" },
+  { "pregunta": "¿Quién era el recaudador de impuestos que se volvió apóstol?", "opciones": ["Lucas", "Marcos", "Mateo", "Juan"], "respuestaCorrecta": "Mateo" },
+  { "pregunta": "¿Qué rey de Israel tenía 700 esposas y 300 concubinas?", "opciones": ["David", "Roboam", "Salomón", "Acab"], "respuestaCorrecta": "Salomón" },
+  { "pregunta": "¿Qué instrumento musical se menciona con más frecuencia en los Salmos?", "opciones": ["Flauta", "Trompeta", "Arpa", "Pandero"], "respuestaCorrecta": "Arpa" },
+  { "pregunta": "¿Quién interpretó el sueño de la estatua hecha de distintos metales?", "opciones": ["José", "Isaías", "Daniel", "Ezequiel"], "respuestaCorrecta": "Daniel" },
+  { "pregunta": "¿A qué apóstol se le conoce como el 'Dídimo'?", "opciones": ["Felipe", "Tomás", "Bartolomé", "Judas"], "respuestaCorrecta": "Tomás" },
+  { "pregunta": "¿Qué fruta trajeron los espías del valle de Escol?", "opciones": ["Higos", "Granadas", "Un racimo de uvas", "Dátiles"], "respuestaCorrecta": "Un racimo de uvas" },
+  { "pregunta": "¿Qué profeta fue escondido en una cisterna lodosa?", "opciones": ["Jeremías", "Daniel", "Isaías", "Miqueas"], "respuestaCorrecta": "Jeremías" },
+  { "pregunta": "¿A qué ciudad iban los dos discípulos el día que Jesús resucitó?", "opciones": ["Jericó", "Betania", "Emaús", "Nazaret"], "respuestaCorrecta": "Emaús" },
+  { "pregunta": "¿Qué rey mandó arrojar a Daniel al foso de los leones?", "opciones": ["Ciro", "Darío", "Belsasar", "Nabucodonosor"], "respuestaCorrecta": "Darío" },
+  { "pregunta": "¿Quién era el sumo sacerdote en el tiempo de Elí que cayó de su silla y murió?", "opciones": ["Elí", "Aarón", "Zadok", "Finees"], "respuestaCorrecta": "Elí" },
+  { "pregunta": "¿A qué mujer engañó la serpiente en el Edén?", "opciones": ["Sara", "Raquel", "Eva", "Agar"], "respuestaCorrecta": "Eva" },
+  { "pregunta": "¿Cuál era la señal del pacto de Dios con Abraham?", "opciones": ["El arco iris", "La circuncisión", "El sábado", "Los diez mandamientos"], "respuestaCorrecta": "La circuncisión" },
+  { "pregunta": "¿Qué madera usó Noé para hacer el arca?", "opciones": ["Cedro", "Acacia", "Gofer", "Roble"], "respuestaCorrecta": "Gofer" },
+  { "pregunta": "¿A quién le dijo Dios: 'Ciertamente serás bendición'?", "opciones": ["Isaac", "Abraham", "Jacob", "Moisés"], "respuestaCorrecta": "Abraham" },
+  { "pregunta": "¿Qué metal no se encontraba en la estatua que soñó Nabucodonosor?", "opciones": ["Oro", "Plata", "Bronce", "Cobre"], "respuestaCorrecta": "Cobre" },
+  { "pregunta": "¿Qué animal alimentaba a Elías cerca del arroyo Querit?", "opciones": ["Palomas", "Cuervos", "Águilas", "Perros"], "respuestaCorrecta": "Cuervos" },
+  { "pregunta": "¿Cuál fue la primera plaga que afectó a Egipto?", "opciones": ["Las ranas", "El río se convierte en sangre", "Los piojos", "La oscuridad"], "respuestaCorrecta": "El río se convierte en sangre" },
+  { "pregunta": "¿A qué profeta le dijo Dios que se casara con una mujer infiel?", "opciones": ["Oseas", "Amós", "Jonás", "Miqueas"], "respuestaCorrecta": "Oseas" },
+  { "pregunta": "¿Quién fue la madre de Salomón?", "opciones": ["Mical", "Abigail", "Betsabé", "María"], "respuestaCorrecta": "Betsabé" },
+  { "pregunta": "¿A quién se le devolvió el doble de todo lo que había perdido?", "opciones": ["David", "Job", "José", "Abraham"], "respuestaCorrecta": "Job" },
+  { "pregunta": "¿Quién era el general sirio curado de lepra?", "opciones": ["Ben-adad", "Senaquerib", "Naamán", "Hazael"], "respuestaCorrecta": "Naamán" },
+  { "pregunta": "¿Qué apóstol era fabricante de tiendas de campaña?", "opciones": ["Pedro", "Juan", "Pablo", "Santiago"], "respuestaCorrecta": "Pablo" },
+  { "pregunta": "¿Qué mujer fue levantada de entre los muertos por Pedro?", "opciones": ["Lidia", "María", "Dorcas", "Priscila"], "respuestaCorrecta": "Dorcas" },
+  { "pregunta": "¿Cómo se llamaba el siervo del sumo sacerdote al que Pedro le cortó la oreja?", "opciones": ["Caifás", "Malco", "Ananías", "Barrabás"], "respuestaCorrecta": "Malco" },
+  { "pregunta": "¿A quién llamó Jesús 'generación de víboras'?", "opciones": ["A los publicanos", "A los fariseos y saduceos", "A los romanos", "A sus discípulos"], "respuestaCorrecta": "A los fariseos y saduceos" },
+  { "pregunta": "¿Qué profeta hizo flotar un hacha de hierro en el agua?", "opciones": ["Elías", "Eliseo", "Ezequiel", "Jeremías"], "respuestaCorrecta": "Eliseo" },
+  { "pregunta": "¿En qué fiesta se derramó el Espíritu Santo sobre los discípulos?", "opciones": ["La Pascua", "El Día de la Expiación", "Pentecostés", "Los Tabernáculos"], "respuestaCorrecta": "Pentecostés" },
+  { "pregunta": "¿Quién reemplazó a Judas Iscariote como apóstol?", "opciones": ["Pablo", "Silas", "Bernabé", "Matías"], "respuestaCorrecta": "Matías" },
+  { "pregunta": "¿A quién entregó Jesús al cuidado de su madre antes de morir?", "opciones": ["A Pedro", "A Juan", "A Santiago", "A Mateo"], "respuestaCorrecta": "A Juan" },
+  { "pregunta": "¿Qué emperador romano desterró a Juan a la isla de Patmos?", "opciones": ["Domiciano", "Nerón", "Augusto", "Julio César"], "respuestaCorrecta": "Domiciano" },
+  { "pregunta": "¿Qué significa la palabra 'Gólgota'?", "opciones": ["Lugar de la calavera", "Lugar de llanto", "Monte alto", "Ciudad de paz"], "respuestaCorrecta": "Lugar de la calavera" },
+  { "pregunta": "¿A quién reconoció Jesús al decir: 'He aquí un verdadero israelita en quien no hay engaño'?", "opciones": ["A Natanael", "A Pedro", "A Andrés", "A Tomás"], "respuestaCorrecta": "A Natanael" },
+  { "pregunta": "¿Cuántos libros tiene el Nuevo Testamento?", "opciones": ["27", "39", "66", "24"], "respuestaCorrecta": "27" },
+  { "pregunta": "¿En qué ciudad fueron llamados cristianos por primera vez los discípulos?", "opciones": ["Jerusalén", "Roma", "Éfeso", "Antioquía"], "respuestaCorrecta": "Antioquía" },
+  { "pregunta": "¿Qué rey mandó construir el gran templo de Jerusalén?", "opciones": ["David", "Saúl", "Salomón", "Ezequías"], "respuestaCorrecta": "Salomón" },
+  { "pregunta": "¿Quién interpretó los sueños del jefe de los coperos y el panadero?", "opciones": ["Daniel", "José", "Moisés", "Jacob"], "respuestaCorrecta": "José" },
+  { "pregunta": "¿Cuál era la tribu encargada del sacerdocio en Israel?", "opciones": ["Judá", "Leví", "Benjamín", "Efraín"], "respuestaCorrecta": "Leví" },
+  { "pregunta": "¿Qué libro bíblico narra la historia de los inicios de la iglesia primitiva?", "opciones": ["Evangelio de Juan", "Romanos", "Hechos de los Apóstoles", "Gálatas"], "respuestaCorrecta": "Hechos de los Apóstoles" },
+  { "pregunta": "¿Quién tuvo la visión del valle de los huesos secos?", "opciones": ["Ezequiel", "Jeremías", "Daniel", "Oseas"], "respuestaCorrecta": "Ezequiel" },
+  { "pregunta": "¿A qué apóstol reprendió Pablo cara a cara en Antioquía?", "opciones": ["A Juan", "A Santiago", "A Pedro", "A Bernabé"], "respuestaCorrecta": "A Pedro" },
+  { "pregunta": "¿En la armadura de Dios (Efesios 6), ¿qué representa el yelmo (casco)?", "opciones": ["La fe", "La verdad", "La salvación", "El Espíritu"], "respuestaCorrecta": "La salvación" },
+  { "pregunta": "¿Qué fruta comieron Adán y Eva?", "opciones": ["Una manzana", "Un higo", "El fruto del árbol del conocimiento", "Una uva"], "respuestaCorrecta": "El fruto del árbol del conocimiento" },
+  { "pregunta": "¿Cómo se llamaba el suegro de Moisés, sacerdote de Madián?", "opciones": ["Labán", "Jetro", "Balaam", "Mardoqueo"], "respuestaCorrecta": "Jetro" },
+  { "pregunta": "¿Qué río se abrió para que los israelitas entraran a la Tierra Prometida?", "opciones": ["El Nilo", "El Éufrates", "El Tigris", "El Jordán"], "respuestaCorrecta": "El Jordán" },
+  { "pregunta": "¿Qué mujer ayudó a los espías israelitas en Jericó?", "opciones": ["Rut", "Rahab", "Débora", "Ester"], "respuestaCorrecta": "Rahab" },
+  { "pregunta": "¿Quién era el gigante filisteo que David venció?", "opciones": ["Goliat", "Og", "Anac", "Sif"], "respuestaCorrecta": "Goliat" },
+  { "pregunta": "¿Cuál fue el profeta que fue llevado al cielo en un torbellino?", "opciones": ["Eliseo", "Moisés", "Elías", "Enoc"], "respuestaCorrecta": "Elías" },
+  { "pregunta": "¿Cómo se llama el primer mártir de la iglesia cristiana?", "opciones": ["Santiago", "Esteban", "Pedro", "Pablo"], "respuestaCorrecta": "Esteban" },
+  { "pregunta": "¿A quién le dijo Jesús: 'Yo soy la resurrección y la vida'?", "opciones": ["A Marta", "A María", "A Lázaro", "A Pedro"], "respuestaCorrecta": "A Marta" },
+  { "pregunta": "¿Qué hombre vivió más años según el registro bíblico?", "opciones": ["Noé", "Matusalén", "Adán", "Enoc"], "respuestaCorrecta": "Matusalén" },
+  { "pregunta": "¿Quién era el gobernador romano durante el juicio de Jesús?", "opciones": ["Herodes Antipas", "Poncio Pilato", "Félix", "Festo"], "respuestaCorrecta": "Poncio Pilato" },
+  { "pregunta": "¿Qué joven pastor ungido rey tocaba el arpa para Saúl?", "opciones": ["Salomón", "Jonatán", "David", "Absalón"], "respuestaCorrecta": "David" },
+  { "pregunta": "¿Qué ciudad es conocida como la Ciudad de David?", "opciones": ["Hebrón", "Belén", "Jerusalén", "Jericó"], "respuestaCorrecta": "Jerusalén" },
+  { "pregunta": "¿Quién era el sumo sacerdote que crió a Samuel?", "opciones": ["Aarón", "Elí", "Sadoc", "Finees"], "respuestaCorrecta": "Elí" },
+  { "pregunta": "¿A qué rey le prolongó Dios la vida quince años?", "opciones": ["Josías", "Ezequías", "Salomón", "David"], "respuestaCorrecta": "Ezequías" },
+  { "pregunta": "¿Qué profeta huyó en barco hacia Tarsis?", "opciones": ["Nahúm", "Jonás", "Miqueas", "Amós"], "respuestaCorrecta": "Jonás" },
+  { "pregunta": "¿En qué fiesta de los judíos Jesús instituyó la Cena del Señor?", "opciones": ["Pentecostés", "Purim", "La Pascua", "Los Tabernáculos"], "respuestaCorrecta": "La Pascua" },
+  { "pregunta": "¿De dónde eran expulsados los mercaderes por Jesús?", "opciones": ["Del palacio", "De la sinagoga", "Del Templo", "Del mercado"], "respuestaCorrecta": "Del Templo" },
+  { "pregunta": "¿Cuántos hombres conformaban el grupo íntimo de apóstoles de Jesús?", "opciones": ["7", "10", "12", "70"], "respuestaCorrecta": "12" },
+  { "pregunta": "¿Quién escribió el libro de los Romanos?", "opciones": ["Pedro", "Santiago", "Juan", "Pablo"], "respuestaCorrecta": "Pablo" },
+  { "pregunta": "¿Quién fue el compañero de Pablo en su primer viaje misionero?", "opciones": ["Timoteo", "Silas", "Lucas", "Bernabé"], "respuestaCorrecta": "Bernabé" },
+  { "pregunta": "¿Cómo se llamaba la mujer que lavó los pies de Jesús con sus lágrimas?", "opciones": ["María Magdalena", "Una mujer pecadora", "Marta", "María, hermana de Lázaro"], "respuestaCorrecta": "Una mujer pecadora" },
+  { "pregunta": "¿A quién pidió Salomón ayuda material para edificar el Templo?", "opciones": ["A Hiram, rey de Tiro", "A Faraón", "Al rey de Babilonia", "A la reina de Sabá"], "respuestaCorrecta": "A Hiram, rey de Tiro" },
+  { "pregunta": "¿Quién vio una zarza ardiendo que no se consumía?", "opciones": ["Abraham", "Josué", "Moisés", "Gedeón"], "respuestaCorrecta": "Moisés" },
+  { "pregunta": "¿A quién le cambió Dios el nombre por 'Israel'?", "opciones": ["Abraham", "Jacob", "Isaac", "José"], "respuestaCorrecta": "Jacob" },
+  { "pregunta": "¿Cuál de las siguientes mujeres fue juez en Israel?", "opciones": ["Jael", "Débora", "Rut", "Ester"], "respuestaCorrecta": "Débora" },
+  { "pregunta": "¿Quién era el apóstol que inicialmente perseguía a la Iglesia?", "opciones": ["Pedro", "Saulo (Pablo)", "Mateo", "Tomás"], "respuestaCorrecta": "Saulo (Pablo)" },
+  { "pregunta": "¿Qué animal se utilizó para tentar a Jesús en el desierto? (Pregunta trampa)", "opciones": ["Una serpiente", "Un león", "Un escorpión", "Ningún animal"], "respuestaCorrecta": "Ningún animal" },
+  { "pregunta": "¿Qué instrumento tocaron los israelitas cuando cayeron los muros de Jericó?", "opciones": ["Trompetas de cuerno de carnero", "Arpas", "Tambores", "Flautas"], "respuestaCorrecta": "Trompetas de cuerno de carnero" },
+  { "pregunta": "¿Quién vendió su primogenitura por un plato de lentejas?", "opciones": ["Jacob", "Ismael", "Esaú", "Rubén"], "respuestaCorrecta": "Esaú" },
+  { "pregunta": "¿Qué profeta curó las aguas de Jericó con sal?", "opciones": ["Elías", "Eliseo", "Jeremías", "Isaías"], "respuestaCorrecta": "Eliseo" },
+  { "pregunta": "¿Cuántos días de ayuno hizo Jesús en el desierto?", "opciones": ["30", "40", "12", "7"], "respuestaCorrecta": "40" },
+  { "pregunta": "¿Qué oficio tenía David antes de matar a Goliat?", "opciones": ["Soldado", "Carpintero", "Pastor de ovejas", "Armero"], "respuestaCorrecta": "Pastor de ovejas" },
+  { "pregunta": "¿A qué apóstol se le rebeló un gran lienzo que bajaba del cielo con animales impuros?", "opciones": ["A Pablo", "A Juan", "A Pedro", "A Jacobo"], "respuestaCorrecta": "A Pedro" },
+  { "pregunta": "¿Cómo se llamaba la esposa del profeta Oseas?", "opciones": ["Gomer", "Rahab", "María", "Lea"], "respuestaCorrecta": "Gomer" },
+  { "pregunta": "¿Qué enfermedad padeció el rey Uzías hasta el día de su muerte?", "opciones": ["Ceguera", "Parálisis", "Lepra", "Sordera"], "respuestaCorrecta": "Lepra" },
+  { "pregunta": "¿Quién mandó cortar la cabeza a Juan el Bautista?", "opciones": ["Herodes Antipas", "Herodes el Grande", "Pilato", "César"], "respuestaCorrecta": "Herodes Antipas" },
+  { "pregunta": "¿A quién le apareció un ángel mientras desgranaba trigo en el lagar?", "opciones": ["Sansón", "Gedeón", "Otoniel", "Jefté"], "respuestaCorrecta": "Gedeón" },
+  { "pregunta": "¿De qué color era el caballo que representa la Muerte en Apocalipsis?", "opciones": ["Blanco", "Negro", "Amarillo (Pálido)", "Rojo"], "respuestaCorrecta": "Amarillo (Pálido)" },
+  { "pregunta": "¿Cuántos capítulos tiene el libro de Proverbios?", "opciones": ["30", "31", "32", "29"], "respuestaCorrecta": "31" },
+  { "pregunta": "¿En qué río se ordenó bañar a Naamán para curarse de lepra?", "opciones": ["Nilo", "Jordán", "Éufrates", "Tigris"], "respuestaCorrecta": "Jordán" },
+  { "pregunta": "¿Quién es el autor de los libros 1 y 2 de Crónicas, según la tradición?", "opciones": ["Nehemías", "Samuel", "Esdras", "David"], "respuestaCorrecta": "Esdras" },
+  { "pregunta": "¿A qué edad fue circuncidado Abraham?", "opciones": ["A los 99 años", "A los 8 días", "A los 50 años", "A los 100 años"], "respuestaCorrecta": "A los 99 años" },
+  { "pregunta": "¿Qué comida pidieron los israelitas en el desierto cuando se cansaron del maná?", "opciones": ["Carne", "Pescado", "Fruta", "Pan"], "respuestaCorrecta": "Carne" },
+  { "pregunta": "¿Cómo se llamaba el ciego que gritó a Jesús: '¡Hijo de David, ten misericordia de mí!'?", "opciones": ["Bartimeo", "Zaqueo", "Jairo", "Lázaro"], "respuestaCorrecta": "Bartimeo" },
+  { "pregunta": "¿Qué joven cayó del tercer piso por quedarse dormido mientras Pablo predicaba?", "opciones": ["Timoteo", "Tito", "Eutico", "Filemón"], "respuestaCorrecta": "Eutico" },
+  { "pregunta": "¿Cuántas vírgenes prudentes había en la parábola de Jesús?", "opciones": ["3", "5", "7", "10"], "respuestaCorrecta": "5" },
+  { "pregunta": "¿En la parábola del sembrador, ¿qué representaba la semilla?", "opciones": ["La fe", "La Palabra de Dios", "Las buenas obras", "La gracia"], "respuestaCorrecta": "La Palabra de Dios" },
+  { "pregunta": "¿Qué instrumento tocó Miriam después de cruzar el Mar Rojo?", "opciones": ["Un arpa", "Una flauta", "Un pandero", "Una trompeta"], "respuestaCorrecta": "Un pandero" },
+  { "pregunta": "¿En qué región de Israel estaba ubicada Nazaret?", "opciones": ["Judea", "Samaria", "Decápolis", "Galilea"], "respuestaCorrecta": "Galilea" },
+  { "pregunta": "¿Qué reina hizo preguntas difíciles a Salomón para probar su sabiduría?", "opciones": ["Reina de Sabá", "Reina de Persia", "Reina de Egipto", "Reina de Babilonia"], "respuestaCorrecta": "Reina de Sabá" },
+  { "pregunta": "¿Qué libro de la Biblia describe detalladamente el arca del pacto y el tabernáculo?", "opciones": ["Génesis", "Deuteronomio", "Éxodo", "Levítico"], "respuestaCorrecta": "Éxodo" },
+  { "pregunta": "¿A qué animal comparó Jesús a Herodes?", "opciones": ["A un lobo", "A un zorro (zorra)", "A una serpiente", "A un perro"], "respuestaCorrecta": "A un zorro (zorra)" },
+  { "pregunta": "¿Quién era el hijo de Rut que fue abuelo del Rey David?", "opciones": ["Booz", "Obed", "Isaí", "Salomón"], "respuestaCorrecta": "Obed" },
+  { "pregunta": "¿En qué libro leemos la frase: 'El amor es paciente, es bondadoso...'?", "opciones": ["Gálatas", "Romanos", "1 Corintios", "Efesios"], "respuestaCorrecta": "1 Corintios" },
+  { "pregunta": "¿Quién oró pidiendo que Dios le ensanchara su territorio y lo librara del mal?", "opciones": ["Jabes", "Josué", "Caleb", "David"], "respuestaCorrecta": "Jabes" },
+  { "pregunta": "¿Cómo se llamaban las hermanas de Lázaro?", "opciones": ["Rut y Noemí", "María y Marta", "Priscila y Lidia", "Sara y Rebeca"], "respuestaCorrecta": "María y Marta" },
+  { "pregunta": "¿A qué árbol maldijo Jesús por no tener fruto?", "opciones": ["A un olivo", "A un manzano", "A una higuera", "A una vid"], "respuestaCorrecta": "A una higuera" },
+  { "pregunta": "¿Cuál es la última palabra del Antiguo Testamento (en la RVR1960)?", "opciones": ["Maldición", "Bendición", "Amén", "Jehová"], "respuestaCorrecta": "Maldición" },
+  { "pregunta": "¿Qué profeta lloró desconsoladamente por la destrucción de Jerusalén?", "opciones": ["Ezequiel", "Jeremías", "Isaías", "Daniel"], "respuestaCorrecta": "Jeremías" },
+  { "pregunta": "¿Cuántos cuernos tenía la bestia que salía del mar en Apocalipsis 13?", "opciones": ["7", "10", "12", "4"], "respuestaCorrecta": "10" }
 ];
 
 export default function ModuloTrivia({ currentUser, db, onVolver }) {
@@ -202,20 +476,18 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [preguntasMezcladas, setPreguntasMezcladas] = useState([]);
   const [estadoRespuesta, setEstadoRespuesta] = useState(null);
   
-  // Efecto visual de Casino
   const [efectoCasino, setEfectoCasino] = useState(false);
-  
-  // Estados para modo Voz
   const [modoVoz, setModoVoz] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const [textoEscuchado, setTextoEscuchado] = useState("");
+  
   const recognitionRef = useRef(null);
+  const procesarVozRef = useRef(null); // EL PUENTE ANTI-CONGELAMIENTO
   
   const LETRAS = ['A', 'B', 'C', 'D'];
 
   const normalizar = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-  // --- GENERADOR DE SONIDOS NATIVO ---
   const reproducirSonido = (tipo) => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -228,7 +500,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
       gainNode.connect(ctx.destination);
 
       if (tipo === 'correcto') {
-        // Sonido ascendente brillante y ganador
         osc.type = 'sine';
         osc.frequency.setValueAtTime(523.25, ctx.currentTime); 
         osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.1); 
@@ -245,10 +516,45 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.3);
       }
-    } catch (e) {
-      console.log("Audio no soportado.");
+    } catch (e) { }
+  };
+
+  // --- 1. LÓGICA PRINCIPAL (ACTUALIZADA CONSTANTEMENTE) ---
+  const validarRespuestaPorVoz = (textoHablado) => {
+    setTextoEscuchado(textoHablado);
+    
+    const preguntaObj = preguntasMezcladas[preguntaActual];
+    if (!preguntaObj) return; // Evita el crasheo
+
+    const txt = normalizar(textoHablado);
+    let opcionDetectada = null;
+
+    const indice = preguntaObj.opciones.findIndex(opt => {
+      const optNorm = normalizar(opt);
+      return txt === optNorm || txt.includes(optNorm) || optNorm.includes(txt);
+    });
+
+    if (indice !== -1 && txt.length > 1) { 
+       opcionDetectada = preguntaObj.opciones[indice];
+    }
+
+    if (!opcionDetectada) {
+       if (/\b(a|la a|opcion a|uno|primera|primer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[0];
+       else if (/\b(b|la b|opcion b|be|dos|segunda|segundo)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[1];
+       else if (/\b(c|la c|opcion c|ce|tres|tercera|tercer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[2];
+       else if (/\b(d|la d|opcion d|de|cuatro|cuarta|cuarto)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[3];
+    }
+
+    if (opcionDetectada) {
+      setTimeout(() => setTextoEscuchado(""), 2500);
+      manejarRespuesta(opcionDetectada, true);
+    } else {
+      hablarTexto("No te entendí bien. Toca la respuesta en la pantalla, o toca el micrófono rojo para repetir.");
     }
   };
+
+  // --- 2. PUENTE DE MEMORIA (Se actualiza en cada render) ---
+  procesarVozRef.current = validarRespuestaPorVoz;
 
   useEffect(() => {
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
@@ -268,7 +574,8 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
         }
         const respuestaHablada = transcript.trim();
         setEscuchando(false);
-        validarRespuestaPorVoz(respuestaHablada);
+        // Llamamos a la referencia en lugar de a la función vieja
+        if (procesarVozRef.current) procesarVozRef.current(respuestaHablada);
       };
 
       recognition.onerror = () => setEscuchando(false);
@@ -312,37 +619,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     }
   };
 
-  const validarRespuestaPorVoz = (textoHablado) => {
-    setTextoEscuchado(textoHablado);
-    
-    const preguntaObj = preguntasMezcladas[preguntaActual];
-    const txt = normalizar(textoHablado);
-    let opcionDetectada = null;
-
-    const indice = preguntaObj.opciones.findIndex(opt => {
-      const optNorm = normalizar(opt);
-      return txt === optNorm || txt.includes(optNorm) || optNorm.includes(txt);
-    });
-
-    if (indice !== -1 && txt.length > 1) { 
-       opcionDetectada = preguntaObj.opciones[indice];
-    }
-
-    if (!opcionDetectada) {
-       if (/\b(a|la a|opcion a|uno|primera|primer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[0];
-       else if (/\b(b|la b|opcion b|be|dos|segunda|segundo)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[1];
-       else if (/\b(c|la c|opcion c|ce|tres|tercera|tercer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[2];
-       else if (/\b(d|la d|opcion d|de|cuatro|cuarta|cuarto)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[3];
-    }
-
-    if (opcionDetectada) {
-      setTimeout(() => setTextoEscuchado(""), 2500);
-      manejarRespuesta(opcionDetectada, true);
-    } else {
-      hablarTexto("No te entendí bien. Toca la respuesta en la pantalla, o toca el micrófono rojo para repetir.");
-    }
-  };
-
   const manejarRespuesta = (opcionSeleccionada, vieneDeVoz = false) => {
     if (estadoRespuesta) return; 
 
@@ -353,7 +629,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     reproducirSonido(esCorrecta ? 'correcto' : 'incorrecto');
 
     if (esCorrecta) {
-      setEfectoCasino(true); // ¡PRENDEMOS LAS LUCES!
+      setEfectoCasino(true);
       setPuntosSesion(prev => prev + 10);
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
@@ -370,7 +646,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     }
 
     setTimeout(() => {
-      setEfectoCasino(false); // Apagamos las luces
+      setEfectoCasino(false); 
       if (preguntaActual + 1 < preguntasMezcladas.length) {
         setPreguntaActual(preguntaActual + 1);
         setEstadoRespuesta(null);
@@ -425,7 +701,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
 
   return (
     <>
-      {/* --- ESTILOS CSS INYECTADOS DIRECTAMENTE PARA LAS LUCES DEL CASINO --- */}
       <style>{`
         @keyframes lucesCasino {
           0%   { box-shadow: 0 0 20px #FFD700, inset 0 0 20px #FFD700; border-color: #FFD700; }
@@ -449,24 +724,20 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
 
       <div className={`relative min-h-[75vh] flex flex-col items-center justify-start p-4 md:p-8 rounded-[40px] overflow-hidden transition-all duration-300 ${efectoCasino ? 'bg-gradient-to-br from-yellow-900 via-amber-700 to-orange-900 border-4 border-yellow-400 animacion-ganador' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900 border-4 border-purple-500/30 shadow-2xl'}`}>
         
-        {/* DECORACIÓN DE FONDO ESTILO GAME SHOW */}
         <div className="absolute top-[-50px] left-[-50px] w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-[-50px] right-[-50px] w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-        {/* HEADER / MARCADORES */}
         <div className="w-full flex justify-between items-center mb-8 relative z-10">
           <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md shadow-md transition-colors">
             <ChevronLeft size={24} />
           </button>
 
-          {/* ACÁ LOS PUNTOS SALTAN Y BRILLAN SI GANA (EFECTO JACKPOT) */}
           <div className={`bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black px-6 py-2 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.5)] flex items-center gap-2 transition-all ${efectoCasino ? 'animacion-jackpot border-2 border-white' : ''}`}>
             {efectoCasino ? <Sparkles size={18} className="fill-white" /> : <Star size={18} className="fill-black" />} 
             <span className={efectoCasino ? 'text-xl' : ''}>{puntosSesion} Pts</span>
           </div>
         </div>
 
-        {/* BOTÓN MODO VOZ */}
         <div className="relative z-10 mb-8 w-full flex justify-center">
           <button 
             onClick={toggleModoVoz}
@@ -481,14 +752,12 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
           </button>
         </div>
 
-        {/* CARTEL DE LO QUE ESTÁ ESCUCHANDO EL MICRÓFONO */}
         {textoEscuchado && (
           <div className="absolute top-[180px] left-1/2 transform -translate-x-1/2 bg-black/80 text-yellow-400 px-6 py-2 rounded-xl text-sm md:text-base font-black border border-yellow-500/50 z-50 text-center shadow-2xl animate-in fade-in zoom-in duration-300">
             🗣️ Escuché: "{textoEscuchado}"
           </div>
         )}
 
-        {/* MICRÓFONO FLOTANTE RESCATE (CLICKABLE) */}
         {(modoVoz && !estadoRespuesta) && (
           <div 
             onClick={iniciarEscucha}
@@ -503,7 +772,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
           </div>
         )}
 
-        {/* TARJETA DE PREGUNTA ESTILO CRISTAL */}
         <div className="relative z-10 w-full max-w-3xl flex flex-col items-center mt-6">
           <div className={`absolute -top-6 text-white font-black text-xl w-14 h-14 flex items-center justify-center rounded-full border-4 shadow-xl z-20 transition-colors ${efectoCasino ? 'bg-yellow-500 border-yellow-200' : 'bg-purple-600 border-indigo-900'}`}>
             {preguntaActual + 1}
@@ -515,7 +783,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
             </h3>
           </div>
           
-          {/* GRILLA DE OPCIONES (BOTONES PÍLDORA) */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {pregunta.opciones.map((opcion, index) => {
               const esSeleccionada = estadoRespuesta && estadoRespuesta.seleccion === opcion;
@@ -527,7 +794,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
 
               if (estadoRespuesta) {
                 if (esCorrecta) {
-                  // Si gana, el botón correcto brilla fuerte
                   colorBoton = "bg-yellow-400 border-white text-black shadow-[0_0_30px_rgba(250,204,21,1)] scale-[1.05] z-10";
                   colorLetra = "bg-black text-yellow-400";
                   icono = <CheckCircle2 size={24} className="text-black" />;
