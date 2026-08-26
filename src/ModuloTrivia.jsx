@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Mic, MicOff, Volume2, Square, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Volume2, Square, Trophy, Star, ChevronLeft, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
-// ¡IMPORTANTE! PEGÁ TUS 100 PREGUNTAS ADENTRO DE ESTOS CORCHETES [ ]
+// ¡TUS PREGUNTAS INTACTAS!
 const PREGUNTAS_LOCALES = [
     { "pregunta": "¿En cuántos días creó Dios los cielos y la tierra?", "opciones": ["7", "6", "3", "40"], "respuestaCorrecta": "6" },
     { "pregunta": "¿Qué ave envió Noé por primera vez desde el arca?", "opciones": ["Una paloma", "Un cuervo", "Un gorrión", "Un águila"], "respuestaCorrecta": "Un cuervo" },
@@ -106,14 +106,51 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   // Estados para modo Voz
   const [modoVoz, setModoVoz] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
+  const [textoEscuchado, setTextoEscuchado] = useState("");
   const recognitionRef = useRef(null);
+  
+  const LETRAS = ['A', 'B', 'C', 'D'];
+
+  // Normalizador de texto para que las tildes o mayúsculas no rompan la validación
+  const normalizar = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+  // --- GENERADOR DE SONIDOS NATIVO ---
+  const reproducirSonido = (tipo) => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      if (tipo === 'correcto') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); 
+        osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.1); 
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.5);
+      } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, ctx.currentTime); 
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      }
+    } catch (e) {
+      console.log("Audio no soportado.");
+    }
+  };
 
   useEffect(() => {
-    // Mezcla de preguntas
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
     setPreguntasMezcladas(mezcladas);
 
-    // Inicializar Speech Recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -122,74 +159,90 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
       recognition.interimResults = false;
 
       recognition.onresult = (event) => {
-        const respuestaHablada = event.results[0][0].transcript.trim().toLowerCase();
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+        }
+        const respuestaHablada = transcript.trim();
         setEscuchando(false);
         validarRespuestaPorVoz(respuestaHablada);
       };
 
-      recognition.onerror = () => {
-        setEscuchando(false);
-      };
-
-      recognition.onend = () => {
-        setEscuchando(false);
-      };
+      recognition.onerror = () => setEscuchando(false);
+      recognition.onend = () => setEscuchando(false);
 
       recognitionRef.current = recognition;
     }
   }, []);
 
-  // Función para leer el texto en voz alta
   const hablarTexto = (texto, callback = null) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(texto);
     utterance.lang = 'es-ES';
     utterance.rate = 1.0;
-    
-    if (callback) {
-      utterance.onend = callback;
-    }
+    if (callback) utterance.onend = callback;
     window.speechSynthesis.speak(utterance);
   };
 
-  // Efecto que lee la pregunta automáticamente si está en modo voz
   useEffect(() => {
     if (modoVoz && preguntasMezcladas.length > 0 && !juegoTerminado && !estadoRespuesta) {
       const pregunta = preguntasMezcladas[preguntaActual];
-      const textoHablar = `Siguiente pregunta. ${pregunta.pregunta} ... Opciones. ${pregunta.opciones.join(". ... ")}. ¿Cuál es tu respuesta?`;
+      let textoHablar = `Siguiente pregunta. ${pregunta.pregunta} ... Opciones. `;
+      pregunta.opciones.forEach((opt, i) => {
+        textoHablar += `Opción ${LETRAS[i]}: ${opt}. ... `;
+      });
+      textoHablar += "¿Cuál es tu respuesta?";
       
       hablarTexto(textoHablar, () => {
-        // Arranca a escuchar automáticamente cuando termina de leer
         iniciarEscucha();
       });
     }
   }, [preguntaActual, modoVoz, juegoTerminado, preguntasMezcladas]);
 
   const iniciarEscucha = () => {
-    if (recognitionRef.current) {
-      setEscuchando(true);
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        setEscuchando(false);
+    if (recognitionRef.current && !escuchando) {
+      try { 
+        setTextoEscuchado("");
+        recognitionRef.current.start(); 
+        setEscuchando(true);
+      } catch (e) { 
+        console.log("El micrófono ya estaba encendido o fue bloqueado.");
       }
     }
   };
 
+  // --- DETECTOR DE PALABRAS INTELIGENTE ---
   const validarRespuestaPorVoz = (textoHablado) => {
-    const preguntaObj = preguntasMezcladas[preguntaActual];
+    setTextoEscuchado(textoHablado); // Te muestra en pantalla lo que escuchó
     
-    // Buscar si lo que dijo coincide con alguna de las opciones
-    const opcionDetectada = preguntaObj.opciones.find(opt => 
-      textoHablado.includes(opt.toLowerCase()) || opt.toLowerCase().includes(textoHablado)
-    );
+    const preguntaObj = preguntasMezcladas[preguntaActual];
+    const txt = normalizar(textoHablado);
+    let opcionDetectada = null;
+
+    // 1. Validar si lo que dijo contiene el texto exacto de la respuesta
+    const indice = preguntaObj.opciones.findIndex(opt => {
+      const optNorm = normalizar(opt);
+      return txt === optNorm || txt.includes(optNorm) || optNorm.includes(txt);
+    });
+
+    if (indice !== -1 && txt.length > 1) { 
+       opcionDetectada = preguntaObj.opciones[indice];
+    }
+
+    // 2. Validar si el usuario dijo la Letra ("A", "B", "Uno", "Primera", etc.)
+    if (!opcionDetectada) {
+       if (/\b(a|la a|opcion a|uno|primera|primer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[0];
+       else if (/\b(b|la b|opcion b|be|dos|segunda|segundo)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[1];
+       else if (/\b(c|la c|opcion c|ce|tres|tercera|tercer)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[2];
+       else if (/\b(d|la d|opcion d|de|cuatro|cuarta|cuarto)\b/.test(txt)) opcionDetectada = preguntaObj.opciones[3];
+    }
 
     if (opcionDetectada) {
+      setTimeout(() => setTextoEscuchado(""), 2500); // Borra el cartelito después de 2.5s
       manejarRespuesta(opcionDetectada, true);
     } else {
-      hablarTexto("No te entendí bien. Repetí tu respuesta por favor.", () => {
-        iniciarEscucha();
-      });
+      // Si no entendió, avisa y apaga el mic para que el usuario toque la opción o el botón de rescate
+      hablarTexto("No te entendí bien. Toca la respuesta en la pantalla, o toca el micrófono rojo para repetir.");
     }
   };
 
@@ -200,6 +253,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     const esCorrecta = opcionSeleccionada === preguntaObj.respuestaCorrecta;
     
     setEstadoRespuesta({ seleccion: opcionSeleccionada, correcta: preguntaObj.respuestaCorrecta });
+    reproducirSonido(esCorrecta ? 'correcto' : 'incorrecto');
 
     if (modoVoz || vieneDeVoz) {
       const mensajeFinal = esCorrecta ? "¡Correcto! Sumaste diez puntos." : `Incorrecto. La respuesta era ${preguntaObj.respuestaCorrecta}.`;
@@ -208,7 +262,6 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
 
     if (esCorrecta) {
       setPuntosSesion(prev => prev + 10);
-      
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
         currentUser.puntosTrivia = puntosTotales;
@@ -226,7 +279,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
         setJuegoTerminado(true);
         if (modoVoz) hablarTexto("¡Excelente! Has terminado el desafío.");
       }
-    }, modoVoz ? 3500 : 1500); // Dar más tiempo para que termine de hablar en modo voz
+    }, modoVoz ? 3500 : 2000); 
   };
 
   const toggleModoVoz = () => {
@@ -236,10 +289,10 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
       window.speechSynthesis.cancel();
       if (recognitionRef.current) recognitionRef.current.stop();
       setEscuchando(false);
+      setTextoEscuchado("");
     }
   };
 
-  // Limpiar motores al salir del componente
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
@@ -248,15 +301,23 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   }, []);
 
   if (preguntasMezcladas.length === 0) {
-    return <div className="text-center p-10 text-white font-bold">Cargando desafío...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="animate-spin text-purple-500 mb-4" size={48} />
+        <p className="text-purple-300 font-bold tracking-widest uppercase">Cargando Desafío...</p>
+      </div>
+    );
   }
 
   if (juegoTerminado) {
     return (
-      <div className="bg-blue-950/80 border border-blue-500/40 p-8 rounded-3xl text-center shadow-xl">
-        <h2 className="text-4xl font-black text-white mb-4">¡Completaste el Desafío!</h2>
-        <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> hoy.</p>
-        <button onClick={onVolver} className="bg-blue-600 text-white font-black py-4 px-8 rounded-xl w-full uppercase tracking-widest hover:scale-105 transition-transform">Volver al Inicio</button>
+      <div className="bg-gradient-to-b from-indigo-900 to-purple-900 border-4 border-purple-500/50 p-8 rounded-[40px] text-center shadow-[0_0_50px_rgba(168,85,247,0.4)] max-w-2xl mx-auto">
+        <Trophy size={80} className="mx-auto text-yellow-400 mb-6 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
+        <h2 className="text-4xl font-black text-white mb-4 drop-shadow-md">¡Misión Cumplida!</h2>
+        <p className="text-purple-200 text-xl mb-8 font-medium">Lograste sumar <span className="text-yellow-400 font-black text-3xl">{puntosSesion} Puntos</span></p>
+        <button onClick={onVolver} className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-black py-4 px-10 rounded-full w-full uppercase tracking-widest hover:scale-105 transition-transform shadow-xl text-lg">
+          Volver al Menú
+        </button>
       </div>
     );
   }
@@ -264,62 +325,113 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const pregunta = preguntasMezcladas[preguntaActual];
 
   return (
-    <div className="bg-black/80 border border-blue-500/40 p-6 md:p-10 rounded-3xl text-center shadow-2xl relative">
+    <div className="relative min-h-[75vh] flex flex-col items-center justify-start p-4 md:p-8 bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900 rounded-[40px] overflow-hidden shadow-2xl border-4 border-purple-500/30">
       
-      {/* BOTÓN GIGANTE MODO VOZ */}
-      <div className="flex justify-center mb-6">
+      {/* DECORACIÓN DE FONDO ESTILO GAME SHOW */}
+      <div className="absolute top-[-50px] left-[-50px] w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-[-50px] right-[-50px] w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      {/* HEADER / MARCADORES */}
+      <div className="w-full flex justify-between items-center mb-8 relative z-10">
+        <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md shadow-md transition-colors">
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black px-6 py-2 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.5)] flex items-center gap-2">
+          <Star size={18} className="fill-black" /> {puntosSesion} Pts
+        </div>
+      </div>
+
+      {/* BOTÓN MODO VOZ */}
+      <div className="relative z-10 mb-8 w-full flex justify-center">
         <button 
           onClick={toggleModoVoz}
-          className={`flex items-center gap-3 px-6 py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-xl ${
+          className={`flex items-center gap-3 px-8 py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-xl border-2 ${
             modoVoz 
-              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white animate-pulse' 
-              : 'bg-blue-900 border border-blue-400 text-blue-300 hover:bg-blue-800'
+              ? 'bg-red-600 border-red-400 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.6)]' 
+              : 'bg-indigo-900/80 border-indigo-400/50 text-indigo-200 hover:bg-indigo-800'
           }`}
         >
-          {modoVoz ? <Square size={20} fill="currentColor"/> : <Volume2 size={20} />} 
-          {modoVoz ? 'Detener Voz' : 'Jugar con Voz (Manos Libres)'}
+          {modoVoz ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} 
+          {modoVoz ? 'Detener Locutor' : 'Jugar Manos Libres'}
         </button>
       </div>
 
-      <div className="flex justify-between items-center mb-6 border-b border-blue-500/30 pb-4">
-        <span className="text-blue-300 font-bold uppercase tracking-widest text-sm">Pregunta {preguntaActual + 1}</span>
-        <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">Ganado: {puntosSesion} Pts</span>
-      </div>
-      
-      {/* INDICADOR DE MICRÓFONO ESCUCHANDO */}
-      {escuchando && (
-        <div className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.8)]" title="Micrófono activado, te estoy escuchando...">
-          <Mic size={24} />
+      {/* CARTEL DE LO QUE ESTÁ ESCUCHANDO EL MICRÓFONO */}
+      {textoEscuchado && (
+        <div className="absolute top-[180px] left-1/2 transform -translate-x-1/2 bg-black/80 text-yellow-400 px-6 py-2 rounded-xl text-sm md:text-base font-black border border-yellow-500/50 z-50 text-center shadow-2xl animate-in fade-in zoom-in duration-300">
+          🗣️ Escuché: "{textoEscuchado}"
         </div>
       )}
 
-      <h3 className="text-2xl md:text-3xl font-black text-white mb-10 leading-tight">{pregunta.pregunta}</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {pregunta.opciones.map((opcion, index) => {
-          let colorBoton = "bg-[#1a1a1a] border-slate-600 text-white hover:bg-blue-600";
-          if (estadoRespuesta) {
-            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; 
-            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; 
-            else colorBoton = "bg-slate-800 border-slate-700 text-slate-500 opacity-50"; 
-          }
+      {/* MICRÓFONO FLOTANTE RESCATE (CLICKABLE) */}
+      {(modoVoz && !estadoRespuesta) && (
+        <div 
+          onClick={iniciarEscucha}
+          className={`absolute top-24 left-1/2 transform -translate-x-1/2 text-white p-4 rounded-full cursor-pointer z-40 transition-all duration-300 ${
+             escuchando 
+               ? 'bg-red-600 animate-bounce shadow-[0_0_20px_rgba(220,38,38,0.8)]' 
+               : 'bg-slate-700/80 hover:bg-red-500 border-2 border-white/20'
+          }`}
+          title="Toca para encender el micrófono si se apagó"
+        >
+          {escuchando ? <Mic size={28} /> : <MicOff size={28} />}
+        </div>
+      )}
 
-          return (
-            <button 
-              key={index} 
-              onClick={() => manejarRespuesta(opcion)} 
-              disabled={estadoRespuesta !== null || escuchando} 
-              className={`border font-bold py-5 px-4 rounded-xl transition-all shadow-md ${colorBoton}`}
-            >
-              {opcion}
-            </button>
-          );
-        })}
+      {/* TARJETA DE PREGUNTA ESTILO CRISTAL */}
+      <div className="relative z-10 w-full max-w-3xl flex flex-col items-center mt-6">
+        <div className="absolute -top-6 bg-purple-600 text-white font-black text-xl w-14 h-14 flex items-center justify-center rounded-full border-4 border-indigo-900 shadow-xl z-20">
+          {preguntaActual + 1}
+        </div>
+
+        <div className="w-full bg-white/10 backdrop-blur-xl border border-white/20 p-8 pt-12 md:p-12 md:pt-14 rounded-[30px] text-center shadow-2xl mb-8">
+          <h3 className="text-2xl md:text-4xl font-black text-white leading-tight drop-shadow-md">
+            {pregunta.pregunta}
+          </h3>
+        </div>
+        
+        {/* GRILLA DE OPCIONES (BOTONES PÍLDORA) */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {pregunta.opciones.map((opcion, index) => {
+            const esSeleccionada = estadoRespuesta && estadoRespuesta.seleccion === opcion;
+            const esCorrecta = estadoRespuesta && estadoRespuesta.correcta === opcion;
+            
+            let colorBoton = "bg-indigo-900/60 border-indigo-500/50 text-white hover:bg-indigo-700/80";
+            let icono = null;
+
+            if (estadoRespuesta) {
+              if (esCorrecta) {
+                colorBoton = "bg-green-500 border-green-300 text-white shadow-[0_0_25px_rgba(34,197,94,0.6)] scale-105 z-10";
+                icono = <CheckCircle2 size={24} className="text-white" />;
+              } else if (esSeleccionada) {
+                colorBoton = "bg-red-500 border-red-300 text-white shadow-[0_0_25px_rgba(239,68,68,0.6)]";
+                icono = <XCircle size={24} className="text-white" />;
+              } else {
+                colorBoton = "bg-indigo-950/40 border-transparent text-slate-400 opacity-50";
+              }
+            }
+
+            return (
+              <button 
+                key={index} 
+                onClick={() => manejarRespuesta(opcion)} 
+                disabled={estadoRespuesta !== null || escuchando} 
+                className={`relative flex items-center justify-between p-4 pl-5 pr-6 rounded-full border-2 transition-all duration-300 font-bold text-lg md:text-xl shadow-lg ${colorBoton}`}
+              >
+                <div className="flex items-center gap-4 text-left">
+                  <div className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full font-black text-lg ${estadoRespuesta ? 'bg-white/20' : 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black'}`}>
+                    {LETRAS[index]}
+                  </div>
+                  <span>{opcion}</span>
+                </div>
+                {icono && <div>{icono}</div>}
+              </button>
+            );
+          })}
+        </div>
       </div>
-
-      <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">
-        Volver al Inicio
-      </button>
+      
     </div>
   );
 }
