@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, ArrowLeft, 
-  Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown,
-  Loader2, LogOut, Lock, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, Search, UserPlus,
-  GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ExternalLink, ShieldCheck, DollarSign,
+  BookOpen, Settings, Type, Sun, Sparkles, ArrowLeft, 
+  Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
+  Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
+  GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
   Upload, Download, FileWord, Image as ImageIcon
 } from 'lucide-react';
 
@@ -12,11 +12,11 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc } from 'firebase/firestore';
 
-// 1. IMPORTAMOS LOS MÓDULOS DE TRIVIA Y CLUB
+// MÓDULOS EXISTENTES
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
 
-// 2. IMPORTAMOS LAS BASES DE DATOS BÍBLICAS
+// BASES DE DATOS BÍBLICAS
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
@@ -42,12 +42,9 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 const BIBLIA_VERSIONES = { RVR1960: BibliaRVR, NTV: BibliaNTV, DHH: BibliaDHH, LBLA: BibliaLBLA, TLA: BibliaTLA };
 
 const LECTURAS_DIARIAS = [
-  { libro: 'Salmos', capitulo: 1, devocional: { titulo: 'El Camino de la Bendición', reflexion: 'El Salmo 1 nos planta frente a una gran verdad: nuestras decisiones determinan nuestro destino. El hombre bienaventurado no camina bajo el consejo del mundo, sino que echa raíces junto a las corrientes de agua de la Palabra de Dios. En tiempos de sequía espiritual o de presiones cotidianas, meditar en Su verdad nos mantiene verdes, firmes y dando frutos a su tiempo.', oracion: 'Señor Jesús, ayúdame a deleitarme en tu Palabra cada día. Líbrame de los consejos corrientes del mundo y hazme como ese árbol plantado junto a corrientes de agua, firme, fructífero y profundamente arraigado en tu gracia. Amén.' } }, 
-  { libro: 'Proverbios', capitulo: 3, devocional: { titulo: 'Confianza de Todo Corazón', reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control. Proverbios nos desafíos a no depender de nuestra propia prudencia. Cuando reconocemos a Dios en cada uno de nuestros pasos y decisiones, Su promesa es clara: Él enderezará nuestras veredas, quitando los obstáculos del camino.', oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Decido confiar plenamente en ti y poner mis planes en tus manos. Guía mis decisiones y endereza cada paso que dé en esta jornada. Amén.' } }, 
-  { libro: 'Juan', capitulo: 1, devocional: { titulo: 'La Luz que Prevalece', reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad. Juan nos recuerda que Jesús vino a disipar toda tiniebla. No importa cuán oscuro parezca el panorama a nuestro alrededor o en nuestros corazones: la Luz del mundo ya resplandeció, y las tinieblas jamás podrán apagarla.', oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Que tu luz brille hoy a través de mí para iluminar a aquellos que caminan en desánimo y confusión. Amén.' } },
-  { libro: 'Romanos', capitulo: 8, devocional: { titulo: 'Más que Vencedores', reflexion: 'Romanos 8 es el canto de victoria del creyente. Nos asegura que ya no hay condenación para los que están en Cristo y que ninguna circunstancia —ni el dolor, ni la escasez, ni las pruebas— nos podrá separar de Su amor infinito. Si Dios está por nosotros, nuestro triunfo diario está garantizado.', oracion: 'Gracias, Padre Amado, porque en Cristo soy más que vencedor. Ningún temor de este mundo puede apartarme de tu amor seguro y eterno. Camino hoy confiado en tu victoria. Amén.' } }, 
-  { libro: 'Filipenses', capitulo: 4, devocional: { titulo: 'La Paz que lo Guarda Todo', reflexion: 'El apóstol Pablo nos enseña el antídoto contra la preocupación: la oración con acción de gracias. Cuando depositamos nuestras peticiones delante del trono de la gracia con un corazón agradecido, la paz de Dios, que sobrepasa todo entendimiento humano, se activa como un escudo sobre nuestras mentes.', oracion: 'Señor, hoy te entrego cada una de mis preocupaciones. Cambio mis cargas por tu paz perfecta. Guarda mis pensamientos en Cristo Jesús y recuérdame que todo lo puedo en ti que me fortaleces. Amén.' } }, 
-  { libro: 'Salmos', capitulo: 23, devocional: { titulo: 'Nuestro Buen Pastor', reflexion: 'El Salmo 23 nos recuerda la intimidad del cuidado de Dios. Él no es solo un pastor general; es "mi" Pastor. Nada nos faltará bajo Su guía. Él nos pastorea en lugares de delicados pastos y nos conforta el alma cuando cruzamos valles de sombra, recordándonos que Su vara y Su cayado nos infunden aliento continuo.', oracion: 'Jesús, mi buen Pastor, gracias por guiarme, proveerme y cuidarme con tanta ternura. No temeré mal alguno hoy, porque sé que tu bondad y tu misericordia me acompañarán todos los días de mi vida. Amén.' } }
+  { libro: 'Salmos', capitulo: 1, devocional: { titulo: 'El Camino de la Bendición', reflexion: 'El Salmo 1 nos planta frente a una gran verdad: nuestras decisiones determinan nuestro destino. El hombre bienaventurado no camina bajo el consejo del mundo, sino que echa raíces junto a las corrientes de agua de la Palabra de Dios.', oracion: 'Señor Jesús, ayúdame a deleitarme en tu Palabra cada día. Amén.' } }, 
+  { libro: 'Proverbios', capitulo: 3, devocional: { titulo: 'Confianza de Todo Corazón', reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control.', oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Amén.' } }, 
+  { libro: 'Juan', capitulo: 1, devocional: { titulo: 'La Luz que Prevalece', reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad.', oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Amén.' } }
 ];
 
 const devocionalPorDefecto = { titulo: 'Creciendo en la Palabra', reflexion: 'Cada porción de las Escrituras contiene aliento y dirección para nuestra vida diaria.', oracion: 'Señor Jesús, abre mis ojos para ver las maravillas de tu Ley. Amén.' };
@@ -76,12 +73,10 @@ const navStyles = { claro: 'bg-white/90 border-slate-200 text-slate-800', cym: '
 export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   const sub = suscripcion?.toUpperCase() || 'GRATIS';
   if (role === 'OWNER') return { colorAro: 'border-[#00a86b]', colorBadge: 'bg-[#00a86b] text-white', texto: '👑 OWNER / DIAMANTE' };
-  
   if (sub === 'BRONCE') return { colorAro: 'border-[#cd7f32]', colorBadge: 'bg-[#cd7f32] text-white', texto: 'SOCIO BRONCE' };
   if (sub === 'PLATA') return { colorAro: 'border-[#c0c0c0]', colorBadge: 'bg-[#c0c0c0] text-black', texto: 'SOCIO PLATA' };
   if (sub === 'ORO') return { colorAro: 'border-[#ffd700]', colorBadge: 'bg-[#ffd700] text-black', texto: 'SOCIO ORO' };
   if (sub === 'DIAMANTE') return { colorAro: 'border-[#00a86b]', colorBadge: 'bg-[#00a86b] text-white', texto: 'SOCIO DIAMANTE' };
-  
   return { colorAro: 'border-[#3b82f6]', colorBadge: 'bg-[#3b82f6] text-white', texto: 'MEMBRESÍA GRATIS' };
 };
 
@@ -102,7 +97,6 @@ export default function App() {
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
   const [leyendoAudio, setLeyendoAudio] = useState(false);
   const [chatInput, setChatInput] = useState('');
-  const [cargandoIA, setCargandoIA] = useState(false);
   const [chatHistorial, setChatHistorial] = useState([{ rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia.' }]);
 
   const [listaAmigos, setListaAmigos] = useState([]);
@@ -110,7 +104,7 @@ export default function App() {
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
 
-  // --- ESTADOS PARA CAPACITACIONES / ACADEMIA ---
+  // ESTADOS DE CAPACITACIONES
   const [cursos, setCursos] = useState([]);
   const [cargandoCursos, setCargandoCursos] = useState(false);
   const [mostrarFormCapacitacion, setMostrarFormCapacitacion] = useState(false);
@@ -125,7 +119,7 @@ export default function App() {
   const [cursoSeleccionadoPago, setCursoSeleccionadoPago] = useState(null);
   const [telefonoWhatsAppAlumno, setTelefonoWhatsAppAlumno] = useState('');
 
-  // --- ESTADOS PARA BOSQUEJOS / PREDICACIONES ---
+  // ESTADOS DE PREDICACIONES / BOSQUEJOS
   const [listaPredicaciones, setListaPredicaciones] = useState([]);
   const [cargandoPredicas, setCargandoPredicas] = useState(false);
   const [tituloPredicaInput, setTituloPredicaInput] = useState('');
@@ -227,7 +221,6 @@ export default function App() {
   const handleLogin = async () => { try { setIsLoadingAuth(true); const result = await signInWithPopup(auth, googleProvider); if (result.user) setCurrentUser(await cargarOcrearUsuario(result.user)); } catch (error) { setIsLoadingAuth(false); } };
   const handleLogout = async () => { await signOut(auth); setCurrentUser(null); setVistaActual('home'); };
 
-  // --- MÉTODOS DE CAPACITACIONES (ACADEMIA) ---
   const handleCrearCapacitacion = async (e) => {
     e.preventDefault();
     if (!nombreClaseInput || !valorCuotaInput || !linkMercadoPagoInput || !linkGrupoWhatsAppInput) {
@@ -262,7 +255,6 @@ export default function App() {
     } catch (e) { alert("Error al registrar: " + e.message); }
   };
 
-  // --- MÉTODOS DE BOSQUEJOS / PREDICACIONES ---
   const handleSelectWord = (e) => { const file = e.target.files[0]; if (file) setArchivoWordTemp(file); };
   const handleSelectPortada = (e) => {
     const file = e.target.files[0];
@@ -400,7 +392,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    const manejarBotonAtras = (event) => {
+    const manejarBotonAtras = () => {
       if (mostrarModalDevocional) setMostrarModalDevocional(false);
       else if (mostrarAsistente) setMostrarAsistente(false);
       else if (vistaActual !== 'home') { setVistaActual('home'); setVersiculoActual(''); }
@@ -453,7 +445,7 @@ export default function App() {
     if (!isOwner && currentUser.creditosIA <= 0) { setChatHistorial([...chatHistorial, { rol: 'asistente', texto: '⚠️ Has agotado tus consultas. Adquiere tu Pase Premium en el Club CyM.' }]); setChatInput(''); return; }
     const nuevoMensajeUsuario = { rol: 'usuario', texto: chatInput };
     const nuevoHistorial = [...chatHistorial, nuevoMensajeUsuario];
-    setChatHistorial(nuevoHistorial); setChatInput(''); setCargandoIA(true);
+    setChatHistorial(nuevoHistorial); setChatInput('');
 
     try {
       const apiKey = process.env.REACT_APP_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
@@ -461,7 +453,7 @@ export default function App() {
       const data = await response.json();
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices?.[0]?.message?.content || "Error en la respuesta." }]);
       if (!isOwner) { const nuevoLimite = currentUser.creditosIA - 1; setCurrentUser({...currentUser, creditosIA: nuevoLimite}); await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite }); }
-    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error: ${error.message}` }]); } finally { setCargandoIA(false); }
+    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error: ${error.message}` }]); }
   };
 
   const abrirLibro = (nombreLibro, capitulo = 1) => { setLibroActual(nombreLibro); setCapituloActual(capitulo); setVersiculoActual(''); setVistaActual('lector'); window.scrollTo(0, 0); };
@@ -514,7 +506,6 @@ export default function App() {
         </div>
       )}
 
-      {/* DEVOCIONAL DIARIO EMERGENTE */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -560,7 +551,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* CAJA VIP DE ORACIÓN */}
             {(currentUser?.role === 'OWNER' || currentUser?.suscripcion === 'ORO' || currentUser?.suscripcion === 'DIAMANTE') && (
               <div className="bg-gradient-to-r from-emerald-900/60 to-black border border-emerald-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between shadow-xl">
                 <div className="mb-4 md:mb-0 text-center md:text-left">
@@ -825,22 +815,26 @@ export default function App() {
             <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
             <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
             <div className="space-y-3">
-              {listaAmigos.map((amigo, index) => {
-                const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
-                return (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
-                      <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
-                      <div>
-                        <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
-                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
+              {listaAmigos.length === 0 ? (
+                <p className="text-slate-400 text-center py-6">Todavía no tenés amigos. ¡Mandales un WhatsApp con el botón verde de arriba!</p>
+              ) : (
+                listaAmigos.map((amigo, index) => {
+                  const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
+                  return (
+                    <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
+                        <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
+                        <div>
+                          <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
+                        </div>
                       </div>
+                      <div className="text-right"><p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p><p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p></div>
                     </div>
-                    <div className="text-right"><p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p><p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p></div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         )}
