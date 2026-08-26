@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BookOpen, Settings, Type, Sun, Sparkles, ArrowLeft, 
+  BookOpen, Settings, Type, Sun, Sparkles, ArrowLeft, ChevronRight,
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
@@ -45,7 +45,7 @@ const LECTURAS_DIARIAS = [
 
 const devocionalPorDefecto = { titulo: 'Creciendo en la Palabra', reflexion: 'Cada porción de las Escrituras contiene aliento y dirección para nuestra vida diaria.', oracion: 'Señor Jesús, abre mis ojos para ver las maravillas de tu Ley. Amén.' };
 
-const LIBROS_MENU = [ { nombre: 'Génesis' }, { nombre: 'Éxodo' }, { nombre: 'Levítico' }, { nombre: 'Números' }, { nombre: 'Deuteronomio' }, { nombre: 'Josué' }, { nombre: 'Jueces' }, { nombre: 'Rut' }, { nombre: '1 Samuel' }, { nombre: '2 Samuel' }, { nombre: '1 Reyes' }, { nombre: '2 Reyes' }, { nombre: '1 Crónicas' }, { nombre: '2 Crónicas' }, { nombre: 'Esdras' }, { nombre: 'Nehemías' }, { nombre: 'Ester' }, { nombre: 'Job' }, { nombre: 'Salmos' }, { nombre: 'Proverbios' }, { nombre: 'Eclesiastés' }, { nombre: 'Cantares' }, { nombre: 'Isaías' }, { nombre: 'Jeremías' }, { nombre: 'Lamentaciones' }, { nombre: 'Ezequiel' }, { nombre: 'Daniel' }, { nombre: 'Oseas' }, { nombre: 'Joel' }, { nombre: 'Amós' }, { nombre: 'Abdías' }, { nombre: 'Jonás' }, { nombre: 'Miqueas' }, { nombre: 'Nahúm' }, { nombre: 'Habacuc' }, { nombre: 'Sofonías' }, { nombre: 'Hageo' }, { nombre: 'Zacarías' }, { nombre: 'Malaquías' }, { nombre: 'Mateo' }, { nombre: 'Marcos' }, { nombre: 'Lucas' }, { nombre: 'Juan' }, { nombre: 'Hechos' }, { nombre: 'Romanos' }, { nombre: '1 Corintios' }, { nombre: '2 Corintios' }, { nombre: 'Gálatas' }, { nombre: 'Efesios' }, { nombre: 'Filipenses' }, { nombre: 'Colosenses' }, { nombre: '1 Tesalonicenses' }, { nombre: '2 Tesalonicenses' }, { nombre: '1 Timoteo' }, { nombre: '2 Timoteo' }, { nombre: 'Tito' }, { nombre: 'Filemón' }, { nombre: 'Hebreos' }, { nombre: 'Santiago' }, { nombre: '1 Pedro' }, { nombre: '2 Pedro' }, { nombre: '1 Juan' }, { nombre: '2 Juan' }, { nombre: '3 Juan' }, { nombre: 'Judas' }, { nombre: 'Apocalipsis' } ];
+const LIBROS_MENU = [ { nombre: 'Génesis' }, { nombre: 'Éxodo' }, { nombre: 'Levítico' }, { nombre: 'Números' }, { nombre: 'Deuteronomio' }, { nombre: 'Josué' }, { nombre: 'Jueces' }, { nombre: 'Rut' }, { nombre: '1 Samuel' }, { nombre: '2 Samuel' }, { nombre: '1 Reyes' }, { nombre: '2 Reyes' }, { nombre: '1 Crónicas' }, { nombre: '2 Crónicas' }, { nombre: 'Esdras' }, { nombre: 'Nehemías' }, { nombre: 'Ester' }, { nombre: 'Job' }, { nombre: 'Salmos' }, { nombre: 'Proverbios' }, { nombre: 'Eclesiastés' }, { nombre: 'Cantares' }, { nombre: 'Isaías' }, { nombre: 'Jeremías' }, { nombre: 'Lamentaciones' }, { nombre: 'Ezequiel' }, { nombre: 'Daniel' }, { nombre: 'Oseas' }, { nombre: 'Joel' }, { nombre: 'Amós' }, { nombre: 'Abdías' }, { nombre: 'Jonás' }, { nombre: 'Miqueas' }, { nombre: 'Nahúm' }, { nombre: 'Habacuc' }, { nombre: 'Sofonías' }, { nombre: 'Hageo' }, { nombre: 'Zacarías' }, { nombre: 'Malaquías' }, { nombre: 'Mateo' }, { nombre: 'Marcos' }, { nombre: 'Lucas' }, { nombre: 'Juan' }, { nombre: 'Hechos' }, { nombre: 'Romanos' }, { nombre: '1 Corintios' }, { nombre: '2 Corintios' }, { nombre: 'Gálatas' }, { nombre: 'Efesios' }, { nombre: 'Filipenses' }, { Colosenses: 'Colosenses' }, { nombre: '1 Tesalonicenses' }, { nombre: '2 Tesalonicenses' }, { nombre: '1 Timoteo' }, { nombre: '2 Timoteo' }, { nombre: 'Tito' }, { nombre: 'Filemón' }, { nombre: 'Hebreos' }, { nombre: 'Santiago' }, { nombre: '1 Pedro' }, { nombre: '2 Pedro' }, { nombre: '1 Juan' }, { nombre: '2 Juan' }, { nombre: '3 Juan' }, { nombre: 'Judas' }, { nombre: 'Apocalipsis' } ];
 
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
@@ -455,7 +455,7 @@ function AppMain() {
       const data = await response.json();
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices?.[0]?.message?.content || "Respuesta no generada." }]);
       if (!isOwner) { const nuevoLimite = (currentUser?.creditosIA || 1) - 1; setCurrentUser({...currentUser, creditosIA: nuevoLimite}); await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite }); }
-    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: 'Error de conexión.' }]); }
+    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: 'Error en la conexión.' }]); }
   };
 
   const abrirLibro = (nombreLibro, capitulo = 1) => { setLibroActual(nombreLibro); setCapituloActual(capitulo); setVersiculoActual(''); setVistaActual('lector'); window.scrollTo(0, 0); };
@@ -517,6 +517,7 @@ function AppMain() {
         </div>
       )}
 
+      {/* DEVOCIONAL DIARIO EMERGENTE (CON BOTÓN DE COMPARTIR) */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -545,6 +546,8 @@ function AppMain() {
         
         {vistaActual === 'home' && (
           <div className="space-y-8">
+            
+            {/* 1. PERFIL COMPLETO CON COLORES DE MEMBRESÍA */}
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current?.click()}>
@@ -562,6 +565,7 @@ function AppMain() {
               </div>
             </div>
 
+            {/* CAJA VIP DE ORACIÓN (Solo Oro, Diamante u Owner) */}
             {(currentUser?.role === 'OWNER' || currentUser?.suscripcion === 'ORO' || currentUser?.suscripcion === 'DIAMANTE') && (
               <div className="bg-gradient-to-r from-emerald-900/60 to-black border border-emerald-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between shadow-xl">
                 <div className="mb-4 md:mb-0 text-center md:text-left">
