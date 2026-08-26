@@ -45,7 +45,7 @@ const LECTURAS_DIARIAS = [
 
 const devocionalPorDefecto = { titulo: 'Creciendo en la Palabra', reflexion: 'Cada porción de las Escrituras contiene aliento y dirección para nuestra vida diaria.', oracion: 'Señor Jesús, abre mis ojos para ver las maravillas de tu Ley. Amén.' };
 
-const LIBROS_MENU = [ { nombre: 'Génesis' }, { nombre: 'Éxodo' }, { nombre: 'Levítico' }, { nombre: 'Números' }, { nombre: 'Deuteronomio' }, { nombre: 'Josué' }, { nombre: 'Jueces' }, { nombre: 'Rut' }, { nombre: '1 Samuel' }, { nombre: '2 Samuel' }, { nombre: '1 Reyes' }, { nombre: '2 Reyes' }, { nombre: '1 Crónicas' }, { nombre: '2 Crónicas' }, { nombre: 'Esdras' }, { nombre: 'Nehemías' }, { nombre: 'Ester' }, { nombre: 'Job' }, { nombre: 'Salmos' }, { nombre: 'Proverbios' }, { nombre: 'Eclesiastés' }, { nombre: 'Cantares' }, { nombre: 'Isaías' }, { nombre: 'Jeremías' }, { nombre: 'Lamentaciones' }, { nombre: 'Ezequiel' }, { nombre: 'Daniel' }, { nombre: 'Oseas' }, { nombre: 'Joel' }, { nombre: 'Amós' }, { nombre: 'Abdías' }, { nombre: 'Jonás' }, { nombre: 'Miqueas' }, { nombre: 'Nahúm' }, { nombre: 'Habacuc' }, { nombre: 'Sofonías' }, { nombre: 'Hageo' }, { nombre: 'Zacarías' }, { nombre: 'Malaquías' }, { nombre: 'Mateo' }, { nombre: 'Marcos' }, { nombre: 'Lucas' }, { nombre: 'Juan' }, { nombre: 'Hechos' }, { nombre: 'Romanos' }, { nombre: '1 Corintios' }, { nombre: '2 Corintios' }, { nombre: 'Gálatas' }, { nombre: 'Efesios' }, { nombre: 'Filipenses' }, { Colosenses: 'Colosenses' }, { nombre: '1 Tesalonicenses' }, { nombre: '2 Tesalonicenses' }, { nombre: '1 Timoteo' }, { nombre: '2 Timoteo' }, { nombre: 'Tito' }, { nombre: 'Filemón' }, { nombre: 'Hebreos' }, { nombre: 'Santiago' }, { nombre: '1 Pedro' }, { nombre: '2 Pedro' }, { nombre: '1 Juan' }, { nombre: '2 Juan' }, { nombre: '3 Juan' }, { nombre: 'Judas' }, { nombre: 'Apocalipsis' } ];
+const LIBROS_MENU = [ { nombre: 'Génesis' }, { nombre: 'Éxodo' }, { nombre: 'Levítico' }, { nombre: 'Números' }, { nombre: 'Deuteronomio' }, { nombre: 'Josué' }, { nombre: 'Jueces' }, { nombre: 'Rut' }, { nombre: '1 Samuel' }, { nombre: '2 Samuel' }, { nombre: '1 Reyes' }, { nombre: '2 Reyes' }, { nombre: '1 Crónicas' }, { nombre: '2 Crónicas' }, { nombre: 'Esdras' }, { nombre: 'Nehemías' }, { nombre: 'Ester' }, { nombre: 'Job' }, { nombre: 'Salmos' }, { nombre: 'Proverbios' }, { nombre: 'Eclesiastés' }, { nombre: 'Cantares' }, { nombre: 'Isaías' }, { nombre: 'Jeremías' }, { nombre: 'Lamentaciones' }, { nombre: 'Ezequiel' }, { nombre: 'Daniel' }, { nombre: 'Oseas' }, { nombre: 'Joel' }, { nombre: 'Amós' }, { nombre: 'Abdías' }, { nombre: 'Jonás' }, { nombre: 'Miqueas' }, { nombre: 'Nahúm' }, { nombre: 'Habacuc' }, { nombre: 'Sofonías' }, { nombre: 'Hageo' }, { nombre: 'Zacarías' }, { nombre: 'Malaquías' }, { nombre: 'Mateo' }, { nombre: 'Marcos' }, { nombre: 'Lucas' }, { nombre: 'Juan' }, { nombre: 'Hechos' }, { nombre: 'Romanos' }, { nombre: '1 Corintios' }, { nombre: '2 Corintios' }, { nombre: 'Gálatas' }, { nombre: 'Efesios' }, { nombre: 'Filipenses' }, { nombre: 'Colosenses' }, { nombre: '1 Tesalonicenses' }, { nombre: '2 Tesalonicenses' }, { nombre: '1 Timoteo' }, { nombre: '2 Timoteo' }, { nombre: 'Tito' }, { nombre: 'Filemón' }, { nombre: 'Hebreos' }, { nombre: 'Santiago' }, { nombre: '1 Pedro' }, { nombre: '2 Pedro' }, { nombre: '1 Juan' }, { nombre: '2 Juan' }, { nombre: '3 Juan' }, { nombre: 'Judas' }, { nombre: 'Apocalipsis' } ];
 
 const encontrarLibro = (biblia, nombreBuscado) => {
   if (!biblia || !biblia.books) return null;
@@ -127,8 +127,46 @@ function AppMain() {
 
   const inputRefWord = useRef(null);
   const inputRefPortada = useRef(null);
-
   const mesActualClave = `${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
+
+  // ==================================================
+  // ARREGLO DE BOTÓN ATRÁS (HARDWARE BACK BUTTON NATIVO)
+  // ==================================================
+  const estadosNavegacion = useRef({ vistaActual, mostrarModalDevocional, mostrarAsistente });
+  
+  useEffect(() => {
+    estadosNavegacion.current = { vistaActual, mostrarModalDevocional, mostrarAsistente };
+  }, [vistaActual, mostrarModalDevocional, mostrarAsistente]);
+
+  useEffect(() => {
+    // Empujamos un historial ficticio al montar la app para crear un "colchón"
+    window.history.pushState({ atrapado: true }, '');
+
+    const manejarBotonAtras = () => {
+      const { vistaActual, mostrarModalDevocional, mostrarAsistente } = estadosNavegacion.current;
+      
+      // Si estamos en la pantalla inicial y sin modales, dejamos que salga de la app
+      if (vistaActual === 'home' && !mostrarModalDevocional && !mostrarAsistente) {
+        return; 
+      }
+      
+      // Si estaba en otra pantalla, lo "atrapamos" empujando otro estado y cerramos/volvemos
+      window.history.pushState({ atrapado: true }, '');
+      
+      if (mostrarAsistente) {
+        setMostrarAsistente(false);
+      } else if (mostrarModalDevocional) {
+        setMostrarModalDevocional(false);
+      } else {
+        setVistaActual('home');
+        setVersiculoActual('');
+      }
+    };
+
+    window.addEventListener('popstate', manejarBotonAtras);
+    return () => window.removeEventListener('popstate', manejarBotonAtras);
+  }, []);
+  // ==================================================
 
   // DESCONGELADOR DE SEGURIDAD
   useEffect(() => {
@@ -204,8 +242,17 @@ function AppMain() {
         await updateDoc(userRef, { descargasMesActual: 0, ultimoMesDescarga: mesActualClave });
       }
 
+      const params = new URLSearchParams(window.location.search);
+      const amigoRefId = params.get('ref');
+      if (amigoRefId && amigoRefId !== user.uid) {
+        await updateDoc(userRef, { amigos: arrayUnion(amigoRefId) });
+        await updateDoc(doc(db, 'cym_usuarios', amigoRefId), { amigos: arrayUnion(user.uid) });
+        userData.amigos.push(amigoRefId);
+        window.history.replaceState(null, '', window.location.pathname); 
+      }
+
       cargarAmigos(userData.amigos);
-      const fotoFinal = userData.photoURL || user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png";
+      const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
       return { uid: user.uid, ...userData, photoURL: fotoFinal };
     } catch (error) { 
       return { 
@@ -455,7 +502,7 @@ function AppMain() {
       const data = await response.json();
       setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices?.[0]?.message?.content || "Respuesta no generada." }]);
       if (!isOwner) { const nuevoLimite = (currentUser?.creditosIA || 1) - 1; setCurrentUser({...currentUser, creditosIA: nuevoLimite}); await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite }); }
-    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: 'Error en la conexión.' }]); }
+    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: 'Error de conexión.' }]); }
   };
 
   const abrirLibro = (nombreLibro, capitulo = 1) => { setLibroActual(nombreLibro); setCapituloActual(capitulo); setVersiculoActual(''); setVistaActual('lector'); window.scrollTo(0, 0); };
