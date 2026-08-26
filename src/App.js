@@ -2,19 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   BookOpen, Settings, ChevronLeft, ChevronRight, Type, Sun, Sparkles, ArrowLeft, 
   Heart, MessageCircle, X, Send, FileText, PlayCircle, Volume2, Square, Trophy, Crown,
-  Loader2, LogOut, Lock, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, Search, UserPlus
+  Loader2, LogOut, Lock, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, Search, UserPlus,
+  GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ExternalLink, ShieldCheck, DollarSign,
+  Upload, Download, FileWord, Image as ImageIcon
 } from 'lucide-react';
 
 // --- FIREBASE IMPORTS ---
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc } from 'firebase/firestore';
 
-// 1. IMPORTAMOS LOS MÓDULOS NUEVOS
+// 1. IMPORTAMOS LOS MÓDULOS DE TRIVIA Y CLUB
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
 
-// 2. IMPORTAMOS LAS BASES DE DATOS
+// 2. IMPORTAMOS LAS BASES DE DATOS BÍBLICAS
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
@@ -31,7 +33,6 @@ const firebaseConfig = {
   appId: "1:31778840496:web:a0dda4c372b560298e0075"
 };
 
-// PARCHE: Evita que Firebase crashee al recargar
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -72,7 +73,6 @@ const EstrellasFondo = () => (<div className="fixed inset-0 z-0 pointer-events-n
 const themeStyles = { claro: 'bg-slate-50 text-slate-900 border-slate-200', cym: 'bg-[#000000] text-slate-200 border-[#cca300]', sepia: 'bg-[#fbf0d9] text-[#5f4b32] border-[#d4b886]' };
 const navStyles = { claro: 'bg-white/90 border-slate-200 text-slate-800', cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]', sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]' };
 
-// --- FUNCIÓN DE COLORES DE MEMBRESÍA ---
 export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   const sub = suscripcion?.toUpperCase() || 'GRATIS';
   if (role === 'OWNER') return { colorAro: 'border-[#00a86b]', colorBadge: 'bg-[#00a86b] text-white', texto: '👑 OWNER / DIAMANTE' };
@@ -110,6 +110,57 @@ export default function App() {
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
 
+  // --- ESTADOS PARA CAPACITACIONES / ACADEMIA ---
+  const [cursos, setCursos] = useState([]);
+  const [cargandoCursos, setCargandoCursos] = useState(false);
+  const [mostrarFormCapacitacion, setMostrarFormCapacitacion] = useState(false);
+  const [nombreClaseInput, setNombreClaseInput] = useState('');
+  const [descripcionCursoInput, setDescripcionCursoInput] = useState('');
+  const [diasCursoInput, setDiasCursoInput] = useState('');
+  const [horarioCursoInput, setHorarioCursoInput] = useState('');
+  const [valorCuotaInput, setValorCuotaInput] = useState('');
+  const [linkMercadoPagoInput, setLinkMercadoPagoInput] = useState('');
+  const [linkGrupoWhatsAppInput, setLinkGrupoWhatsAppInput] = useState('');
+  const [guardandoCurso, setGuardandoCurso] = useState(false);
+  const [cursoSeleccionadoPago, setCursoSeleccionadoPago] = useState(null);
+  const [telefonoWhatsAppAlumno, setTelefonoWhatsAppAlumno] = useState('');
+
+  // --- ESTADOS PARA BOSQUEJOS / PREDICACIONES ---
+  const [listaPredicaciones, setListaPredicaciones] = useState([]);
+  const [cargandoPredicas, setCargandoPredicas] = useState(false);
+  const [tituloPredicaInput, setTituloPredicaInput] = useState('');
+  const [pasajePredicaInput, setPasajePredicaInput] = useState('');
+  const [archivoWordTemp, setArchivoWordTemp] = useState(null);
+  const [portadaImageTemp, setPortadaImageTemp] = useState(null);
+  const [subiendoPredica, setSubiendoPredica] = useState(false);
+
+  const inputRefWord = useRef(null);
+  const inputRefPortada = useRef(null);
+
+  const mesActualClave = `${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
+
+  const cargarCursosFirebase = async () => {
+    setCargandoCursos(true);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'cym_capacitaciones'));
+      const docs = [];
+      querySnapshot.forEach(d => docs.push({ id: d.id, ...d.data() }));
+      setCursos(docs);
+    } catch (e) { console.error("Error cargando capacitaciones:", e); }
+    finally { setCargandoCursos(false); }
+  };
+
+  const cargarPredicacionesFirebase = async () => {
+    setCargandoPredicas(true);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'cym_predicaciones'));
+      const docs = [];
+      querySnapshot.forEach(d => docs.push({ id: d.id, ...d.data() }));
+      setListaPredicaciones(docs);
+    } catch (e) { console.error("Error cargando predicaciones:", e); }
+    finally { setCargandoPredicas(false); }
+  };
+
   const cargarAmigos = async (amigosIds) => {
     if (!amigosIds || amigosIds.length === 0) return;
     const datos = [];
@@ -124,8 +175,6 @@ export default function App() {
   const cargarOcrearUsuario = async (user) => {
     if (!user) return null;
     const emailLower = user.email.toLowerCase();
-    
-    // ROL OWNER
     const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
     const userRef = doc(db, 'cym_usuarios', user.uid);
     
@@ -140,19 +189,20 @@ export default function App() {
           await updateDoc(userRef, { role: 'OWNER', suscripcion: 'DIAMANTE', creditosIA: 9999 });
         }
       } else {
-        userData = { email: emailLower, nombre: user.displayName || 'Hermano/a', role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: isGodMode ? 9999 : 3, puntosTrivia: 0, amigos: [], photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", fechaRegistro: new Date().toISOString() };
+        userData = { 
+          email: emailLower, nombre: user.displayName || 'Hermano/a', role: isGodMode ? 'OWNER' : 'USER', 
+          suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: isGodMode ? 9999 : 3, puntosTrivia: 0, 
+          amigos: [], photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
+          fechaRegistro: new Date().toISOString(), descargasMesActual: 0, ultimoMesDescarga: mesActualClave
+        };
         await setDoc(userRef, userData);
       }
 
       if (!userData.amigos) userData.amigos = [];
-
-      const params = new URLSearchParams(window.location.search);
-      const amigoRefId = params.get('ref');
-      if (amigoRefId && amigoRefId !== user.uid) {
-        await updateDoc(userRef, { amigos: arrayUnion(amigoRefId) });
-        await updateDoc(doc(db, 'cym_usuarios', amigoRefId), { amigos: arrayUnion(user.uid) });
-        userData.amigos.push(amigoRefId);
-        window.history.replaceState(null, '', window.location.pathname); 
+      if (userData.ultimoMesDescarga !== mesActualClave) {
+        userData.descargasMesActual = 0;
+        userData.ultimoMesDescarga = mesActualClave;
+        await updateDoc(userRef, { descargasMesActual: 0, ultimoMesDescarga: mesActualClave });
       }
 
       cargarAmigos(userData.amigos);
@@ -161,11 +211,136 @@ export default function App() {
     } catch (error) { return { uid: user.uid, email: emailLower, nombre: user.displayName, role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL }; }
   };
 
-  useEffect(() => { const unsubscribe = onAuthStateChanged(auth, async (user) => { if (user) setCurrentUser(await cargarOcrearUsuario(user)); else setCurrentUser(null); setIsLoadingAuth(false); }); return () => unsubscribe(); }, []);
+  useEffect(() => { 
+    const unsubscribe = onAuthStateChanged(auth, async (user) => { 
+      if (user) {
+        const u = await cargarOcrearUsuario(user);
+        setCurrentUser(u); 
+        cargarCursosFirebase();
+        cargarPredicacionesFirebase();
+      } else { setCurrentUser(null); }
+      setIsLoadingAuth(false); 
+    }); 
+    return () => unsubscribe(); 
+  }, []);
+
   const handleLogin = async () => { try { setIsLoadingAuth(true); const result = await signInWithPopup(auth, googleProvider); if (result.user) setCurrentUser(await cargarOcrearUsuario(result.user)); } catch (error) { setIsLoadingAuth(false); } };
   const handleLogout = async () => { await signOut(auth); setCurrentUser(null); setVistaActual('home'); };
 
-  // --- COMPRESOR DE IMÁGENES AUTOMÁTICO ---
+  // --- MÉTODOS DE CAPACITACIONES (ACADEMIA) ---
+  const handleCrearCapacitacion = async (e) => {
+    e.preventDefault();
+    if (!nombreClaseInput || !valorCuotaInput || !linkMercadoPagoInput || !linkGrupoWhatsAppInput) {
+      alert("Por favor completá los campos obligatorios (*).");
+      return;
+    }
+    setGuardandoCurso(true);
+    try {
+      await addDoc(collection(db, 'cym_capacitaciones'), {
+        nombreClase: nombreClaseInput, descripcion: descripcionCursoInput,
+        dias: diasCursoInput, horario: horarioCursoInput, valorCuota: valorCuotaInput,
+        linkMercadoPago: linkMercadoPagoInput, linkGrupoWhatsApp: linkGrupoWhatsAppInput,
+        fechaCreacion: new Date().toISOString()
+      });
+      alert("¡Capacitación publicada en la Academia!");
+      setNombreClaseInput(''); setDescripcionCursoInput(''); setDiasCursoInput('');
+      setHorarioCursoInput(''); setValorCuotaInput(''); setLinkMercadoPagoInput('');
+      setLinkGrupoWhatsAppInput(''); setMostrarFormCapacitacion(false);
+      cargarCursosFirebase();
+    } catch (err) { alert("Error al guardar: " + err.message); }
+    finally { setGuardandoCurso(false); }
+  };
+
+  const handleCompletarIngresoWhatsApp = async (cursoId, linkWhatsApp) => {
+    if (!telefonoWhatsAppAlumno.trim()) { alert("Ingresá tu teléfono para registrarte."); return; }
+    try {
+      const userRef = doc(db, 'cym_usuarios', currentUser.uid);
+      await updateDoc(userRef, { cursosInscriptos: arrayUnion({ cursoId, telefonoWhatsApp: telefonoWhatsAppAlumno, fecha: new Date().toISOString() }) });
+      alert("¡Registro completo! Te redirigimos al grupo oficial.");
+      window.open(linkWhatsApp, '_blank');
+      setCursoSeleccionadoPago(null); setTelefonoWhatsAppAlumno('');
+    } catch (e) { alert("Error al registrar: " + e.message); }
+  };
+
+  // --- MÉTODOS DE BOSQUEJOS / PREDICACIONES ---
+  const handleSelectWord = (e) => { const file = e.target.files[0]; if (file) setArchivoWordTemp(file); };
+  const handleSelectPortada = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 800;
+          let width = img.width; let height = img.height;
+          if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
+          else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+          setPortadaImageTemp(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGuardarPredica = async () => {
+    if (!tituloPredicaInput.trim() || !pasajePredicaInput.trim() || !archivoWordTemp) {
+      alert("Ingresá el título, pasaje bíblico y adjuntá el archivo Word.");
+      return;
+    }
+    setSubiendoPredica(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        await addDoc(collection(db, 'cym_predicaciones'), {
+          titulo: tituloPredicaInput, pasaje: pasajePredicaInput,
+          nombreArchivo: archivoWordTemp.name, archivoBase64: ev.target.result,
+          portadaBase64: portadaImageTemp || null, fechaSubida: new Date().toISOString()
+        });
+        alert("¡Prédica publicada con éxito!");
+        setTituloPredicaInput(''); setPasajePredicaInput(''); setArchivoWordTemp(null); setPortadaImageTemp(null);
+        cargarPredicacionesFirebase();
+      } catch (err) { alert("Error al guardar: " + err.message); }
+      finally { setSubiendoPredica(false); }
+    };
+    reader.readAsDataURL(archivoWordTemp);
+  };
+
+  const handleDescargarArchivoPredica = async (predica, tipo) => {
+    const sub = currentUser?.suscripcion?.toUpperCase() || 'GRATIS';
+    const rol = currentUser?.role || 'USER';
+
+    if (rol !== 'OWNER' && sub !== 'DIAMANTE') {
+      alert("🔒 La biblioteca de prédicas en Word y portadas es exclusiva del Plan Diamante ($30.000/mes). Podés unirte en el Club CyM.");
+      setVistaActual('club'); return;
+    }
+
+    if (tipo === 'word') {
+      let descargasUsadas = currentUser.descargasMesActual || 0;
+      if (currentUser.ultimoMesDescarga !== mesActualClave) descargasUsadas = 0;
+      if (rol !== 'OWNER' && descargasUsadas >= 10) { alert("⚠️ Has alcanzado el límite de 10 descargas de prédicas en Word para este mes."); return; }
+
+      const link = document.createElement('a'); link.href = predica.archivoBase64;
+      link.download = predica.nombreArchivo || `${predica.titulo}.docx`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+      if (rol !== 'OWNER') {
+        const nuevoTotal = descargasUsadas + 1;
+        await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave });
+        setCurrentUser(prev => ({ ...prev, descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave }));
+        alert(`¡Descarga iniciada! Has usado ${nuevoTotal} de 10 descargas este mes.`);
+      }
+    } else if (tipo === 'portada') {
+      if (!predica.portadaBase64) { alert("Esta prédica no incluye imagen de portada."); return; }
+      const link = document.createElement('a'); link.href = predica.portadaBase64;
+      link.download = `Portada_${predica.titulo}.jpg`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -179,9 +354,7 @@ export default function App() {
           if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
           else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
           canvas.width = width; canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
+          const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
           const base64String = canvas.toDataURL('image/jpeg', 0.6);
           try {
             await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { photoURL: base64String });
@@ -204,8 +377,7 @@ export default function App() {
       const amigoId = querySnapshot.docs[0].id;
       if (amigoId === currentUser.uid) { alert("¡No puedes agregarte a ti mismo!"); return; }
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { amigos: arrayUnion(amigoId) });
-      alert("¡Amigo agregado con éxito!");
-      setEmailBuscar('');
+      alert("¡Amigo agregado con éxito!"); setEmailBuscar('');
       const userSnap = await getDoc(doc(db, 'cym_usuarios', currentUser.uid));
       cargarAmigos(userSnap.data().amigos);
     } catch (e) { alert("Error al buscar."); }
@@ -241,20 +413,12 @@ export default function App() {
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
   const devocionalHoy = lecturaHoy.devocional || devocionalPorDefecto;
 
-  // --- CANDADO DEL DEVOCIONAL ---
   const handleAbrirDevocional = () => {
-    const sub = currentUser?.suscripcion || 'GRATIS';
-    const rol = currentUser?.role || 'USER';
-    if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') {
-      setMostrarModalDevocional(true);
-    } else {
-      if (window.confirm("🔒 Este devocional pastoral es exclusivo para Socios Oro y Diamante. ¿Querés ir al Club CyM para apoyarnos y desbloquearlo?")) {
-        setVistaActual('club');
-      }
-    }
+    const sub = currentUser?.suscripcion || 'GRATIS'; const rol = currentUser?.role || 'USER';
+    if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') { setMostrarModalDevocional(true); } 
+    else { if (window.confirm("🔒 Este devocional pastoral es exclusivo para Socios Oro y Diamante. ¿Querés ir al Club CyM para apoyarnos y desbloquearlo?")) { setVistaActual('club'); } }
   };
 
-  // --- COMPARTIR WHATSAPP CON MARCA DE AGUA ---
   const compartirDevocional = () => {
     const textoCompartir = `*${devocionalHoy.titulo}*\n\n${devocionalHoy.reflexion}\n\n_Oración: "${devocionalHoy.oracion}"_\n\n📖 *Lectura de hoy:* ${lecturaHoy.libro} ${lecturaHoy.capitulo}\n\n✨ *MINISTERIO CRECER Y MULTIPLICAR* ✨\n📲 App CyM Biblia`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoCompartir)}`, '_blank');
@@ -331,9 +495,11 @@ export default function App() {
           <h1 className="text-lg md:text-2xl font-black tracking-wider hidden sm:block">CyM <span className="font-light opacity-80">Biblia</span></h1>
         </div>
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
-          <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden sm:inline">Comunidad</span></button>
-          <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden sm:inline">Jugar</span></button>
-          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden sm:inline">Club CyM</span></button>
+          <button onClick={() => setVistaActual('capacitaciones')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-500 text-black shadow-md hover:scale-105 transition-transform"><GraduationCap size={14} /> <span className="hidden sm:inline">Academia</span></button>
+          <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileWord size={14} /> <span className="hidden sm:inline">Bosquejos VIP</span></button>
+          <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden sm:inline">Comunidad</span></button>
+          <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden sm:inline">Jugar</span></button>
+          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden sm:inline">Club CyM</span></button>
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
           <button onClick={handleLogout} className="p-2 rounded-full text-red-500 hover:bg-red-500/20 transition-colors"><LogOut size={18} /></button>
         </div>
@@ -348,7 +514,7 @@ export default function App() {
         </div>
       )}
 
-      {/* DEVOCIONAL DIARIO EMERGENTE (CON BOTÓN DE COMPARTIR) */}
+      {/* DEVOCIONAL DIARIO EMERGENTE */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -377,8 +543,6 @@ export default function App() {
         
         {vistaActual === 'home' && (
           <div className="space-y-8">
-            
-            {/* 1. PERFIL COMPLETO CON COLORES DE MEMBRESÍA */}
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current.click()}>
@@ -396,7 +560,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* CAJA VIP DE ORACIÓN (Solo Oro, Diamante u Owner) */}
+            {/* CAJA VIP DE ORACIÓN */}
             {(currentUser?.role === 'OWNER' || currentUser?.suscripcion === 'ORO' || currentUser?.suscripcion === 'DIAMANTE') && (
               <div className="bg-gradient-to-r from-emerald-900/60 to-black border border-emerald-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between shadow-xl">
                 <div className="mb-4 md:mb-0 text-center md:text-left">
@@ -450,37 +614,233 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA COMUNIDAD (AMIGOS CON AROS DE COLORES) --- */}
+        {/* --- VISTA ACADEMIA (CAPACITACIONES SINCRÓNICAS) --- */}
+        {vistaActual === 'capacitaciones' && (
+          <div className="space-y-8">
+            <div className="bg-black/80 border border-amber-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-black text-white flex items-center gap-3">
+                  <GraduationCap className="text-amber-400" size={32} /> Academia CyM & Capacitaciones
+                </h2>
+                <p className="text-slate-400 text-xs mt-1">Clases virtuales sincrónicas. Inscripción independiente por módulos.</p>
+              </div>
+              {isOwner && (
+                <button 
+                  onClick={() => setMostrarFormCapacitacion(!mostrarFormCapacitacion)}
+                  className="bg-amber-500 hover:bg-amber-400 text-black font-black py-3 px-5 rounded-2xl text-xs uppercase tracking-wider flex items-center gap-2 transition-transform hover:scale-105 shadow-xl w-full md:w-auto justify-center"
+                >
+                  <PlusCircle size={18} /> {mostrarFormCapacitacion ? "Cerrar Panel Owner" : "Postear Nueva Clase"}
+                </button>
+              )}
+            </div>
+
+            {/* PANEL FORMULARIO OWNER */}
+            {isOwner && mostrarFormCapacitacion && (
+              <form onSubmit={handleCrearCapacitacion} className="bg-amber-950/30 border border-amber-500/50 p-6 rounded-3xl space-y-4 backdrop-blur-md shadow-2xl">
+                <div className="flex items-center gap-2 border-b border-amber-500/30 pb-3 mb-2">
+                  <ShieldCheck className="text-amber-400" size={22} />
+                  <h3 className="text-amber-300 font-black text-sm uppercase tracking-wider">Panel Owner: Alta de Capacitaciones</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Nombre de la Clase / Módulo *</label>
+                    <input type="text" placeholder="Ej: Escuela Profética - Módulo 1" value={nombreClaseInput} onChange={(e) => setNombreClaseInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Valor de la Cuota *</label>
+                    <input type="text" placeholder="Ej: $15.000 / mes" value={valorCuotaInput} onChange={(e) => setValorCuotaInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Días de Cursada</label>
+                    <input type="text" placeholder="Ej: Martes y Jueves" value={diasCursoInput} onChange={(e) => setDiasCursoInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Horario Sincrónico</label>
+                    <input type="text" placeholder="Ej: 20:00 a 21:30 hs (Arg)" value={horarioCursoInput} onChange={(e) => setHorarioCursoInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Link MercadoPago (Cuota) *</label>
+                    <input type="text" placeholder="https://mpago.la/..." value={linkMercadoPagoInput} onChange={(e) => setLinkMercadoPagoInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Link de Grupo WhatsApp *</label>
+                    <input type="text" placeholder="https://chat.whatsapp.com/..." value={linkGrupoWhatsAppInput} onChange={(e) => setLinkGrupoWhatsAppInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Descripción y Temario</label>
+                  <textarea rows={3} placeholder="Detalles de la cursada..." value={descripcionCursoInput} onChange={(e) => setDescripcionCursoInput(e.target.value)} className="w-full bg-black/70 border border-amber-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                </div>
+
+                <button type="submit" disabled={guardandoCurso} className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[1.01] transition-all shadow-xl">
+                  {guardandoCurso ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} />}
+                  {guardandoCurso ? "Publicando..." : "Publicar Capacitación"}
+                </button>
+              </form>
+            )}
+
+            {/* Malla Cursos */}
+            {cargandoCursos ? (
+              <div className="text-center py-16 text-amber-400"><Loader2 className="animate-spin mx-auto mb-3" size={36} /><p className="font-bold text-xs uppercase tracking-widest">Cargando Capacitaciones...</p></div>
+            ) : cursos.length === 0 ? (
+              <div className="bg-black/60 border border-white/10 p-12 rounded-3xl text-center text-slate-400 space-y-3">
+                <GraduationCap size={48} className="mx-auto opacity-30 text-amber-400" />
+                <h3 className="text-lg font-bold text-white">No hay cursos abiertos actualmente</h3>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {cursos.map((c) => (
+                  <div key={c.id} className="bg-black/80 border border-amber-500/30 p-6 rounded-3xl flex flex-col justify-between shadow-2xl">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-3">
+                        <div>
+                          <span className="bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-amber-500/30">Sincrónico en Vivo</span>
+                          <h3 className="text-xl font-black text-white mt-2">{c.nombreClase}</h3>
+                        </div>
+                        <div className="text-right"><span className="text-xs text-slate-400 block uppercase font-bold">Cuota</span><span className="text-lg font-black text-amber-400">{c.valorCuota}</span></div>
+                      </div>
+                      {c.descripcion && <p className="text-slate-300 text-xs leading-relaxed">{c.descripcion}</p>}
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-white/5 p-3 rounded-2xl border border-white/5">
+                        <div className="flex items-center gap-1.5 text-slate-300"><Calendar size={14} className="text-amber-400" /> <span>{c.dias || "A coordinar"}</span></div>
+                        <div className="flex items-center gap-1.5 text-slate-300"><Clock size={14} className="text-amber-400" /> <span>{c.horario || "A coordinar"}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-white/10">
+                      {cursoSeleccionadoPago?.id === c.id ? (
+                        <div className="bg-amber-950/60 border border-amber-500/50 p-4 rounded-2xl space-y-3">
+                          <p className="text-xs font-bold text-amber-300 flex items-center gap-1.5"><CheckCircle size={16} /> Luego de abonar, ingresá tu WhatsApp:</p>
+                          <input type="text" placeholder="Ej: +5491122334455" value={telefonoWhatsAppAlumno} onChange={(e) => setTelefonoWhatsAppAlumno(e.target.value)} className="w-full bg-black border border-amber-500/40 rounded-xl p-2.5 text-white text-xs outline-none" />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleCompletarIngresoWhatsApp(c.id, c.linkGrupoWhatsApp)} className="flex-1 bg-[#25D366] text-white font-black py-2.5 rounded-xl text-xs uppercase flex items-center justify-center gap-1.5"><MessageCircle size={14} /> Entrar al Grupo</button>
+                            <button onClick={() => setCursoSeleccionadoPago(null)} className="bg-white/10 text-slate-400 p-2.5 rounded-xl text-xs">Cancelar</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => { window.open(c.linkMercadoPago, '_blank'); setCursoSeleccionadoPago(c); }} className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"><DollarSign size={16} /> Abonar Cuota / Inscribirme</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- VISTA SECCIÓN PREDICACIONES VIP (BOSQUEJOS WORD + PORTADA) --- */}
+        {vistaActual === 'predicas' && (
+          <div className="space-y-6">
+            <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+              <div className="flex items-center justify-between border-b border-cyan-500/30 pb-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-cyan-400 flex items-center gap-2"><FileWord size={26} /> Catálogo de Prédicas VIP</h2>
+                  <p className="text-slate-400 text-xs mt-1">Prédicas completas en Word + Imagen de Portada lista para proyectar.</p>
+                </div>
+                {currentUser?.role !== 'OWNER' && (
+                  <div className="bg-cyan-950/80 border border-cyan-500/50 px-4 py-2 rounded-2xl text-right">
+                    <p className="text-[10px] font-black uppercase text-cyan-300">Descargas Word del Mes</p>
+                    <p className="text-xl font-black text-white">{currentUser.descargasMesActual || 0} / 10</p>
+                  </div>
+                )}
+              </div>
+
+              {/* PANEL DE SUBIDA OWNER */}
+              {isOwner && (
+                <div className="bg-cyan-950/40 border border-cyan-500/50 p-6 rounded-2xl mb-8 space-y-4">
+                  <h3 className="text-cyan-300 font-black text-sm uppercase tracking-wider flex items-center gap-2"><Upload size={18} /> Cargar Nueva Prédica + Portada (Panel Owner)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder="Título de la Prédica" value={tituloPredicaInput} onChange={(e) => setTituloPredicaInput(e.target.value)} className="bg-black/60 border border-cyan-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                    <input type="text" placeholder="Pasaje Bíblico (ej: Efesios 6:10-18)" value={pasajePredicaInput} onChange={(e) => setPasajePredicaInput(e.target.value)} className="bg-black/60 border border-cyan-500/30 rounded-xl p-3 text-white text-sm outline-none" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="file" accept=".doc,.docx" ref={inputRefWord} className="hidden" onChange={handleSelectWord} />
+                    <button type="button" onClick={() => inputRefWord.current.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${archivoWordTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
+                      <FileWord size={18} /> {archivoWordTemp ? `✓ ${archivoWordTemp.name}` : "1. Adjuntar Word (.docx)"}
+                    </button>
+
+                    <input type="file" accept="image/*" ref={inputRefPortada} className="hidden" onChange={handleSelectPortada} />
+                    <button type="button" onClick={() => inputRefPortada.current.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${portadaImageTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
+                      <ImageIcon size={18} /> {portadaImageTemp ? "✓ Portada Seleccionada" : "2. Adjuntar Portada (Opcional)"}
+                    </button>
+                  </div>
+
+                  <button type="button" onClick={handleGuardarPredica} disabled={subiendoPredica} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl">
+                    {subiendoPredica ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+                    {subiendoPredica ? "Guardando..." : "Publicar Prédica Completa"}
+                  </button>
+                </div>
+              )}
+
+              {/* Malla Tarjetas */}
+              {cargandoPredicas ? (
+                <div className="text-center py-16 text-cyan-400"><Loader2 className="animate-spin mx-auto mb-3" size={36} /><p className="font-bold text-xs uppercase tracking-widest">Cargando Prédicas...</p></div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {listaPredicaciones.length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-slate-500"><FileWord size={48} className="mx-auto mb-3 opacity-30" /><p className="font-bold">No hay prédicas subidas todavía.</p></div>
+                  ) : (
+                    listaPredicaciones.map((p) => (
+                      <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl">
+                        <div>
+                          {p.portadaBase64 ? (
+                            <div className="h-48 w-full overflow-hidden relative">
+                              <img src={p.portadaBase64} alt={p.titulo} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                            </div>
+                          ) : (
+                            <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileWord size={48} /></div>
+                          )}
+                          <div className="p-5">
+                            <h4 className="text-white font-black text-xl mb-1 leading-snug">{p.titulo}</h4>
+                            <p className="text-cyan-400 font-bold text-xs">📖 {p.pasaje}</p>
+                          </div>
+                        </div>
+
+                        <div className="p-5 pt-0 flex gap-2">
+                          <button onClick={() => handleDescargarArchivoPredica(p, 'word')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-black py-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md">
+                            <Download size={14} /> Descargar .DOCX
+                          </button>
+                          {p.portadaBase64 && (
+                            <button onClick={() => handleDescargarArchivoPredica(p, 'portada')} className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-white/10">
+                              <ImageIcon size={14} /> Portada
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- VISTA COMUNIDAD --- */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
             <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
             <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
-            
             <div className="space-y-3">
-              {listaAmigos.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">Todavía no tenés amigos. ¡Mandales un WhatsApp con el botón verde de arriba!</p>
-              ) : (
-                listaAmigos.map((amigo, index) => {
-                  const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
-                  return (
-                    <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                        <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
-                        <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
-                        <div>
-                          <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
-                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p>
-                        <p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p>
+              {listaAmigos.map((amigo, index) => {
+                const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
+                return (
+                  <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
+                      <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
+                      <div>
+                        <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
                       </div>
                     </div>
-                  );
-                })
-              )}
+                    <div className="text-right"><p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p><p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p></div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
