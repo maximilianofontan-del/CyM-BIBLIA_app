@@ -76,7 +76,6 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   return { colorAro: 'border-[#3b82f6]', colorBadge: 'bg-[#3b82f6] text-white', texto: 'MEMBRESÍA GRATIS' };
 };
 
-// ACÁ RENOMBRAMOS LA APLICACIÓN PRINCIPAL A "AppMain"
 function AppMain() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -139,18 +138,15 @@ function AppMain() {
   }, [vistaActual, mostrarModalDevocional, mostrarAsistente]);
 
   useEffect(() => {
-    // Empujamos un historial ficticio al montar la app para crear un "colchón"
     window.history.pushState({ atrapado: true }, '');
 
     const manejarBotonAtras = () => {
       const { vistaActual, mostrarModalDevocional, mostrarAsistente } = estadosNavegacion.current;
       
-      // Si estamos en la pantalla inicial y sin modales, dejamos que salga de la app
       if (vistaActual === 'home' && !mostrarModalDevocional && !mostrarAsistente) {
         return; 
       }
       
-      // Si estaba en otra pantalla, lo "atrapamos" empujando otro estado y cerramos/volvemos
       window.history.pushState({ atrapado: true }, '');
       
       if (mostrarAsistente) {
@@ -196,15 +192,25 @@ function AppMain() {
     finally { setCargandoPredicas(false); }
   };
 
-  const cargarAmigos = async (amigosIds) => {
-    if (!amigosIds || !Array.isArray(amigosIds) || amigosIds.length === 0) return;
+  // --- CARGAR AMIGOS Y AGREGAR AL USUARIO AL RANKING ---
+  const cargarAmigos = async (amigosIds, usrActual) => {
     const datos = [];
-    for (const id of amigosIds) {
-      try {
-        const snap = await getDoc(doc(db, 'cym_usuarios', id));
-        if (snap.exists()) datos.push(snap.data());
-      } catch (e) {}
+    
+    // Inyectamos al usuario actual para que aparezca en el ranking
+    if (usrActual) {
+      datos.push(usrActual);
     }
+
+    if (amigosIds && Array.isArray(amigosIds) && amigosIds.length > 0) {
+      for (const id of amigosIds) {
+        try {
+          const snap = await getDoc(doc(db, 'cym_usuarios', id));
+          if (snap.exists()) datos.push(snap.data());
+        } catch (e) {}
+      }
+    }
+    
+    // Ordenamos a todos por puntos (Mayor a menor)
     datos.sort((a, b) => (b.puntosTrivia || 0) - (a.puntosTrivia || 0));
     setListaAmigos(datos);
   };
@@ -251,9 +257,13 @@ function AppMain() {
         window.history.replaceState(null, '', window.location.pathname); 
       }
 
-      cargarAmigos(userData.amigos);
-      const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
-      return { uid: user.uid, ...userData, photoURL: fotoFinal };
+      const fotoFinal = userData.photoURL || user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png";
+      const usrCompleto = { uid: user.uid, ...userData, photoURL: fotoFinal };
+      
+      // Llamamos a cargarAmigos pasándole el usuario actual
+      cargarAmigos(userData.amigos, usrCompleto);
+      return usrCompleto;
+      
     } catch (error) { 
       return { 
         uid: user.uid, email: emailLower, nombre: user.displayName || 'Usuario', role: isGodMode ? 'OWNER' : 'USER', 
@@ -432,7 +442,7 @@ function AppMain() {
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { amigos: arrayUnion(amigoId) });
       setEmailBuscar('');
       const userSnap = await getDoc(doc(db, 'cym_usuarios', currentUser.uid));
-      cargarAmigos(userSnap.data()?.amigos);
+      cargarAmigos(userSnap.data()?.amigos, currentUser);
     } catch (e) {}
   };
 
@@ -564,7 +574,6 @@ function AppMain() {
         </div>
       )}
 
-      {/* DEVOCIONAL DIARIO EMERGENTE (CON BOTÓN DE COMPARTIR) */}
       {mostrarModalDevocional && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl border relative text-left overflow-y-auto max-h-[85vh] ${tema === 'cym' ? 'bg-[#0f0f0f] border-[#cca300]/40 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -594,7 +603,6 @@ function AppMain() {
         {vistaActual === 'home' && (
           <div className="space-y-8">
             
-            {/* 1. PERFIL COMPLETO CON COLORES DE MEMBRESÍA */}
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current?.click()}>
@@ -612,7 +620,6 @@ function AppMain() {
               </div>
             </div>
 
-            {/* CAJA VIP DE ORACIÓN (Solo Oro, Diamante u Owner) */}
             {(currentUser?.role === 'OWNER' || currentUser?.suscripcion === 'ORO' || currentUser?.suscripcion === 'DIAMANTE') && (
               <div className="bg-gradient-to-r from-emerald-900/60 to-black border border-emerald-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between shadow-xl">
                 <div className="mb-4 md:mb-0 text-center md:text-left">
@@ -866,7 +873,7 @@ function AppMain() {
           </div>
         )}
 
-        {/* COMUNIDAD */}
+        {/* COMUNIDAD (RANKING CON USUARIO DESTACADO) */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
@@ -874,17 +881,20 @@ function AppMain() {
             <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
             <div className="space-y-3">
               {listaAmigos.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">Todavía no tenés amigos. ¡Mandales un WhatsApp con el botón verde de arriba!</p>
+                <p className="text-slate-400 text-center py-6">Todavía no tenés amigos ni has sumado puntos. ¡Jugá una partida de trivia!</p>
               ) : (
                 listaAmigos.map((amigo, index) => {
+                  const esYo = amigo.uid === currentUser?.uid || amigo.email === currentUser?.email;
                   const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
                   return (
-                    <div key={index} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div key={index} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
                       <div className="flex items-center gap-3">
-                        <span className="font-black text-amber-500 text-lg w-4">{index + 1}</span>
+                        <span className={`font-black text-lg w-4 ${esYo ? 'text-blue-400' : 'text-amber-500'}`}>{index + 1}</span>
                         <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
                         <div>
-                          <p className="font-bold text-white leading-tight">{amigo.nombre}</p>
+                          <p className="font-bold text-white leading-tight">
+                            {esYo ? 'Tú' : amigo.nombre}
+                          </p>
                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
                         </div>
                       </div>
