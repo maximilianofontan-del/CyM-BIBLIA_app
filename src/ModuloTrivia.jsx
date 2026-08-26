@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Mic, MicOff, Volume2, Square, Loader2 } from 'lucide-react';
 
 // ¡IMPORTANTE! PEGÁ TUS 100 PREGUNTAS ADENTRO DE ESTOS CORCHETES [ ]
 const PREGUNTAS_LOCALES = [
@@ -92,109 +93,7 @@ const PREGUNTAS_LOCALES = [
     { "pregunta": "¿De dónde sale el río de agua de vida en Apocalipsis?", "opciones": ["Del Templo", "Del trono de Dios y del Cordero", "De la tierra", "Del cielo"], "respuestaCorrecta": "Del trono de Dios y del Cordero" },
     { "pregunta": "¿Cuántos tipos de frutos da el árbol de la vida?", "opciones": ["1", "7", "12", "24"], "respuestaCorrecta": "12" },
     { "pregunta": "¿Qué color tenía el caballo cuyo jinete se llamaba Muerte?", "opciones": ["Blanco", "Rojo", "Negro", "Amarillo pálido"], "respuestaCorrecta": "Amarillo pálido" },
-    { "pregunta": "Jesús dijo: 'Yo soy el Alfa y la...'", "opciones": ["Beta", "Omega", "Luz", "Verdad"], "respuestaCorrecta": "Omega" },
-  { "pregunta": "¿Quién fue tragado por un gran pez?", "opciones": ["Moisés", "Jonás", "David", "Pedro"], "respuestaCorrecta": "Jonás" },
-  { "pregunta": "¿Cuántos días y noches llovió en el diluvio?", "opciones": ["40", "7", "12", "100"], "respuestaCorrecta": "40" },
-  { "pregunta": "¿Quién fue tragado por un gran pez?", "opciones": ["Moisés", "Jonás", "David", "Pedro"], "respuestaCorrecta": "Jonás" },
-  { "pregunta": "¿Cuántos días y noches llovió en el diluvio?", "opciones": ["40", "7", "12", "100"], "respuestaCorrecta": "40" },
-  { "pregunta": "¿Quién derrotó a Goliat?", "opciones": ["Saúl", "Salomón", "David", "Sansón"], "respuestaCorrecta": "David" },
-  { "pregunta": "¿Cuál es el primer libro de la Biblia?", "opciones": ["Apocalipsis", "Éxodo", "Génesis", "Levítico"], "respuestaCorrecta": "Génesis" },
-  { "pregunta": "¿Quién fue vendido como esclavo por sus hermanos?", "opciones": ["José", "Benjamín", "Isaac", "Jacob"], "respuestaCorrecta": "José" },
-  { "pregunta": "¿Qué animal tentó a Eva en el Edén?", "opciones": ["Un león", "Una serpiente", "Un cuervo", "Un escorpión"], "respuestaCorrecta": "Una serpiente" },
-  { "pregunta": "¿Quién construyó el arca?", "opciones": ["Moisés", "Abraham", "Noé", "Enoc"], "respuestaCorrecta": "Noé" },
-  { "pregunta": "¿Cuántas plagas envió Dios a Egipto?", "opciones": ["7", "10", "12", "40"], "respuestaCorrecta": "10" },
-  { "pregunta": "¿En qué monte recibió Moisés los 10 mandamientos?", "opciones": ["Sion", "Carmelo", "Sinaí", "Ararat"], "respuestaCorrecta": "Sinaí" },
-  { "pregunta": "¿Quién fue el hombre más fuerte de la Biblia?", "opciones": ["Goliat", "David", "Sansón", "Saúl"], "respuestaCorrecta": "Sansón" },
-  { "pregunta": "¿A quién le pidió Dios que sacrificara a su hijo Isaac?", "opciones": ["Jacob", "Abraham", "Moisés", "Lot"], "respuestaCorrecta": "Abraham" },
-  { "pregunta": "¿Quién interpretó los sueños del Faraón?", "opciones": ["Daniel", "José", "Moisés", "Aarón"], "respuestaCorrecta": "José" },
-  { "pregunta": "¿Qué mar cruzaron los israelitas en seco?", "opciones": ["Mar Muerto", "Mar de Galilea", "Mar Rojo", "Mar Mediterráneo"], "respuestaCorrecta": "Mar Rojo" },
-  { "pregunta": "¿Quién fue la madre de Samuel?", "opciones": ["Ana", "Rut", "Ester", "Sara"], "respuestaCorrecta": "Ana" },
-  { "pregunta": "¿Qué profeta hizo caer fuego del cielo en el monte Carmelo?", "opciones": ["Eliseo", "Isaías", "Elías", "Jeremías"], "respuestaCorrecta": "Elías" },
-  { "pregunta": "¿Quién fue arrojado al foso de los leones?", "opciones": ["Sadrac", "Daniel", "Jeremías", "Ezequiel"], "respuestaCorrecta": "Daniel" },
-  { "pregunta": "¿Cuál era la profesión de Mateo antes de seguir a Jesús?", "opciones": ["Pescador", "Carpintero", "Recaudador de impuestos", "Médico"], "respuestaCorrecta": "Recaudador de impuestos" },
-  { "pregunta": "¿En qué ciudad nació Jesús?", "opciones": ["Nazaret", "Belén", "Jerusalén", "Jericó"], "respuestaCorrecta": "Belén" },
-  { "pregunta": "¿Quién bautizó a Jesús?", "opciones": ["Pedro", "Juan el Bautista", "Santiago", "Mateo"], "respuestaCorrecta": "Juan el Bautista" },
-  { "pregunta": "¿Cuántos panes y peces multiplicó Jesús?", "opciones": ["5 panes y 2 peces", "7 panes y 3 peces", "2 panes y 5 peces", "12 panes y 2 peces"], "respuestaCorrecta": "5 panes y 2 peces" },
-  { "pregunta": "¿Quién negó a Jesús tres veces?", "opciones": ["Judas", "Juan", "Pedro", "Tomás"], "respuestaCorrecta": "Pedro" },
-  { "pregunta": "¿Por cuántas monedas traicionó Judas a Jesús?", "opciones": ["10", "20", "30", "40"], "respuestaCorrecta": "30" },
-  { "pregunta": "¿Quién le cortó la oreja al siervo del sumo sacerdote?", "opciones": ["Juan", "Pedro", "Jesús", "Santiago"], "respuestaCorrecta": "Pedro" },
-  { "pregunta": "¿Qué preso fue liberado en lugar de Jesús?", "opciones": ["Barrabás", "Dimas", "Gestas", "Zaqueo"], "respuestaCorrecta": "Barrabás" },
-  { "pregunta": "¿Quién ayudó a cargar la cruz de Jesús?", "opciones": ["Simón de Cirene", "José de Arimatea", "Nicodemo", "Juan"], "respuestaCorrecta": "Simón de Cirene" },
-  { "pregunta": "¿Quién fue el primer mártir cristiano?", "opciones": ["Pedro", "Pablo", "Esteban", "Santiago"], "respuestaCorrecta": "Esteban" },
-  { "pregunta": "¿En qué camino Jesús se le apareció a Saulo (Pablo)?", "opciones": ["Jericó", "Emaús", "Damasco", "Jerusalén"], "respuestaCorrecta": "Damasco" },
-  { "pregunta": "¿Quién escribió el libro de Apocalipsis?", "opciones": ["Pedro", "Pablo", "Juan", "Lucas"], "respuestaCorrecta": "Juan" },
-  { "pregunta": "¿Cuántos libros tiene la Biblia (versión protestante)?", "opciones": ["66", "73", "39", "27"], "respuestaCorrecta": "66" },
-  { "pregunta": "¿Cuál es el libro más largo de la Biblia?", "opciones": ["Génesis", "Isaías", "Salmos", "Jeremías"], "respuestaCorrecta": "Salmos" },
-  { "pregunta": "¿Quién fue el hombre más sabio?", "opciones": ["David", "Salomón", "Esdras", "Pablo"], "respuestaCorrecta": "Salomón" },
-  { "pregunta": "¿Qué alimento cayó del cielo para el pueblo de Israel?", "opciones": ["Codornices", "Maná", "Miel", "Pan de cebada"], "respuestaCorrecta": "Maná" },
-  { "pregunta": "¿Qué joven pastor mató a un oso y un león?", "opciones": ["José", "Moisés", "David", "Gedeón"], "respuestaCorrecta": "David" },
-  { "pregunta": "¿Cómo se llamaba la esposa de Isaac?", "opciones": ["Raquel", "Lea", "Rebeca", "Sara"], "respuestaCorrecta": "Rebeca" },
-  { "pregunta": "¿Qué gigante tenía 6 dedos en cada mano?", "opciones": ["Goliat", "El hermano de Goliat", "Og rey de Basán", "No se menciona"], "respuestaCorrecta": "El hermano de Goliat" },
-  { "pregunta": "¿Qué profeta fue llevado al cielo en un carro de fuego?", "opciones": ["Enoc", "Eliseo", "Elías", "Moisés"], "respuestaCorrecta": "Elías" },
-  { "pregunta": "¿Quién se subió a un árbol para ver a Jesús?", "opciones": ["Zaqueo", "Bartimeo", "Nicodemo", "Lázaro"], "respuestaCorrecta": "Zaqueo" },
-  { "pregunta": "¿Quién era el amigo de Jesús que fue resucitado al cuarto día?", "opciones": ["Jairo", "Lázaro", "Juan", "Lucas"], "respuestaCorrecta": "Lázaro" },
-  { "pregunta": "¿Cuál es el primer milagro de Jesús registrado en los evangelios?", "opciones": ["Sanar a un ciego", "Caminar sobre el agua", "Convertir el agua en vino", "Multiplicar los panes"], "respuestaCorrecta": "Convertir el agua en vino" },
-  { "pregunta": "¿Qué libro de la Biblia no menciona la palabra 'Dios'?", "opciones": ["Rut", "Ester", "Cantares", "Eclesiastés"], "respuestaCorrecta": "Ester" },
-  { "pregunta": "¿Quién era el rey de Babilonia cuando Daniel fue llevado cautivo?", "opciones": ["Belsasar", "Darío", "Ciro", "Nabucodonosor"], "respuestaCorrecta": "Nabucodonosor" },
-  { "pregunta": "¿Quién era el suegro de Moisés?", "opciones": ["Jetro", "Aarón", "Labán", "Faraón"], "respuestaCorrecta": "Jetro" },
-  { "pregunta": "¿Cuántas veces dio vuelta Israel a Jericó el último día?", "opciones": ["1", "3", "7", "12"], "respuestaCorrecta": "7" },
-  { "pregunta": "¿Quién era el hermano de Marta y María?", "opciones": ["Simón", "Lázaro", "Felipe", "Andrés"], "respuestaCorrecta": "Lázaro" },
-  { "pregunta": "¿En qué río fue bautizado Jesús?", "opciones": ["Nilo", "Éufrates", "Jordán", "Tigris"], "respuestaCorrecta": "Jordán" },
-  { "pregunta": "¿Quién era el médico amado que acompañó a Pablo?", "opciones": ["Tito", "Timoteo", "Lucas", "Marcos"], "respuestaCorrecta": "Lucas" },
-  { "pregunta": "¿Cómo se llamaba la suegra de Rut?", "opciones": ["Orfa", "Noemí", "Lea", "Ana"], "respuestaCorrecta": "Noemí" },
-  { "pregunta": "¿Qué animal habló con Balaam?", "opciones": ["Un camello", "Una serpiente", "Un asna", "Una paloma"], "respuestaCorrecta": "Un asna" },
-  { "pregunta": "¿Quién sobrevivió en el foso de los leones?", "opciones": ["Daniel", "Sadrac", "Mesac", "Abed-nego"], "respuestaCorrecta": "Daniel" },
-  { "pregunta": "¿Quién fue el primer homicida mencionado en la Biblia?", "opciones": ["Caín", "Lamec", "Esaú", "Faraón"], "respuestaCorrecta": "Caín" },
-  { "pregunta": "¿De qué madera construyó Noé el arca?", "opciones": ["Cedro", "Acacia", "Gofer", "Roble"], "respuestaCorrecta": "Gofer" },
-  { "pregunta": "¿Quién es el hombre que más años vivió según la Biblia?", "opciones": ["Noé", "Matusalén", "Adán", "Enoc"], "respuestaCorrecta": "Matusalén" },
-  { "pregunta": "¿Qué nombre le puso Dios a Jacob después de luchar con el ángel?", "opciones": ["Israel", "Abraham", "Efraín", "Judá"], "respuestaCorrecta": "Israel" },
-  { "pregunta": "¿A qué país huyó Moisés tras matar a un egipcio?", "opciones": ["Canaán", "Madián", "Babilonia", "Siria"], "respuestaCorrecta": "Madián" },
-  { "pregunta": "¿Qué hermano de Moisés fue el primer sumo sacerdote?", "opciones": ["Coré", "Aarón", "Hur", "Josué"], "respuestaCorrecta": "Aarón" },
-  { "pregunta": "¿Qué tribu de Israel no recibió herencia de tierra?", "opciones": ["Judá", "Leví", "Benjamín", "Simeón"], "respuestaCorrecta": "Leví" },
-  { "pregunta": "¿Quién sucedió a Moisés como líder de Israel?", "opciones": ["Caleb", "Aarón", "Josué", "Gedeón"], "respuestaCorrecta": "Josué" },
-  { "pregunta": "¿Qué mujer escondió a los espías israelitas en Jericó?", "opciones": ["Rut", "Rahab", "Débora", "Jael"], "respuestaCorrecta": "Rahab" },
-  { "pregunta": "¿Qué juez de Israel derrotó a los madianitas con solo 300 hombres?", "opciones": ["Sansón", "Gedeón", "Otoniel", "Jefté"], "respuestaCorrecta": "Gedeón" },
-  { "pregunta": "¿De qué nacionalidad era Rut?", "opciones": ["Israelita", "Egipcia", "Moabita", "Filistea"], "respuestaCorrecta": "Moabita" },
-  { "pregunta": "¿A quién ungió Samuel como el primer rey de Israel?", "opciones": ["David", "Saúl", "Salomón", "Absalón"], "respuestaCorrecta": "Saúl" },
-  { "pregunta": "¿Cómo se llamaba el padre del rey David?", "opciones": ["Isaí", "Samuel", "Saúl", "Salomón"], "respuestaCorrecta": "Isaí" },
-  { "pregunta": "¿Quién fue el mejor amigo de David?", "opciones": ["Abner", "Jonatán", "Natán", "Joab"], "respuestaCorrecta": "Jonatán" },
-  { "pregunta": "¿Qué reina viajó desde lejos para comprobar la sabiduría de Salomón?", "opciones": ["Reina de Sabá", "Reina de Persia", "Reina de Egipto", "Reina de Etiopía"], "respuestaCorrecta": "Reina de Sabá" },
-  { "pregunta": "¿Qué profeta sucedió a Elías y pidió una doble porción de su espíritu?", "opciones": ["Eliseo", "Isaías", "Oseas", "Jeremías"], "respuestaCorrecta": "Eliseo" },
-  { "pregunta": "¿Quién fue el copero del rey que reconstruyó los muros de Jerusalén?", "opciones": ["Esdras", "Nehemías", "Zorobabel", "Daniel"], "respuestaCorrecta": "Nehemías" },
-  { "pregunta": "¿Qué profeta escribió sobre un valle de huesos secos que revivían?", "opciones": ["Jeremías", "Ezequiel", "Isaías", "Joel"], "respuestaCorrecta": "Ezequiel" },
-  { "pregunta": "¿A quién se le conoce comúnmente como el 'profeta llorón'?", "opciones": ["Jeremías", "Habacuc", "Jonás", "Miqueas"], "respuestaCorrecta": "Jeremías" },
-  { "pregunta": "¿Quiénes fueron arrojados a un horno de fuego ardiente?", "opciones": ["Daniel y sus hermanos", "Sadrac, Mesac y Abed-nego", "Pablo y Silas", "Pedro y Juan"], "respuestaCorrecta": "Sadrac, Mesac y Abed-nego" },
-  { "pregunta": "¿Qué ciudad fue destruida por Dios con fuego y azufre?", "opciones": ["Jericó", "Nínive", "Sodoma", "Babilonia"], "respuestaCorrecta": "Sodoma" },
-  { "pregunta": "¿Quién es considerado el autor de la mayoría de los Salmos?", "opciones": ["Moisés", "Salomón", "Asaf", "David"], "respuestaCorrecta": "David" },
-  { "pregunta": "¿Qué edad tenía Jesús cuando se perdió y fue hallado en el templo?", "opciones": ["7 años", "10 años", "12 años", "15 años"], "respuestaCorrecta": "12 años" },
-  { "pregunta": "¿Quién fue el padre terrenal de Juan el Bautista?", "opciones": ["Zacarías", "José", "Simeón", "Elí"], "respuestaCorrecta": "Zacarías" },
-  { "pregunta": "¿A qué apóstoles llevó Jesús al monte de la transfiguración?", "opciones": ["Pedro, Andrés y Juan", "Pedro, Jacobo y Juan", "Mateo, Marcos y Lucas", "Felipe, Tomás y Mateo"], "respuestaCorrecta": "Pedro, Jacobo y Juan" },
-  { "pregunta": "¿Qué enfermedad tenía el hombre que fue bajado por el techo hacia Jesús?", "opciones": ["Lepra", "Ceguera", "Parálisis", "Fiebre"], "respuestaCorrecta": "Parálisis" },
-  { "pregunta": "¿A quién le dijo Jesús de noche: 'Es necesario nacer de nuevo'?", "opciones": ["Nicodemo", "Zaqueo", "Caifás", "Pilato"], "respuestaCorrecta": "Nicodemo" },
-  { "pregunta": "¿A quién resucitó Jesús en la ciudad de Naín?", "opciones": ["A la hija de Jairo", "Al hijo de una viuda", "A Lázaro", "Al siervo del centurión"], "respuestaCorrecta": "Al hijo de una viuda" },
-  { "pregunta": "¿Qué discípulo caminó sobre el agua hacia Jesús?", "opciones": ["Juan", "Andrés", "Pedro", "Jacobo"], "respuestaCorrecta": "Pedro" },
-  { "pregunta": "¿Quién pidió el cuerpo de Jesús a Pilato para sepultarlo?", "opciones": ["José de Arimatea", "Simón de Cirene", "Nicodemo", "Juan"], "respuestaCorrecta": "José de Arimatea" },
-  { "pregunta": "¿Quién fue el discípulo elegido para reemplazar a Judas Iscariote?", "opciones": ["Pablo", "Bernabé", "Matías", "Silas"], "respuestaCorrecta": "Matías" },
-  { "pregunta": "¿En qué festividad descendió el Espíritu Santo sobre los discípulos?", "opciones": ["Pascua", "Pentecostés", "Tabernáculos", "Purim"], "respuestaCorrecta": "Pentecostés" },
-  { "pregunta": "¿Qué pareja mintió sobre el dinero de una venta y cayó muerta?", "opciones": ["Priscila y Aquila", "Ananías y Safira", "Félix y Drusila", "Herodes y Herodías"], "respuestaCorrecta": "Ananías y Safira" },
-  { "pregunta": "¿Quién acompañó a Pablo en su primer viaje misionero?", "opciones": ["Timoteo", "Silas", "Lucas", "Bernabé"], "respuestaCorrecta": "Bernabé" },
-  { "pregunta": "¿De qué ciudad era originario el apóstol Pablo?", "opciones": ["Jerusalén", "Antioquía", "Tarso", "Roma"], "respuestaCorrecta": "Tarso" },
-  { "pregunta": "¿Qué oficio manual tenía Pablo para sostenerse económicamente?", "opciones": ["Pescador", "Carpintero", "Fabricante de tiendas", "Alfarero"], "respuestaCorrecta": "Fabricante de tiendas" },
-  { "pregunta": "¿En qué isla naufragó Pablo mientras era llevado a Roma?", "opciones": ["Chipre", "Creta", "Patmos", "Malta"], "respuestaCorrecta": "Malta" },
-  { "pregunta": "¿A qué iglesia le escribió Pablo el famoso capítulo sobre el Amor (capítulo 13)?", "opciones": ["Romanos", "Gálatas", "Corintios", "Efesios"], "respuestaCorrecta": "Corintios" },
-  { "pregunta": "¿Cuál es el primer fruto del Espíritu mencionado en Gálatas 5?", "opciones": ["Paz", "Paciencia", "Fe", "Amor"], "respuestaCorrecta": "Amor" },
-  { "pregunta": "¿Qué libro del Nuevo Testamento es conocido como el 'salón de la fama de la fe'?", "opciones": ["Romanos", "Hebreos", "Santiago", "Judas"], "respuestaCorrecta": "Hebreos" },
-  { "pregunta": "¿A cuántas iglesias de Asia Menor se dirigen los mensajes en Apocalipsis?", "opciones": ["3", "5", "7", "12"], "respuestaCorrecta": "7" },
-  { "pregunta": "¿Cuál es el último libro del Antiguo Testamento?", "opciones": ["Zacarías", "Malaquías", "Sofonías", "Hageo"], "respuestaCorrecta": "Malaquías" },
-  { "pregunta": "¿Quién era la hermana de Moisés y Aarón?", "opciones": ["Séfora", "Jocabed", "María (Miriam)", "Agar"], "respuestaCorrecta": "María (Miriam)" },
-  { "pregunta": "¿Qué animal trajo una rama de olivo a Noé?", "opciones": ["Un cuervo", "Una paloma", "Un gorrión", "Un águila"], "respuestaCorrecta": "Una paloma" },
-  { "pregunta": "¿Qué rey babilónico se volvió loco y comió hierba como los bueyes?", "opciones": ["Belsasar", "Darío", "Ciro", "Nabucodonosor"], "respuestaCorrecta": "Nabucodonosor" },
-  { "pregunta": "¿Qué instrumento usó David para calmar al rey Saúl?", "opciones": ["Flauta", "Trompeta", "Arpa", "Pandero"], "respuestaCorrecta": "Arpa" },
-  { "pregunta": "¿En qué idioma se escribió originalmente la mayor parte del Nuevo Testamento?", "opciones": ["Hebreo", "Arameo", "Griego", "Latín"], "respuestaCorrecta": "Griego" },
-  { "pregunta": "¿Cómo se llamaba el ciego de Jericó al que Jesús sanó?", "opciones": ["Zaqueo", "Bartimeo", "Simón", "Lázaro"], "respuestaCorrecta": "Bartimeo" },
-  { "pregunta": "¿Qué discípulo dijo: 'Señor, no solo mis pies, sino también las manos y la cabeza'?", "opciones": ["Juan", "Tomás", "Pedro", "Mateo"], "respuestaCorrecta": "Pedro" },
-  { "pregunta": "¿Qué mujer judía llegó a ser reina del Imperio Persa?", "opciones": ["Vasti", "Ester", "Rut", "Débora"], "respuestaCorrecta": "Ester" },
-  { "pregunta": "¿Quién derrotó a Goliat?", "opciones": ["Saúl", "Salomón", "David", "Sansón"], "respuestaCorrecta": "David" }
+    { "pregunta": "Jesús dijo: 'Yo soy el Alfa y la...'", "opciones": ["Beta", "Omega", "Luz", "Verdad"], "respuestaCorrecta": "Omega" }
 ];
 
 export default function ModuloTrivia({ currentUser, db, onVolver }) {
@@ -203,45 +102,150 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [juegoTerminado, setJuegoTerminado] = useState(false);
   const [preguntasMezcladas, setPreguntasMezcladas] = useState([]);
   const [estadoRespuesta, setEstadoRespuesta] = useState(null);
+  
+  // Estados para modo Voz
+  const [modoVoz, setModoVoz] = useState(false);
+  const [escuchando, setEscuchando] = useState(false);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
-    // Mezcla de preguntas para que siempre sean aleatorias
+    // Mezcla de preguntas
     const mezcladas = [...PREGUNTAS_LOCALES].sort(() => Math.random() - 0.5);
     setPreguntasMezcladas(mezcladas);
+
+    // Inicializar Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event) => {
+        const respuestaHablada = event.results[0][0].transcript.trim().toLowerCase();
+        setEscuchando(false);
+        validarRespuestaPorVoz(respuestaHablada);
+      };
+
+      recognition.onerror = () => {
+        setEscuchando(false);
+      };
+
+      recognition.onend = () => {
+        setEscuchando(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
   }, []);
 
-  const manejarRespuesta = (opcionSeleccionada) => {
-    // Si ya tocó una opción, bloquea los botones para que no toque dos veces
+  // Función para leer el texto en voz alta
+  const hablarTexto = (texto, callback = null) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = 1.0;
+    
+    if (callback) {
+      utterance.onend = callback;
+    }
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Efecto que lee la pregunta automáticamente si está en modo voz
+  useEffect(() => {
+    if (modoVoz && preguntasMezcladas.length > 0 && !juegoTerminado && !estadoRespuesta) {
+      const pregunta = preguntasMezcladas[preguntaActual];
+      const textoHablar = `Siguiente pregunta. ${pregunta.pregunta} ... Opciones. ${pregunta.opciones.join(". ... ")}. ¿Cuál es tu respuesta?`;
+      
+      hablarTexto(textoHablar, () => {
+        // Arranca a escuchar automáticamente cuando termina de leer
+        iniciarEscucha();
+      });
+    }
+  }, [preguntaActual, modoVoz, juegoTerminado, preguntasMezcladas]);
+
+  const iniciarEscucha = () => {
+    if (recognitionRef.current) {
+      setEscuchando(true);
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        setEscuchando(false);
+      }
+    }
+  };
+
+  const validarRespuestaPorVoz = (textoHablado) => {
+    const preguntaObj = preguntasMezcladas[preguntaActual];
+    
+    // Buscar si lo que dijo coincide con alguna de las opciones
+    const opcionDetectada = preguntaObj.opciones.find(opt => 
+      textoHablado.includes(opt.toLowerCase()) || opt.toLowerCase().includes(textoHablado)
+    );
+
+    if (opcionDetectada) {
+      manejarRespuesta(opcionDetectada, true);
+    } else {
+      hablarTexto("No te entendí bien. Repetí tu respuesta por favor.", () => {
+        iniciarEscucha();
+      });
+    }
+  };
+
+  const manejarRespuesta = (opcionSeleccionada, vieneDeVoz = false) => {
     if (estadoRespuesta) return; 
 
-    const esCorrecta = opcionSeleccionada === preguntasMezcladas[preguntaActual].respuestaCorrecta;
+    const preguntaObj = preguntasMezcladas[preguntaActual];
+    const esCorrecta = opcionSeleccionada === preguntaObj.respuestaCorrecta;
     
-    // Muestra los colores verde/rojo
-    setEstadoRespuesta({ seleccion: opcionSeleccionada, correcta: preguntasMezcladas[preguntaActual].respuestaCorrecta });
+    setEstadoRespuesta({ seleccion: opcionSeleccionada, correcta: preguntaObj.respuestaCorrecta });
+
+    if (modoVoz || vieneDeVoz) {
+      const mensajeFinal = esCorrecta ? "¡Correcto! Sumaste diez puntos." : `Incorrecto. La respuesta era ${preguntaObj.respuestaCorrecta}.`;
+      hablarTexto(mensajeFinal);
+    }
 
     if (esCorrecta) {
       setPuntosSesion(prev => prev + 10);
       
-      // GUARDA EN FIREBASE EN SEGUNDO PLANO (sin trabar la app)
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
-        currentUser.puntosTrivia = puntosTotales; // Actualiza puntaje visual rápido
+        currentUser.puntosTrivia = puntosTotales;
         updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { 
           puntosTrivia: puntosTotales 
-        }).catch(err => console.error("Error guardando puntos en silencio:", err));
+        }).catch(() => {});
       }
     }
 
-    // Espera 1.5 segundos justos y pasa a la próxima pregunta sin trabarse
     setTimeout(() => {
       if (preguntaActual + 1 < preguntasMezcladas.length) {
         setPreguntaActual(preguntaActual + 1);
         setEstadoRespuesta(null);
       } else {
         setJuegoTerminado(true);
+        if (modoVoz) hablarTexto("¡Excelente! Has terminado el desafío.");
       }
-    }, 1500);
+    }, modoVoz ? 3500 : 1500); // Dar más tiempo para que termine de hablar en modo voz
   };
+
+  const toggleModoVoz = () => {
+    const nuevoModo = !modoVoz;
+    setModoVoz(nuevoModo);
+    if (!nuevoModo) {
+      window.speechSynthesis.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setEscuchando(false);
+    }
+  };
+
+  // Limpiar motores al salir del componente
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
+  }, []);
 
   if (preguntasMezcladas.length === 0) {
     return <div className="text-center p-10 text-white font-bold">Cargando desafío...</div>;
@@ -250,7 +254,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   if (juegoTerminado) {
     return (
       <div className="bg-blue-950/80 border border-blue-500/40 p-8 rounded-3xl text-center shadow-xl">
-        <h2 className="text-4xl font-black text-white mb-4">¡Completaste todas las preguntas!</h2>
+        <h2 className="text-4xl font-black text-white mb-4">¡Completaste el Desafío!</h2>
         <p className="text-blue-300 text-xl mb-6">Sumaste <span className="text-amber-400 font-black">{puntosSesion} puntos</span> hoy.</p>
         <button onClick={onVolver} className="bg-blue-600 text-white font-black py-4 px-8 rounded-xl w-full uppercase tracking-widest hover:scale-105 transition-transform">Volver al Inicio</button>
       </div>
@@ -260,29 +264,51 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const pregunta = preguntasMezcladas[preguntaActual];
 
   return (
-    <div className="bg-black/80 border border-blue-500/40 p-6 md:p-10 rounded-3xl text-center shadow-2xl">
+    <div className="bg-black/80 border border-blue-500/40 p-6 md:p-10 rounded-3xl text-center shadow-2xl relative">
+      
+      {/* BOTÓN GIGANTE MODO VOZ */}
+      <div className="flex justify-center mb-6">
+        <button 
+          onClick={toggleModoVoz}
+          className={`flex items-center gap-3 px-6 py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-xl ${
+            modoVoz 
+              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white animate-pulse' 
+              : 'bg-blue-900 border border-blue-400 text-blue-300 hover:bg-blue-800'
+          }`}
+        >
+          {modoVoz ? <Square size={20} fill="currentColor"/> : <Volume2 size={20} />} 
+          {modoVoz ? 'Detener Voz' : 'Jugar con Voz (Manos Libres)'}
+        </button>
+      </div>
+
       <div className="flex justify-between items-center mb-6 border-b border-blue-500/30 pb-4">
         <span className="text-blue-300 font-bold uppercase tracking-widest text-sm">Pregunta {preguntaActual + 1}</span>
         <span className="bg-blue-600 text-white font-black px-4 py-2 rounded-full shadow-lg">Ganado: {puntosSesion} Pts</span>
       </div>
       
+      {/* INDICADOR DE MICRÓFONO ESCUCHANDO */}
+      {escuchando && (
+        <div className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.8)]" title="Micrófono activado, te estoy escuchando...">
+          <Mic size={24} />
+        </div>
+      )}
+
       <h3 className="text-2xl md:text-3xl font-black text-white mb-10 leading-tight">{pregunta.pregunta}</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {pregunta.opciones.map((opcion, index) => {
-          // Lógica de colores al responder
           let colorBoton = "bg-[#1a1a1a] border-slate-600 text-white hover:bg-blue-600";
           if (estadoRespuesta) {
-            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; // Correcta
-            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; // Incorrecta
-            else colorBoton = "bg-slate-800 border-slate-700 text-slate-500 opacity-50"; // Las demás se apagan
+            if (opcion === estadoRespuesta.correcta) colorBoton = "bg-green-600 border-green-400 text-white"; 
+            else if (opcion === estadoRespuesta.seleccion) colorBoton = "bg-red-600 border-red-400 text-white"; 
+            else colorBoton = "bg-slate-800 border-slate-700 text-slate-500 opacity-50"; 
           }
 
           return (
             <button 
               key={index} 
               onClick={() => manejarRespuesta(opcion)} 
-              disabled={estadoRespuesta !== null} 
+              disabled={estadoRespuesta !== null || escuchando} 
               className={`border font-bold py-5 px-4 rounded-xl transition-all shadow-md ${colorBoton}`}
             >
               {opcion}
@@ -291,7 +317,9 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
         })}
       </div>
 
-      <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">Volver al Inicio (Tus puntos ya están guardados)</button>
+      <button onClick={onVolver} className="mt-10 text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300 transition-colors">
+        Volver al Inicio
+      </button>
     </div>
   );
 }
