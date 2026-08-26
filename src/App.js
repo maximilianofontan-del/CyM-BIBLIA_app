@@ -7,23 +7,19 @@ import {
   Upload, Download, Image as ImageIcon
 } from 'lucide-react';
 
-// --- FIREBASE IMPORTS ---
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc } from 'firebase/firestore';
 
-// MÓDULOS EXISTENTES
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
 
-// BASES DE DATOS BÍBLICAS
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
 import BibliaDHH from './data/DHH.json';
 import BibliaLBLA from './data/LBLA.json';
 import BibliaTLA from './data/TLA.json';
 
-// --- CONFIGURACIÓN OFICIAL DE FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyD2ya4X0gJZg9eaD7sYs7DOz43cu4Q83lQ",
   authDomain: "cym-biblia.firebaseapp.com",
@@ -42,7 +38,7 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 const BIBLIA_VERSIONES = { RVR1960: BibliaRVR, NTV: BibliaNTV, DHH: BibliaDHH, LBLA: BibliaLBLA, TLA: BibliaTLA };
 
 const LECTURAS_DIARIAS = [
-  { libro: 'Salmos', capitulo: 1, devocional: { titulo: 'El Camino de la Bendición', reflexion: 'El Salmo 1 nos planta frente a una gran verdad: nuestras decisiones determinan nuestro destino. El hombre bienaventurado no camina bajo el consejo del mundo, sino que echa raíces junto a las corrientes de agua de la Palabra de Dios.', oracion: 'Señor Jesús, ayúdame a deleitarme en tu Palabra cada día. Amén.' } }, 
+  { libro: 'Salmos', capitulo: 1, devocional: { titulo: 'El Camino de la Bendición', reflexion: 'El Salmo 1 nos planta frente a una gran verdad: nuestras decisiones determinan nuestro destino.', oracion: 'Señor Jesús, ayúdame a deleitarme en tu Palabra cada día. Amén.' } }, 
   { libro: 'Proverbios', capitulo: 3, devocional: { titulo: 'Confianza de Todo Corazón', reflexion: 'Confiar en el Señor con "todo el corazón" implica rendir nuestra necesidad de tener siempre el control.', oracion: 'Padre Celestial, hoy rindo mi ansiedad y mi propio entendimiento. Amén.' } }, 
   { libro: 'Juan', capitulo: 1, devocional: { titulo: 'La Luz que Prevalece', reflexion: 'En el principio era el Verbo, la Palabra encarnada que trajo vida y luz a la humanidad.', oracion: 'Señor Jesús, gracias por venir a mi vida a traer claridad y salvación. Amén.' } }
 ];
@@ -104,7 +100,6 @@ export default function App() {
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
 
-  // ESTADOS DE CAPACITACIONES
   const [cursos, setCursos] = useState([]);
   const [cargandoCursos, setCargandoCursos] = useState(false);
   const [mostrarFormCapacitacion, setMostrarFormCapacitacion] = useState(false);
@@ -119,7 +114,6 @@ export default function App() {
   const [cursoSeleccionadoPago, setCursoSeleccionadoPago] = useState(null);
   const [telefonoWhatsAppAlumno, setTelefonoWhatsAppAlumno] = useState('');
 
-  // ESTADOS DE PREDICACIONES / BOSQUEJOS
   const [listaPredicaciones, setListaPredicaciones] = useState([]);
   const [cargandoPredicas, setCargandoPredicas] = useState(false);
   const [tituloPredicaInput, setTituloPredicaInput] = useState('');
@@ -159,8 +153,10 @@ export default function App() {
     if (!amigosIds || amigosIds.length === 0) return;
     const datos = [];
     for (const id of amigosIds) {
-      const snap = await getDoc(doc(db, 'cym_usuarios', id));
-      if (snap.exists()) datos.push(snap.data());
+      try {
+        const snap = await getDoc(doc(db, 'cym_usuarios', id));
+        if (snap.exists()) datos.push(snap.data());
+      } catch (err) {}
     }
     datos.sort((a, b) => (b.puntosTrivia || 0) - (a.puntosTrivia || 0));
     setListaAmigos(datos);
@@ -168,7 +164,7 @@ export default function App() {
 
   const cargarOcrearUsuario = async (user) => {
     if (!user) return null;
-    const emailLower = user.email.toLowerCase();
+    const emailLower = user.email ? user.email.toLowerCase() : '';
     const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
     const userRef = doc(db, 'cym_usuarios', user.uid);
     
@@ -202,7 +198,7 @@ export default function App() {
       cargarAmigos(userData.amigos);
       const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
       return { uid: user.uid, ...userData, photoURL: fotoFinal };
-    } catch (error) { return { uid: user.uid, email: emailLower, nombre: user.displayName, role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL }; }
+    } catch (error) { return { uid: user.uid, email: emailLower, nombre: user.displayName || 'Usuario', role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL }; }
   };
 
   useEffect(() => { 
@@ -474,7 +470,7 @@ export default function App() {
     );
   }
 
-  const estiloMiPerfil = obtenerEstiloSuscripcion(currentUser.suscripcion, currentUser.role);
+  const estiloMiPerfil = obtenerEstiloSuscripcion(currentUser?.suscripcion, currentUser?.role);
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
@@ -537,16 +533,16 @@ export default function App() {
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current.click()}>
-                <img src={currentUser.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} alt="Perfil" className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-[3px] object-cover ${estiloMiPerfil.colorAro}`} />
+                <img src={currentUser?.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} alt="Perfil" className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-[3px] object-cover ${estiloMiPerfil.colorAro}`} />
                 <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 size={18} className="text-white" /></div>
               </div>
               <div>
-                <h2 className="text-xl md:text-2xl font-black text-white">{currentUser.nombre || currentUser.email}</h2>
+                <h2 className="text-xl md:text-2xl font-black text-white">{currentUser?.nombre || currentUser?.email || "Usuario"}</h2>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${estiloMiPerfil.colorBadge}`}>
                     {estiloMiPerfil.texto}
                   </span>
-                  <span className="text-xs text-[#ffd700] font-bold flex items-center gap-1"><Zap size={12}/> {isOwner ? 'Créditos Ilimitados' : `${currentUser.creditosIA} Consultas IA`}</span>
+                  <span className="text-xs text-[#ffd700] font-bold flex items-center gap-1"><Zap size={12}/> {isOwner ? 'Créditos Ilimitados' : `${currentUser?.creditosIA || 0} Consultas IA`}</span>
                 </div>
               </div>
             </div>
@@ -581,7 +577,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-blue-950/60 to-black border border-blue-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col justify-between">
-                <div><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><Gamepad2 size={24} className="text-blue-400" /><h4 className="text-blue-400 font-black text-sm uppercase tracking-widest">Desafío Bíblico</h4></div><button onClick={retarAmigo} className="p-2 bg-blue-600/20 text-blue-400 hover:text-white hover:bg-blue-600 rounded-full transition-colors"><Share2 size={16} /></button></div><p className="text-white font-bold text-3xl mb-1">{currentUser.puntosTrivia || 0} PTS</p><p className="text-slate-400 text-xs mb-4">Sumá puntos y compartí rachas.</p></div>
+                <div><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><Gamepad2 size={24} className="text-blue-400" /><h4 className="text-blue-400 font-black text-sm uppercase tracking-widest">Desafío Bíblico</h4></div><button onClick={retarAmigo} className="p-2 bg-blue-600/20 text-blue-400 hover:text-white hover:bg-blue-600 rounded-full transition-colors"><Share2 size={16} /></button></div><p className="text-white font-bold text-3xl mb-1">{currentUser?.puntosTrivia || 0} PTS</p><p className="text-slate-400 text-xs mb-4">Sumá puntos y compartí rachas.</p></div>
                 <button onClick={() => setVistaActual('trivia')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Gamepad2 size={16}/> Jugar Trivia</button>
               </div>
               <div className="bg-gradient-to-br from-amber-950/60 to-black border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col justify-between">
@@ -604,7 +600,7 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA ACADEMIA (CAPACITACIONES SINCRÓNICAS) --- */}
+        {/* ACADEMIA */}
         {vistaActual === 'capacitaciones' && (
           <div className="space-y-8">
             <div className="bg-black/80 border border-amber-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
@@ -624,7 +620,6 @@ export default function App() {
               )}
             </div>
 
-            {/* PANEL FORMULARIO OWNER */}
             {isOwner && mostrarFormCapacitacion && (
               <form onSubmit={handleCrearCapacitacion} className="bg-amber-950/30 border border-amber-500/50 p-6 rounded-3xl space-y-4 backdrop-blur-md shadow-2xl">
                 <div className="flex items-center gap-2 border-b border-amber-500/30 pb-3 mb-2">
@@ -671,7 +666,6 @@ export default function App() {
               </form>
             )}
 
-            {/* Malla Cursos */}
             {cargandoCursos ? (
               <div className="text-center py-16 text-amber-400"><Loader2 className="animate-spin mx-auto mb-3" size={36} /><p className="font-bold text-xs uppercase tracking-widest">Cargando Capacitaciones...</p></div>
             ) : cursos.length === 0 ? (
@@ -719,7 +713,7 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA SECCIÓN PREDICACIONES VIP (BOSQUEJOS WORD + PORTADA) --- */}
+        {/* PREDICACIONES VIP */}
         {vistaActual === 'predicas' && (
           <div className="space-y-6">
             <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
@@ -731,12 +725,11 @@ export default function App() {
                 {currentUser?.role !== 'OWNER' && (
                   <div className="bg-cyan-950/80 border border-cyan-500/50 px-4 py-2 rounded-2xl text-right">
                     <p className="text-[10px] font-black uppercase text-cyan-300">Descargas Word del Mes</p>
-                    <p className="text-xl font-black text-white">{currentUser.descargasMesActual || 0} / 10</p>
+                    <p className="text-xl font-black text-white">{currentUser?.descargasMesActual || 0} / 10</p>
                   </div>
                 )}
               </div>
 
-              {/* PANEL DE SUBIDA OWNER */}
               {isOwner && (
                 <div className="bg-cyan-950/40 border border-cyan-500/50 p-6 rounded-2xl mb-8 space-y-4">
                   <h3 className="text-cyan-300 font-black text-sm uppercase tracking-wider flex items-center gap-2"><Upload size={18} /> Cargar Nueva Prédica + Portada (Panel Owner)</h3>
@@ -764,7 +757,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Malla Tarjetas */}
               {cargandoPredicas ? (
                 <div className="text-center py-16 text-cyan-400"><Loader2 className="animate-spin mx-auto mb-3" size={36} /><p className="font-bold text-xs uppercase tracking-widest">Cargando Prédicas...</p></div>
               ) : (
@@ -808,7 +800,7 @@ export default function App() {
           </div>
         )}
 
-        {/* --- VISTA COMUNIDAD --- */}
+        {/* COMUNIDAD */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
@@ -839,7 +831,7 @@ export default function App() {
           </div>
         )}
 
-        {/* LECTOR BÍBLICO COMPLETO */}
+        {/* LECTOR BÍBLICO */}
         {vistaActual === 'lector' && (
           <div className="bg-black/70 p-4 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
             <div className="mb-8 p-4 bg-black/50 border border-[#cca300]/30 rounded-2xl"><div className="grid grid-cols-2 md:grid-cols-4 gap-2"><select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="DHH">DHH</option><option value="LBLA">LBLA</option><option value="TLA">TLA</option></select><select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}</select><select value={capituloActual} onChange={(e) => setCapituloActual(Number(e.target.value))} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select><select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="">Ir a Versículo</option>{versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}</select></div></div>
@@ -848,7 +840,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MÓDULOS DE TRIVIA Y CLUB CYM */}
+        {/* TRIVIA Y CLUB */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
         {vistaActual === 'club' && (
           <ModuloClub 
@@ -864,7 +856,7 @@ export default function App() {
               setTimeout(() => {
                 const confirmo = window.confirm("¿Pudiste completar tu suscripción mensual en MercadoPago? Si tocás 'Aceptar', se abrirá WhatsApp para enviar tu comprobante.");
                 if (confirmo) {
-                  window.open(`https://api.whatsapp.com/send?phone=5491128745169&text=${encodeURIComponent(`Hola pastor Max! Acabo de suscribirme mensualmente al plan *${planElegido}*. Mi email en la app es: *${currentUser.email}*. Te dejo el comprobante para que me actives la membresía!`)}`, '_blank');
+                  window.open(`https://api.whatsapp.com/send?phone=5491128745169&text=${encodeURIComponent(`Hola pastor Max! Acabo de suscribirme mensualmente al plan *${planElegido}*. Mi email en la app es: *${currentUser?.email}*. Te dejo el comprobante para que me actives la membresía!`)}`, '_blank');
                 }
               }, 3000);
             }} 
@@ -872,7 +864,7 @@ export default function App() {
         )}
       </main>
 
-      {/* ASISTENTE CON IA PASTORAL */}
+      {/* IA ASISTENTE */}
       {vistaActual === 'lector' && (
         <div className="fixed bottom-20 right-4 md:right-6 z-50">
           {mostrarAsistente ? (
