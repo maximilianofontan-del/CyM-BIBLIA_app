@@ -99,6 +99,29 @@ function AppMain() {
   const [emailBuscar, setEmailBuscar] = useState('');
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
+  // ESTADOS PARA LA INSTALACIÓN DE LA APP
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [mostrarInstalador, setMostrarInstalador] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault(); // Evita que Chrome muestre su propio cartel feo
+      setDeferredPrompt(e); // Guarda el evento para usarlo al tocar el botón
+      setMostrarInstalador(true); // Muestra nuestro cartel hermoso
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstalarApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt(); // Muestra el cartel oficial del celular
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setMostrarInstalador(false); // Si acepta, ocultamos el cartel
+    }
+    setDeferredPrompt(null);
+  };
 
   // ESTADOS DE CAPACITACIONES
   const [cursos, setCursos] = useState([]);
@@ -950,7 +973,24 @@ function AppMain() {
           )}
         </div>
       )}
-
+{/* CARTEL DE DESCARGA / INSTALACIÓN */}
+{mostrarInstalador && (
+        <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent backdrop-blur-md animate-in slide-in-from-bottom flex flex-col items-center justify-center">
+          <div className="w-full max-w-md bg-[#141414] border-2 border-[#cca300] rounded-3xl p-5 shadow-[0_0_40px_rgba(204,163,0,0.3)] flex flex-col gap-4 relative">
+            <button onClick={() => setMostrarInstalador(false)} className="absolute top-3 right-3 text-slate-400 hover:text-white"><X size={20} /></button>
+            <div className="flex items-center gap-4">
+              <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Icono" className="w-14 h-14 object-contain" />
+              <div>
+                <h3 className="text-white font-black text-lg leading-tight">Instalar App Oficial</h3>
+                <p className="text-slate-400 text-xs font-bold mt-1">Más rápida, sin abrir el navegador y no ocupa espacio.</p>
+              </div>
+            </div>
+            <button onClick={handleInstalarApp} className="w-full bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-2">
+              <Download size={18} /> Descargar e Instalar
+            </button>
+          </div>
+        </div>
+      )}
       <footer className="mt-auto p-6 text-center border-t border-[#cca300]/30 bg-black/70 backdrop-blur-md">
         <span className="text-xs font-black tracking-widest uppercase opacity-40">Ministerio Crecer y Multiplicar</span>
       </footer>
