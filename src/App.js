@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
-  Upload, Download, FileWord, Image as ImageIcon
+  Upload, Download, Image as ImageIcon
 } from 'lucide-react';
 
 // --- FIREBASE IMPORTS ---
@@ -488,7 +488,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
           <button onClick={() => setVistaActual('capacitaciones')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-500 text-black shadow-md hover:scale-105 transition-transform"><GraduationCap size={14} /> <span className="hidden sm:inline">Academia</span></button>
-          <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileWord size={14} /> <span className="hidden sm:inline">Bosquejos VIP</span></button>
+          <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileText size={14} /> <span className="hidden sm:inline">Bosquejos VIP</span></button>
           <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden sm:inline">Comunidad</span></button>
           <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden sm:inline">Jugar</span></button>
           <button onClick={() => setVistaActual('club')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden sm:inline">Club CyM</span></button>
@@ -725,7 +725,7 @@ export default function App() {
             <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
               <div className="flex items-center justify-between border-b border-cyan-500/30 pb-4 mb-6">
                 <div>
-                  <h2 className="text-2xl font-black text-cyan-400 flex items-center gap-2"><FileWord size={26} /> Catálogo de Prédicas VIP</h2>
+                  <h2 className="text-2xl font-black text-cyan-400 flex items-center gap-2"><FileText size={26} /> Catálogo de Prédicas VIP</h2>
                   <p className="text-slate-400 text-xs mt-1">Prédicas completas en Word + Imagen de Portada lista para proyectar.</p>
                 </div>
                 {currentUser?.role !== 'OWNER' && (
@@ -748,7 +748,7 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="file" accept=".doc,.docx" ref={inputRefWord} className="hidden" onChange={handleSelectWord} />
                     <button type="button" onClick={() => inputRefWord.current.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${archivoWordTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
-                      <FileWord size={18} /> {archivoWordTemp ? `✓ ${archivoWordTemp.name}` : "1. Adjuntar Word (.docx)"}
+                      <FileText size={18} /> {archivoWordTemp ? `✓ ${archivoWordTemp.name}` : "1. Adjuntar Word (.docx)"}
                     </button>
 
                     <input type="file" accept="image/*" ref={inputRefPortada} className="hidden" onChange={handleSelectPortada} />
@@ -770,7 +770,7 @@ export default function App() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {listaPredicaciones.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-slate-500"><FileWord size={48} className="mx-auto mb-3 opacity-30" /><p className="font-bold">No hay prédicas subidas todavía.</p></div>
+                    <div className="col-span-full text-center py-12 text-slate-500"><FileText size={48} className="mx-auto mb-3 opacity-30" /><p className="font-bold">No hay prédicas subidas todavía.</p></div>
                   ) : (
                     listaPredicaciones.map((p) => (
                       <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl">
@@ -781,7 +781,7 @@ export default function App() {
                               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                             </div>
                           ) : (
-                            <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileWord size={48} /></div>
+                            <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileText size={48} /></div>
                           )}
                           <div className="p-5">
                             <h4 className="text-white font-black text-xl mb-1 leading-snug">{p.titulo}</h4>
