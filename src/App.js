@@ -67,7 +67,7 @@ const themeStyles = { claro: 'bg-slate-50 text-slate-900 border-slate-200', cym:
 const navStyles = { claro: 'bg-white/90 border-slate-200 text-slate-800', cym: 'bg-black/70 border-[#cca300]/30 text-[#fcd34d]', sepia: 'bg-[#f4e4c3]/90 border-[#d4b886] text-[#5f4b32]' };
 
 export const obtenerEstiloSuscripcion = (suscripcion, role) => {
-  const sub = suscripcion?.toUpperCase() || 'GRATIS';
+  const sub = suscripcion ? String(suscripcion).toUpperCase() : 'GRATIS';
   if (role === 'OWNER') return { colorAro: 'border-[#00a86b]', colorBadge: 'bg-[#00a86b] text-white', texto: '👑 OWNER / DIAMANTE' };
   if (sub === 'BRONCE') return { colorAro: 'border-[#cd7f32]', colorBadge: 'bg-[#cd7f32] text-white', texto: 'SOCIO BRONCE' };
   if (sub === 'PLATA') return { colorAro: 'border-[#c0c0c0]', colorBadge: 'bg-[#c0c0c0] text-black', texto: 'SOCIO PLATA' };
@@ -100,6 +100,7 @@ export default function App() {
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
 
+  // ESTADOS ACADEMIA
   const [cursos, setCursos] = useState([]);
   const [cargandoCursos, setCargandoCursos] = useState(false);
   const [mostrarFormCapacitacion, setMostrarFormCapacitacion] = useState(false);
@@ -114,6 +115,7 @@ export default function App() {
   const [cursoSeleccionadoPago, setCursoSeleccionadoPago] = useState(null);
   const [telefonoWhatsAppAlumno, setTelefonoWhatsAppAlumno] = useState('');
 
+  // ESTADOS PREDICACIONES
   const [listaPredicaciones, setListaPredicaciones] = useState([]);
   const [cargandoPredicas, setCargandoPredicas] = useState(false);
   const [tituloPredicaInput, setTituloPredicaInput] = useState('');
@@ -134,7 +136,7 @@ export default function App() {
       const docs = [];
       querySnapshot.forEach(d => docs.push({ id: d.id, ...d.data() }));
       setCursos(docs);
-    } catch (e) { console.error("Error cargando capacitaciones:", e); }
+    } catch (e) { console.error("Error capacitaciones:", e); }
     finally { setCargandoCursos(false); }
   };
 
@@ -145,18 +147,18 @@ export default function App() {
       const docs = [];
       querySnapshot.forEach(d => docs.push({ id: d.id, ...d.data() }));
       setListaPredicaciones(docs);
-    } catch (e) { console.error("Error cargando predicaciones:", e); }
+    } catch (e) { console.error("Error predicaciones:", e); }
     finally { setCargandoPredicas(false); }
   };
 
   const cargarAmigos = async (amigosIds) => {
-    if (!amigosIds || amigosIds.length === 0) return;
+    if (!amigosIds || !Array.isArray(amigosIds) || amigosIds.length === 0) return;
     const datos = [];
     for (const id of amigosIds) {
       try {
         const snap = await getDoc(doc(db, 'cym_usuarios', id));
         if (snap.exists()) datos.push(snap.data());
-      } catch (err) {}
+      } catch (e) {}
     }
     datos.sort((a, b) => (b.puntosTrivia || 0) - (a.puntosTrivia || 0));
     setListaAmigos(datos);
@@ -196,20 +198,33 @@ export default function App() {
       }
 
       cargarAmigos(userData.amigos);
-      const fotoFinal = userData.photoURL ? userData.photoURL : (user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png");
+      const fotoFinal = userData.photoURL || user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png";
       return { uid: user.uid, ...userData, photoURL: fotoFinal };
-    } catch (error) { return { uid: user.uid, email: emailLower, nombre: user.displayName || 'Usuario', role: isGodMode ? 'OWNER' : 'USER', suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, photoURL: user.photoURL }; }
+    } catch (error) { 
+      return { 
+        uid: user.uid, email: emailLower, nombre: user.displayName || 'Usuario', role: isGodMode ? 'OWNER' : 'USER', 
+        suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, 
+        photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", descargasMesActual: 0 
+      }; 
+    }
   };
 
   useEffect(() => { 
     const unsubscribe = onAuthStateChanged(auth, async (user) => { 
-      if (user) {
-        const u = await cargarOcrearUsuario(user);
-        setCurrentUser(u); 
-        cargarCursosFirebase();
-        cargarPredicacionesFirebase();
-      } else { setCurrentUser(null); }
-      setIsLoadingAuth(false); 
+      try {
+        if (user) {
+          const u = await cargarOcrearUsuario(user);
+          setCurrentUser(u); 
+          cargarCursosFirebase();
+          cargarPredicacionesFirebase();
+        } else { 
+          setCurrentUser(null); 
+        }
+      } catch (e) {
+        console.error("Error Auth:", e);
+      } finally {
+        setIsLoadingAuth(false); 
+      }
     }); 
     return () => unsubscribe(); 
   }, []);
@@ -231,24 +246,24 @@ export default function App() {
         linkMercadoPago: linkMercadoPagoInput, linkGrupoWhatsApp: linkGrupoWhatsAppInput,
         fechaCreacion: new Date().toISOString()
       });
-      alert("¡Capacitación publicada en la Academia!");
+      alert("¡Capacitación publicada!");
       setNombreClaseInput(''); setDescripcionCursoInput(''); setDiasCursoInput('');
       setHorarioCursoInput(''); setValorCuotaInput(''); setLinkMercadoPagoInput('');
       setLinkGrupoWhatsAppInput(''); setMostrarFormCapacitacion(false);
       cargarCursosFirebase();
-    } catch (err) { alert("Error al guardar: " + err.message); }
+    } catch (err) { alert("Error: " + err.message); }
     finally { setGuardandoCurso(false); }
   };
 
   const handleCompletarIngresoWhatsApp = async (cursoId, linkWhatsApp) => {
-    if (!telefonoWhatsAppAlumno.trim()) { alert("Ingresá tu teléfono para registrarte."); return; }
+    if (!telefonoWhatsAppAlumno.trim()) { alert("Ingresá tu teléfono."); return; }
     try {
       const userRef = doc(db, 'cym_usuarios', currentUser.uid);
       await updateDoc(userRef, { cursosInscriptos: arrayUnion({ cursoId, telefonoWhatsApp: telefonoWhatsAppAlumno, fecha: new Date().toISOString() }) });
-      alert("¡Registro completo! Te redirigimos al grupo oficial.");
+      alert("¡Redirigiendo al grupo!");
       window.open(linkWhatsApp, '_blank');
       setCursoSeleccionadoPago(null); setTelefonoWhatsAppAlumno('');
-    } catch (e) { alert("Error al registrar: " + e.message); }
+    } catch (e) { alert("Error: " + e.message); }
   };
 
   const handleSelectWord = (e) => { const file = e.target.files[0]; if (file) setArchivoWordTemp(file); };
@@ -276,7 +291,7 @@ export default function App() {
 
   const handleGuardarPredica = async () => {
     if (!tituloPredicaInput.trim() || !pasajePredicaInput.trim() || !archivoWordTemp) {
-      alert("Ingresá el título, pasaje bíblico y adjuntá el archivo Word.");
+      alert("Completá los campos obligatorios.");
       return;
     }
     setSubiendoPredica(true);
@@ -288,28 +303,28 @@ export default function App() {
           nombreArchivo: archivoWordTemp.name, archivoBase64: ev.target.result,
           portadaBase64: portadaImageTemp || null, fechaSubida: new Date().toISOString()
         });
-        alert("¡Prédica publicada con éxito!");
+        alert("¡Prédica publicada!");
         setTituloPredicaInput(''); setPasajePredicaInput(''); setArchivoWordTemp(null); setPortadaImageTemp(null);
         cargarPredicacionesFirebase();
-      } catch (err) { alert("Error al guardar: " + err.message); }
+      } catch (err) { alert("Error: " + err.message); }
       finally { setSubiendoPredica(false); }
     };
     reader.readAsDataURL(archivoWordTemp);
   };
 
   const handleDescargarArchivoPredica = async (predica, tipo) => {
-    const sub = currentUser?.suscripcion?.toUpperCase() || 'GRATIS';
+    const sub = currentUser?.suscripcion ? String(currentUser.suscripcion).toUpperCase() : 'GRATIS';
     const rol = currentUser?.role || 'USER';
 
     if (rol !== 'OWNER' && sub !== 'DIAMANTE') {
-      alert("🔒 La biblioteca de prédicas en Word y portadas es exclusiva del Plan Diamante ($30.000/mes). Podés unirte en el Club CyM.");
+      alert("🔒 Exclusivo para Plan Diamante ($30.000).");
       setVistaActual('club'); return;
     }
 
     if (tipo === 'word') {
-      let descargasUsadas = currentUser.descargasMesActual || 0;
-      if (currentUser.ultimoMesDescarga !== mesActualClave) descargasUsadas = 0;
-      if (rol !== 'OWNER' && descargasUsadas >= 10) { alert("⚠️ Has alcanzado el límite de 10 descargas de prédicas en Word para este mes."); return; }
+      let descargasUsadas = currentUser?.descargasMesActual || 0;
+      if (currentUser?.ultimoMesDescarga !== mesActualClave) descargasUsadas = 0;
+      if (rol !== 'OWNER' && descargasUsadas >= 10) { alert("⚠️ Has alcanzado el límite mensual."); return; }
 
       const link = document.createElement('a'); link.href = predica.archivoBase64;
       link.download = predica.nombreArchivo || `${predica.titulo}.docx`;
@@ -319,10 +334,9 @@ export default function App() {
         const nuevoTotal = descargasUsadas + 1;
         await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave });
         setCurrentUser(prev => ({ ...prev, descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave }));
-        alert(`¡Descarga iniciada! Has usado ${nuevoTotal} de 10 descargas este mes.`);
       }
     } else if (tipo === 'portada') {
-      if (!predica.portadaBase64) { alert("Esta prédica no incluye imagen de portada."); return; }
+      if (!predica.portadaBase64) { alert("Sin portada adjunta."); return; }
       const link = document.createElement('a'); link.href = predica.portadaBase64;
       link.download = `Portada_${predica.titulo}.jpg`;
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
@@ -347,8 +361,8 @@ export default function App() {
           try {
             await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { photoURL: base64String });
             setCurrentUser(prev => ({...prev, photoURL: base64String}));
-            alert("¡Foto de perfil actualizada correctamente!");
-          } catch (error) { alert("Hubo un error al guardar la foto."); }
+            alert("¡Foto actualizada!");
+          } catch (error) {}
         };
         img.src = event.target.result;
       };
@@ -361,20 +375,20 @@ export default function App() {
     try {
       const q = query(collection(db, "cym_usuarios"), where("email", "==", emailBuscar.toLowerCase()));
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) { alert("No se encontró ningún usuario con ese correo."); return; }
+      if (querySnapshot.empty) { alert("No se encontró usuario."); return; }
       const amigoId = querySnapshot.docs[0].id;
-      if (amigoId === currentUser.uid) { alert("¡No puedes agregarte a ti mismo!"); return; }
+      if (amigoId === currentUser.uid) return;
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { amigos: arrayUnion(amigoId) });
-      alert("¡Amigo agregado con éxito!"); setEmailBuscar('');
+      setEmailBuscar('');
       const userSnap = await getDoc(doc(db, 'cym_usuarios', currentUser.uid));
-      cargarAmigos(userSnap.data().amigos);
-    } catch (e) { alert("Error al buscar."); }
+      cargarAmigos(userSnap.data()?.amigos);
+    } catch (e) {}
   };
 
-  const retarAmigo = () => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Hola! Logré ${currentUser.puntosTrivia || 0} puntos en el Desafío Bíblico de CyM. 📖🏆 ¿Te animás a superarme? Jugá acá: ${window.location.origin}?ref=${currentUser.uid}`)}`, '_blank'); };
+  const retarAmigo = () => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Hola! Logré ${currentUser?.puntosTrivia || 0} puntos en CyM. Jugá acá: ${window.location.origin}?ref=${currentUser?.uid}`)}`, '_blank'); };
 
   const isOwner = currentUser?.role === 'OWNER';
-  const isPremium = isOwner || (currentUser?.suscripcion !== 'GRATIS' && currentUser?.suscripcion !== undefined);
+  const isPremium = isOwner || (currentUser?.suscripcion && currentUser?.suscripcion !== 'GRATIS');
 
   useEffect(() => { window.speechSynthesis.cancel(); setLeyendoAudio(false); }, [capituloActual, libroActual, vistaActual]);
 
@@ -387,16 +401,6 @@ export default function App() {
     window.speechSynthesis.speak(utterance); setLeyendoAudio(true);
   };
 
-  useEffect(() => {
-    const manejarBotonAtras = () => {
-      if (mostrarModalDevocional) setMostrarModalDevocional(false);
-      else if (mostrarAsistente) setMostrarAsistente(false);
-      else if (vistaActual !== 'home') { setVistaActual('home'); setVersiculoActual(''); }
-    };
-    window.history.pushState(null, ''); window.addEventListener('popstate', manejarBotonAtras);
-    return () => window.removeEventListener('popstate', manejarBotonAtras);
-  }, [vistaActual, mostrarModalDevocional, mostrarAsistente]);
-
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
   const devocionalHoy = lecturaHoy.devocional || devocionalPorDefecto;
@@ -404,11 +408,11 @@ export default function App() {
   const handleAbrirDevocional = () => {
     const sub = currentUser?.suscripcion || 'GRATIS'; const rol = currentUser?.role || 'USER';
     if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') { setMostrarModalDevocional(true); } 
-    else { if (window.confirm("🔒 Este devocional pastoral es exclusivo para Socios Oro y Diamante. ¿Querés ir al Club CyM para apoyarnos y desbloquearlo?")) { setVistaActual('club'); } }
+    else { if (window.confirm("🔒 Devocional exclusivo Oro/Diamante. ¿Ir al Club CyM?")) { setVistaActual('club'); } }
   };
 
   const compartirDevocional = () => {
-    const textoCompartir = `*${devocionalHoy.titulo}*\n\n${devocionalHoy.reflexion}\n\n_Oración: "${devocionalHoy.oracion}"_\n\n📖 *Lectura de hoy:* ${lecturaHoy.libro} ${lecturaHoy.capitulo}\n\n✨ *MINISTERIO CRECER Y MULTIPLICAR* ✨\n📲 App CyM Biblia`;
+    const textoCompartir = `*${devocionalHoy.titulo}*\n\n${devocionalHoy.reflexion}\n\n✨ *MINISTERIO CRECER Y MULTIPLICAR* ✨`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoCompartir)}`, '_blank');
   };
 
@@ -429,27 +433,25 @@ export default function App() {
         const textoSeguro = (item.lines && Array.isArray(item.lines)) ? item.lines.join(' ') : (item.text || 'Texto no disponible');
         return { numero: numeroSeguro, texto: textoSeguro };
       });
-    } catch (e) { return [{ numero: '⚠️', texto: `Error en lectura: ${e.message}` }]; }
+    } catch (e) { return [{ numero: '⚠️', texto: 'Contenido no disponible' }]; }
   };
   const versiculosActuales = obtenerVersiculos();
-
-  useEffect(() => { if (versiculoActual && versiculoRefs.current[versiculoActual]) { setTimeout(() => { versiculoRefs.current[versiculoActual].scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); } }, [versiculoActual, capituloActual, libroActual]);
 
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    if (!isOwner && currentUser.creditosIA <= 0) { setChatHistorial([...chatHistorial, { rol: 'asistente', texto: '⚠️ Has agotado tus consultas. Adquiere tu Pase Premium en el Club CyM.' }]); setChatInput(''); return; }
+    if (!isOwner && (currentUser?.creditosIA || 0) <= 0) { setChatHistorial([...chatHistorial, { rol: 'asistente', texto: '⚠️ Consultas agotadas. Unite al Club CyM.' }]); setChatInput(''); return; }
     const nuevoMensajeUsuario = { rol: 'usuario', texto: chatInput };
     const nuevoHistorial = [...chatHistorial, nuevoMensajeUsuario];
     setChatHistorial(nuevoHistorial); setChatInput('');
 
     try {
       const apiKey = process.env.REACT_APP_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
-      const response = await fetch("https://api.openai.com/v1/chat/completions", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "system", content: `Consejero pastoral para 'CyM Biblia'. Leyendo ${libroActual} ${capituloActual}.` }, { role: "user", content: chatInput }], temperature: 0.7 }) });
+      const response = await fetch("https://api.openai.com/v1/chat/completions", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "system", content: `Consejero pastoral CyM. Leyendo ${libroActual} ${capituloActual}.` }, { role: "user", content: chatInput }], temperature: 0.7 }) });
       const data = await response.json();
-      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices?.[0]?.message?.content || "Error en la respuesta." }]);
-      if (!isOwner) { const nuevoLimite = currentUser.creditosIA - 1; setCurrentUser({...currentUser, creditosIA: nuevoLimite}); await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite }); }
-    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: `⚠️ Error: ${error.message}` }]); }
+      setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: data.choices?.[0]?.message?.content || "Respuesta no generada." }]);
+      if (!isOwner) { const nuevoLimite = (currentUser?.creditosIA || 1) - 1; setCurrentUser({...currentUser, creditosIA: nuevoLimite}); await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { creditosIA: nuevoLimite }); }
+    } catch (error) { setChatHistorial([...nuevoHistorial, { rol: 'asistente', texto: 'Error en la conexión.' }]); }
   };
 
   const abrirLibro = (nombreLibro, capitulo = 1) => { setLibroActual(nombreLibro); setCapituloActual(capitulo); setVersiculoActual(''); setVistaActual('lector'); window.scrollTo(0, 0); };
@@ -532,7 +534,7 @@ export default function App() {
           <div className="space-y-8">
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
-              <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current.click()}>
+              <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current?.click()}>
                 <img src={currentUser?.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} alt="Perfil" className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-[3px] object-cover ${estiloMiPerfil.colorAro}`} />
                 <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 size={18} className="text-white" /></div>
               </div>
@@ -740,12 +742,12 @@ export default function App() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="file" accept=".doc,.docx" ref={inputRefWord} className="hidden" onChange={handleSelectWord} />
-                    <button type="button" onClick={() => inputRefWord.current.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${archivoWordTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
+                    <button type="button" onClick={() => inputRefWord.current?.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${archivoWordTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
                       <FileText size={18} /> {archivoWordTemp ? `✓ ${archivoWordTemp.name}` : "1. Adjuntar Word (.docx)"}
                     </button>
 
                     <input type="file" accept="image/*" ref={inputRefPortada} className="hidden" onChange={handleSelectPortada} />
-                    <button type="button" onClick={() => inputRefPortada.current.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${portadaImageTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
+                    <button type="button" onClick={() => inputRefPortada.current?.click()} className={`p-3.5 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs uppercase ${portadaImageTemp ? 'bg-green-600/20 border-green-500 text-green-300' : 'bg-black/40 border-cyan-500/30 text-cyan-400'}`}>
                       <ImageIcon size={18} /> {portadaImageTemp ? "✓ Portada Seleccionada" : "2. Adjuntar Portada (Opcional)"}
                     </button>
                   </div>
@@ -804,7 +806,7 @@ export default function App() {
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
-            <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
+            <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser?.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
             <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
             <div className="space-y-3">
               {listaAmigos.length === 0 ? (
