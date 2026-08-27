@@ -16,6 +16,9 @@ export default async function handler(req, res) {
 
     const productoElegido = precios[tipoProducto || plan] || precios.CORAZONES;
 
+    // Aca definimos la URL principal limpia de tu app
+    const URL_DOMINIO = "https://cy-m-biblia-app.vercel.app/";
+
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -32,11 +35,11 @@ export default async function handler(req, res) {
           }
         ],
         payer: { email: email },
-        external_reference: userId, // Vincula el usuario de Firebase
+        external_reference: userId,
         back_urls: {
-          success: "https://cy-m-biblia-app-git-main-maximilianofontan-dels-projects.vercel.app/",
-          failure: "https://cy-m-biblia-app-git-main-maximilianofontan-dels-projects.vercel.app/",
-          pending: "https://cy-m-biblia-app-git-main-maximilianofontan-dels-projects.vercel.app/"
+          success: URL_DOMINIO,
+          failure: URL_DOMINIO,
+          pending: URL_DOMINIO
         },
         auto_return: "approved"
       })
