@@ -256,7 +256,7 @@ const PREGUNTAS_LOCALES = [
     { "pregunta": "¿Con qué mató Sansón a mil filisteos?", "opciones": ["Con una quijada de asno", "Con una espada", "Con una honda", "Con un palo"], "respuestaCorrecta": "Con una quijada de asno" },
     { "pregunta": "¿A qué dios adoraban los filisteos en el templo que destruyó Sansón?", "opciones": ["Baal", "Asera", "Dagón", "Moloc"], "respuestaCorrecta": "Dagón" },
     { "pregunta": "¿Cómo se llamaba el marido de Noemí?", "opciones": ["Elimelec", "Mahlón", "Quelión", "Booz"], "respuestaCorrecta": "Elimelec" },
-    { "pregunta": "¿En qué ciudad se instalaron Rut y Noemí al volver de Moab?", "opciones": ["Jerusalén", "Jericó", "Belén", "Hebrón"], "respuestaCorrecta": "Belén" },
+    { "pregunta": "¿En qué ciudad se instalarón Rut y Noemí al volver de Moab?", "opciones": ["Jerusalén", "Jericó", "Belén", "Hebrón"], "respuestaCorrecta": "Belén" },
     { "pregunta": "¿Quién fue el padre de Booz?", "opciones": ["Salmón", "Elimelec", "Obed", "No se menciona"], "respuestaCorrecta": "Salmón" },
     { "pregunta": "¿Cómo se llamó el hijo de Rut y Booz?", "opciones": ["David", "Isaí", "Obed", "Salomón"], "respuestaCorrecta": "Obed" },
     { "pregunta": "¿Cómo se llamaban los hijos malvados del sacerdote Elí?", "opciones": ["Nadab y Abiú", "Ofni y Finees", "Coré y Datán", "Eldad y Medad"], "respuestaCorrecta": "Ofni y Finees" },
@@ -492,6 +492,13 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   
   const LETRAS = ['A', 'B', 'C', 'D'];
 
+  // PARCHE 1: MUESTRA EL MODAL SI ENTRAS A LA TRIVIA CON 0 CORAZONES
+  useEffect(() => {
+    if (corazonesActuales <= 0 && !juegoTerminado) {
+      setMostrarModalSinVidas(true);
+    }
+  }, [corazonesActuales, juegoTerminado]);
+
   const normalizar = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
   const reproducirSonido = (tipo) => {
@@ -650,13 +657,13 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   };
 
   const manejarRespuesta = async (opcionSeleccionada, vieneDeVoz = false) => {
-    if (estadoRespuesta || mostrarModalSinVidas) return; 
-
-    // Bloqueo inmediato si no tiene corazones disponibles
+    // PARCHE 2: REABRE EL MODAL SI SE HACE CLIC CON 0 CORAZONES
     if (corazonesActuales <= 0) {
       setMostrarModalSinVidas(true);
       return;
     }
+
+    if (estadoRespuesta || mostrarModalSinVidas) return; 
 
     const preguntaObj = preguntasMezcladas[preguntaActual];
     const esCorrecta = opcionSeleccionada === preguntaObj.respuestaCorrecta;
@@ -864,7 +871,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
                 <button 
                   key={index} 
                   onClick={() => manejarRespuesta(opcion)} 
-                  disabled={estadoRespuesta !== null || escuchando || corazonesActuales <= 0} 
+                  disabled={estadoRespuesta !== null || escuchando} 
                   className={`relative flex items-center justify-between p-4 pl-5 pr-6 rounded-full border-2 transition-all duration-300 font-bold text-lg md:text-xl shadow-lg ${colorBoton}`}
                 >
                   <div className="flex items-center gap-4 text-left">
