@@ -15,8 +15,6 @@ export default async function handler(req, res) {
     };
 
     const productoElegido = precios[tipoProducto || plan] || precios.CORAZONES;
-
-    // Aca definimos la URL principal limpia de tu app
     const URL_DOMINIO = "https://cy-m-biblia-app.vercel.app/";
 
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -35,7 +33,7 @@ export default async function handler(req, res) {
           }
         ],
         payer: { email: email },
-        external_reference: userId,
+        external_reference: String(userId || ''),
         back_urls: {
           success: URL_DOMINIO,
           failure: URL_DOMINIO,
@@ -50,11 +48,11 @@ export default async function handler(req, res) {
     if (data.init_point) {
       return res.status(200).json({ init_point: data.init_point });
     } else {
-      return res.status(500).json({ error: "Error al generar cobro." });
+      return res.status(500).json({ error: "Error al generar la preferencia de cobro." });
     }
 
   } catch (error) {
-    console.error("Error en servidor:", error);
+    console.error("Error en servidor al crear preferencia:", error);
     return res.status(500).json({ error: "Error interno del servidor." });
   }
 }
