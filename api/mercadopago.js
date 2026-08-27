@@ -1,25 +1,7 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-
-// Inicialización ultra segura
-if (!getApps().length) {
-  try {
-    let serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (typeof serviceAccount === 'string') {
-      serviceAccount = JSON.parse(serviceAccount);
-    }
-    if (serviceAccount) {
-      initializeApp({ credential: cert(serviceAccount) });
-    }
-  } catch (err) {
-    console.error("Error al inicializar Firebase Admin:", err);
-  }
-}
-
 export default async function handler(req, res) {
-  // Respondemos 200 a las peticiones GET/HEAD de prueba de Mercado Pago
+  // Manejo de peticiones de prueba
   if (req.method !== 'POST') {
-    return res.status(200).json({ message: 'Endpoint activo' });
+    return res.status(200).json({ status: 'Webhook Activo' });
   }
 
   try {
@@ -29,7 +11,7 @@ export default async function handler(req, res) {
       const paymentId = data?.id || req.body?.data?.id;
 
       if (paymentId) {
-        // Consultar estado directamente a Mercado Pago
+        // 1. Consultar estado del pago en Mercado Pago
         const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
           headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` }
         });
@@ -40,48 +22,63 @@ export default async function handler(req, res) {
           const monto = paymentData.transaction_amount;
           const descripcion = (paymentData.description || '').toLowerCase();
 
-          if (userId && getApps().length > 0) {
-            const db = getFirestore();
-            const userRef = db.collection('cym_usuarios').doc(userId);
+          if (userId) {
+            const firebaseApiKey = "AIzaSyD2ya4X0gJZg9eaD7sYs7DOz43cu4Q83lQ";
+            const projectId = "cym-biblia";
+            const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/cym_usuarios/${userId}?key=${firebaseApiKey}`;
 
-            // COMPRA DE CORAZONES EXTRA ($2.000)
-            if (descripcion.includes('corazones') || monto === 2000) {
-              await userRef.update({
-                corazones: FieldValue.increment(10),
-                ultimoPagoId: String(paymentId),
-                fechaUltimoPago: new Date().toISOString()
+            // 2. Obtener datos actuales del usuario en Firestore
+            const userRes = await fetch(firestoreUrl);
+            const userData = await userRes.json();
+
+            if (userData.fields) {
+              const corazonesActuales = Number(userData.fields.corazones?.integerValue || 10);
+              const camposActualizar = {};
+
+              // COMPRA DE CORAZONES EXTRA ($2.000)
+              if (descripcion.includes('corazones') || monto === 2000) {
+                camposActualizar.corazones = { integerValue: corazonesActuales + 10 };
+                camposActualizar.ultimoPagoId = { stringValue: String(paymentId) };
+                camposActualizar.fechaUltimoPago = { stringValue: new Date().toISOString() };
+              } 
+              // COMPRA DE MEMBRESÍA
+              else {
+                let nuevaSuscripcion = 'BRONCE';
+                if (descripcion.includes('diamante') || monto >= 10000) nuevaSuscripcion = 'DIAMANTE';
+                else if (descripcion.includes('oro') || monto >= 7500) nuevaSuscripcion = 'ORO';
+                else if (descripcion.includes('plata') || monto >= 4500) nuevaSuscripcion = 'PLATA';
+                else if (descripcion.includes('bronce') || monto >= 2000) nuevaSuscripcion = 'BRONCE';
+
+                const hoy = new Date();
+                const fechaVencimiento = new Date(hoy.setDate(hoy.getDate() + 30)).toISOString();
+
+                camposActualizar.suscripcion = { stringValue: nuevaSuscripcion };
+                camposActualizar.fechaVencimiento = { stringValue: fechaVencimiento };
+                camposActualizar.ultimoPagoId = { stringValue: String(paymentId) };
+                camposActualizar.fechaUltimoPago = { stringValue: new Date().toISOString() };
+              }
+
+              // 3. Actualizar documento en Firestore vía PATCH (Sin SDKs pesados)
+              const updateMask = Object.keys(camposActualizar).map(k => `updateMask.fieldPaths=${k}`).join('&');
+              await fetch(`${firestoreUrl}&${updateMask}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: camposActualizar })
               });
-              console.log(`❤️ 10 Corazones acreditados a ${userId}`);
-            } 
-            // COMPRA DE MEMBRESÍA
-            else {
-              let nuevaSuscripcion = 'BRONCE';
-              if (descripcion.includes('diamante') || monto >= 10000) nuevaSuscripcion = 'DIAMANTE';
-              else if (descripcion.includes('oro') || monto >= 7500) nuevaSuscripcion = 'ORO';
-              else if (descripcion.includes('plata') || monto >= 4500) nuevaSuscripcion = 'PLATA';
-              else if (descripcion.includes('bronce') || monto >= 2000) nuevaSuscripcion = 'BRONCE';
 
-              const hoy = new Date();
-              const fechaVencimiento = new Date(hoy.setDate(hoy.getDate() + 30)).toISOString();
-
-              await userRef.update({
-                suscripcion: nuevaSuscripcion,
-                fechaVencimiento: fechaVencimiento,
-                ultimoPagoId: String(paymentId),
-                fechaUltimoPago: new Date().toISOString()
-              });
-              console.log(`✅ Membresía ${nuevaSuscripcion} activada para ${userId}`);
+              console.log(`✅ Firestore actualizado exitosamente para el usuario: ${userId}`);
             }
           }
         }
       }
     }
 
-    // SIEMPRE responder 200 OK para evitar reintentos con error 401 en Mercado Pago
+    // Respuesta 200 para avisar a Mercado Pago que la entrega se completó sin errores
     return res.status(200).send('OK');
 
   } catch (error) {
-    console.error('Error interno en Webhook:', error);
-    return res.status(200).send('OK recibido con advertencia');
+    console.error('Error procesando webhook:', error);
+    // Devolvemos 200 OK para evitar bloqueos del webhook en Mercado Pago
+    return res.status(200).send('OK procesado con excepcion');
   }
 }
