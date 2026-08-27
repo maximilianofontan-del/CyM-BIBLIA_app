@@ -4,12 +4,12 @@ import {
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
-  Upload, Download, Image as ImageIcon
+  Upload, Download, Image as ImageIcon, Shield
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc, onSnapshot } from 'firebase/firestore';
 
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
@@ -76,6 +76,101 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   return { colorAro: 'border-[#3b82f6]', colorBadge: 'bg-[#3b82f6] text-white', texto: 'MEMBRESÍA GRATIS' };
 };
 
+// --------------------------------------------------
+// MÓDULO ADMINISTRADOR / OWNER
+// --------------------------------------------------
+function ModuloAdmin() {
+  const [listaUsuarios, setListaUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'cym_usuarios'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = [];
+      snapshot.forEach((d) => docs.push({ id: d.id, ...d.data() }));
+      setListaUsuarios(docs);
+      setCargando(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const esOnline = (ultimaConexion) => {
+    if (!ultimaConexion) return false;
+    const ahora = new Date();
+    const conexion = new Date(ultimaConexion);
+    return (ahora - conexion) / (1000 * 60) < 5;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-black/80 border border-emerald-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+        <h2 className="text-2xl font-black text-emerald-400 flex items-center gap-2 mb-2">
+          <Shield size={28} /> Panel de Control del Owner
+        </h2>
+        <p className="text-slate-400 text-xs">Métricas en tiempo real de tu aplicación y base de usuarios.</p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] font-black uppercase text-slate-400">Total Usuarios</p>
+            <p className="text-2xl font-black text-white mt-1">{listaUsuarios.length}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] font-black uppercase text-emerald-400">En Línea 🟢</p>
+            <p className="text-2xl font-black text-emerald-400 mt-1">
+              {listaUsuarios.filter((u) => esOnline(u.ultimaConexion)).length}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] font-black uppercase text-amber-400">Membresías VIP ⭐</p>
+            <p className="text-2xl font-black text-amber-400 mt-1">
+              {listaUsuarios.filter((u) => u.suscripcion && u.suscripcion !== 'GRATIS').length}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] font-black uppercase text-cyan-400">Cursos / Capacitaciones</p>
+            <p className="text-2xl font-black text-cyan-400 mt-1">
+              {listaUsuarios.filter((u) => u.cursosInscriptos && u.cursosInscriptos.length > 0).length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-black/80 border border-white/10 p-6 rounded-3xl backdrop-blur-md overflow-x-auto">
+        <h3 className="text-white font-black text-lg mb-4">Lista de Usuarios Registrados</h3>
+        {cargando ? (
+          <div className="text-center py-8 text-amber-400"><Loader2 className="animate-spin mx-auto" size={32} /></div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 text-xs uppercase">
+                <th className="p-3">Estado</th>
+                <th className="p-3">Usuario / Email</th>
+                <th className="p-3">Suscripción</th>
+                <th className="p-3">Cursos</th>
+                <th className="p-3">Puntos</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-sm">
+              {listaUsuarios.map((u) => {
+                const online = esOnline(u.ultimaConexion);
+                return (
+                  <tr key={u.id} className="hover:bg-white/5">
+                    <td className="p-3 font-bold">{online ? <span className="text-emerald-400">🟢 Online</span> : <span className="text-slate-500">🔴 Off</span>}</td>
+                    <td className="p-3 font-bold text-white">{u.nombre || u.email} <br/><span className="text-xs text-slate-400 font-normal">{u.email}</span></td>
+                    <td className="p-3"><span className="bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full text-xs font-bold">{u.suscripcion || 'GRATIS'}</span></td>
+                    <td className="p-3 text-xs text-slate-300">{u.cursosInscriptos ? `${u.cursosInscriptos.length} Inscripto(s)` : 'Ninguno'}</td>
+                    <td className="p-3 font-bold text-blue-400">{u.puntosTrivia || 0} PTS</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AppMain() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -99,15 +194,14 @@ function AppMain() {
   const [emailBuscar, setEmailBuscar] = useState('');
   const inputRefFoto = useRef(null);
   const versiculoRefs = useRef({});
-  // ESTADOS PARA LA INSTALACIÓN DE LA APP
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault(); // Evita que Chrome muestre su propio cartel feo
-      setDeferredPrompt(e); // Guarda el evento para usarlo al tocar el botón
-      setMostrarInstalador(true); // Muestra nuestro cartel hermoso
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setMostrarInstalador(true);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -115,15 +209,14 @@ function AppMain() {
 
   const handleInstalarApp = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt(); // Muestra el cartel oficial del celular
+    deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      setMostrarInstalador(false); // Si acepta, ocultamos el cartel
+      setMostrarInstalador(false);
     }
     setDeferredPrompt(null);
   };
 
-  // ESTADOS DE CAPACITACIONES
   const [cursos, setCursos] = useState([]);
   const [cargandoCursos, setCargandoCursos] = useState(false);
   const [mostrarFormCapacitacion, setMostrarFormCapacitacion] = useState(false);
@@ -138,7 +231,6 @@ function AppMain() {
   const [cursoSeleccionadoPago, setCursoSeleccionadoPago] = useState(null);
   const [telefonoWhatsAppAlumno, setTelefonoWhatsAppAlumno] = useState('');
 
-  // ESTADOS DE PREDICACIONES / BOSQUEJOS
   const [listaPredicaciones, setListaPredicaciones] = useState([]);
   const [cargandoPredicas, setCargandoPredicas] = useState(false);
   const [tituloPredicaInput, setTituloPredicaInput] = useState('');
@@ -151,9 +243,6 @@ function AppMain() {
   const inputRefPortada = useRef(null);
   const mesActualClave = `${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
 
-  // ==================================================
-  // ARREGLO DE BOTÓN ATRÁS (HARDWARE BACK BUTTON NATIVO)
-  // ==================================================
   const estadosNavegacion = useRef({ vistaActual, mostrarModalDevocional, mostrarAsistente });
   
   useEffect(() => {
@@ -185,9 +274,7 @@ function AppMain() {
     window.addEventListener('popstate', manejarBotonAtras);
     return () => window.removeEventListener('popstate', manejarBotonAtras);
   }, []);
-  // ==================================================
 
-  // DESCONGELADOR DE SEGURIDAD
   useEffect(() => {
     const timer = setTimeout(() => { setIsLoadingAuth(false); }, 3000);
     return () => clearTimeout(timer);
@@ -215,11 +302,8 @@ function AppMain() {
     finally { setCargandoPredicas(false); }
   };
 
-  // --- CARGAR AMIGOS Y AGREGAR AL USUARIO AL RANKING ---
   const cargarAmigos = async (amigosIds, usrActual) => {
     const datos = [];
-    
-    // Inyectamos al usuario actual para que aparezca en el ranking
     if (usrActual) {
       datos.push(usrActual);
     }
@@ -233,7 +317,6 @@ function AppMain() {
       }
     }
     
-    // Ordenamos a todos por puntos (Mayor a menor)
     datos.sort((a, b) => (b.puntosTrivia || 0) - (a.puntosTrivia || 0));
     setListaAmigos(datos);
   };
@@ -252,14 +335,17 @@ function AppMain() {
         userData = userSnap.data();
         if (isGodMode && userData.role !== 'OWNER') {
           userData.role = 'OWNER'; userData.suscripcion = 'DIAMANTE'; userData.creditosIA = 9999;
-          await updateDoc(userRef, { role: 'OWNER', suscripcion: 'DIAMANTE', creditosIA: 9999 });
+          await updateDoc(userRef, { role: 'OWNER', suscripcion: 'DIAMANTE', creditosIA: 9999, ultimaConexion: new Date().toISOString() });
+        } else {
+          await updateDoc(userRef, { ultimaConexion: new Date().toISOString() });
         }
       } else {
         userData = { 
           email: emailLower, nombre: user.displayName || 'Hermano/a', role: isGodMode ? 'OWNER' : 'USER', 
           suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: isGodMode ? 9999 : 3, puntosTrivia: 0, 
           amigos: [], photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
-          fechaRegistro: new Date().toISOString(), descargasMesActual: 0, ultimoMesDescarga: mesActualClave
+          fechaRegistro: new Date().toISOString(), descargasMesActual: 0, ultimoMesDescarga: mesActualClave,
+          ultimaConexion: new Date().toISOString()
         };
         await setDoc(userRef, userData);
       }
@@ -283,7 +369,6 @@ function AppMain() {
       const fotoFinal = userData.photoURL || user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png";
       const usrCompleto = { uid: user.uid, ...userData, photoURL: fotoFinal };
       
-      // Llamamos a cargarAmigos pasándole el usuario actual
       cargarAmigos(userData.amigos, usrCompleto);
       return usrCompleto;
       
@@ -578,6 +663,9 @@ function AppMain() {
           <h1 className="text-lg md:text-2xl font-black tracking-wider hidden sm:block">CyM <span className="font-light opacity-80">Biblia</span></h1>
         </div>
         <div className="flex items-center gap-1 md:gap-3 relative z-10">
+          {isOwner && (
+            <button onClick={() => setVistaActual('admin')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-emerald-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden sm:inline">Admin</span></button>
+          )}
           <button onClick={() => setVistaActual('capacitaciones')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-500 text-black shadow-md hover:scale-105 transition-transform"><GraduationCap size={14} /> <span className="hidden sm:inline">Academia</span></button>
           <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileText size={14} /> <span className="hidden sm:inline">Bosquejos VIP</span></button>
           <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden sm:inline">Comunidad</span></button>
@@ -623,6 +711,9 @@ function AppMain() {
 
       <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-8 relative z-10">
         
+        {/* PANEL ADMIN (SOLO OWNER) */}
+        {vistaActual === 'admin' && isOwner && <ModuloAdmin />}
+
         {vistaActual === 'home' && (
           <div className="space-y-8">
             
@@ -973,8 +1064,9 @@ function AppMain() {
           )}
         </div>
       )}
-{/* CARTEL DE DESCARGA / INSTALACIÓN */}
-{mostrarInstalador && (
+
+      {/* CARTEL DE DESCARGA / INSTALACIÓN */}
+      {mostrarInstalador && (
         <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent backdrop-blur-md animate-in slide-in-from-bottom flex flex-col items-center justify-center">
           <div className="w-full max-w-md bg-[#141414] border-2 border-[#cca300] rounded-3xl p-5 shadow-[0_0_40px_rgba(204,163,0,0.3)] flex flex-col gap-4 relative">
             <button onClick={() => setMostrarInstalador(false)} className="absolute top-3 right-3 text-slate-400 hover:text-white"><X size={20} /></button>
