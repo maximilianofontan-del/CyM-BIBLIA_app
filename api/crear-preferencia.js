@@ -6,7 +6,6 @@ export default async function handler(req, res) {
     try {
       const { plan, userId, email } = req.body;
   
-      // Configuramos precios y títulos de cada membresía
       const precios = {
         BRONCE: { titulo: "Suscripción Socio Bronce - CyM Biblia", precio: 2500 },
         PLATA: { titulo: "Suscripción Socio Plata - CyM Biblia", precio: 5000 },
@@ -16,7 +15,6 @@ export default async function handler(req, res) {
   
       const planElegido = precios[plan] || precios.BRONCE;
   
-      // Creamos la preferencia en Mercado Pago INYECTANDO el ID del usuario (external_reference)
       const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
         headers: {
@@ -33,8 +31,7 @@ export default async function handler(req, res) {
             }
           ],
           payer: { email: email },
-          // ESTA ES LA CLAVE DE LA AUTOMATIZACIÓN:
-          external_reference: userId, 
+          external_reference: userId, // VINCULA EL PAGO CON EL USUARIO EN FIREBASE
           back_urls: {
             success: "https://cy-m-biblia-app-git-main-maximilianofontan-dels-projects.vercel.app/",
             failure: "https://cy-m-biblia-app-git-main-maximilianofontan-dels-projects.vercel.app/",
@@ -49,12 +46,10 @@ export default async function handler(req, res) {
       if (data.init_point) {
         return res.status(200).json({ init_point: data.init_point });
       } else {
-        console.error("Error Mercado Pago:", data);
-        return res.status(500).json({ error: "No se pudo generar la preferencia de pago." });
+        return res.status(500).json({ error: "Error al generar cobro." });
       }
   
     } catch (error) {
-      console.error("Error en servidor:", error);
-      return res.status(500).json({ error: "Error interno del servidor." });
+      return res.status(500).json({ error: "Error de servidor." });
     }
   }
