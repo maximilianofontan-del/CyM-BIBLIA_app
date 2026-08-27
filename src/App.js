@@ -326,6 +326,26 @@ function AppMain() {
     const emailLower = user.email ? user.email.toLowerCase() : '';
     const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
     const userRef = doc(db, 'cym_usuarios', user.uid);
+    // Obtener clave del día actual (ej: "2026-08-27")
+const hoyClave = new Date().toISOString().split('T')[0];
+
+if (userSnap.exists()) {
+  userData = userSnap.data();
+  
+  // CONTROL DE CORAZONES A LAS 00:00 HS
+  if (userData.ultimaFechaCorazones !== hoyClave) {
+    userData.corazones = 10; // Resetea a 10 diarios sin acumular
+    userData.ultimaFechaCorazones = hoyClave;
+    await updateDoc(userRef, { corazones: 10, ultimaFechaCorazones: hoyClave });
+  }
+} else {
+  userData = {
+    // ...demás campos
+    corazones: 10,
+    ultimaFechaCorazones: hoyClave,
+    // ...
+  };
+}
     
     try {
       const userSnap = await getDoc(userRef);
