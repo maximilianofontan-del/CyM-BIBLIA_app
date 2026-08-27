@@ -1036,19 +1036,29 @@ function AppMain() {
           <ModuloClub 
             tema={tema} 
             onVolver={() => setVistaActual('home')} 
-            onSuscribir={(planElegido) => {
-              let linkPago = "https://link.mercadopago.com.ar/crecerymultiplicar"; 
-              if (planElegido === 'BRONCE') linkPago = "https://mpago.la/1QrMEYF";
-              if (planElegido === 'PLATA') linkPago = "https://mpago.la/2mEVGiW";
-              if (planElegido === 'ORO') linkPago = "https://mpago.la/1jwezU4";
-              if (planElegido === 'DIAMANTE') linkPago = "https://mpago.la/2X5GusX";
-              window.open(linkPago, '_blank');
-              setTimeout(() => {
-                const confirmo = window.confirm("¿Pudiste completar tu suscripción mensual en MercadoPago? Si tocás 'Aceptar', se abrirá WhatsApp para enviar tu comprobante.");
-                if (confirmo) {
-                  window.open(`https://api.whatsapp.com/send?phone=5491128745169&text=${encodeURIComponent(`Hola pastor Max! Acabo de suscribirme mensualmente al plan *${planElegido}*. Mi email en la app es: *${currentUser?.email}*. Te dejo el comprobante para que me actives la membresía!`)}`, '_blank');
+            onSuscribir={async (planElegido) => {
+              try {
+                const res = await fetch('/api/crear-preferencia', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    plan: planElegido,
+                    userId: currentUser?.uid,
+                    email: currentUser?.email
+                  })
+                });
+
+                const data = await res.json();
+
+                if (data.init_point) {
+                  window.location.href = data.init_point;
+                } else {
+                  alert("No se pudo iniciar el proceso de cobro. Intentá de nuevo.");
                 }
-              }, 3000);
+              } catch (err) {
+                console.error("Error al iniciar suscripción:", err);
+                alert("Error al conectar con la pasarela de pago.");
+              }
             }} 
           />
         )}
