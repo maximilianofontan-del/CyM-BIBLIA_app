@@ -326,26 +326,7 @@ function AppMain() {
     const emailLower = user.email ? user.email.toLowerCase() : '';
     const isGodMode = emailLower === 'maxdelanus@gmail.com' || emailLower === 'maximiliano.fontan@newsan.com.ar';
     const userRef = doc(db, 'cym_usuarios', user.uid);
-    // Obtener clave del día actual (ej: "2026-08-27")
-const hoyClave = new Date().toISOString().split('T')[0];
-
-if (userSnap.exists()) {
-  userData = userSnap.data();
-  
-  // CONTROL DE CORAZONES A LAS 00:00 HS
-  if (userData.ultimaFechaCorazones !== hoyClave) {
-    userData.corazones = 10; // Resetea a 10 diarios sin acumular
-    userData.ultimaFechaCorazones = hoyClave;
-    await updateDoc(userRef, { corazones: 10, ultimaFechaCorazones: hoyClave });
-  }
-} else {
-  userData = {
-    // ...demás campos
-    corazones: 10,
-    ultimaFechaCorazones: hoyClave,
-    // ...
-  };
-}
+    const hoyClave = new Date().toISOString().split('T')[0];
     
     try {
       const userSnap = await getDoc(userRef);
@@ -353,18 +334,41 @@ if (userSnap.exists()) {
 
       if (userSnap.exists()) {
         userData = userSnap.data();
-        if (isGodMode && userData.role !== 'OWNER') {
-          userData.role = 'OWNER'; userData.suscripcion = 'DIAMANTE'; userData.creditosIA = 9999;
-          await updateDoc(userRef, { role: 'OWNER', suscripcion: 'DIAMANTE', creditosIA: 9999, ultimaConexion: new Date().toISOString() });
-        } else {
-          await updateDoc(userRef, { ultimaConexion: new Date().toISOString() });
+        const updates = { ultimaConexion: new Date().toISOString() };
+
+        // RESTAURACIÓN DE CORAZONES A LAS 00:00 HS
+        if (userData.corazones === undefined || userData.ultimaFechaCorazones !== hoyClave) {
+          userData.corazones = 10;
+          userData.ultimaFechaCorazones = hoyClave;
+          updates.corazones = 10;
+          updates.ultimaFechaCorazones = hoyClave;
         }
+
+        if (isGodMode && userData.role !== 'OWNER') {
+          userData.role = 'OWNER';
+          userData.suscripcion = 'DIAMANTE';
+          userData.creditosIA = 9999;
+          updates.role = 'OWNER';
+          updates.suscripcion = 'DIAMANTE';
+          updates.creditosIA = 9999;
+        }
+
+        await updateDoc(userRef, updates);
       } else {
         userData = { 
-          email: emailLower, nombre: user.displayName || 'Hermano/a', role: isGodMode ? 'OWNER' : 'USER', 
-          suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: isGodMode ? 9999 : 3, puntosTrivia: 0, 
-          amigos: [], photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
-          fechaRegistro: new Date().toISOString(), descargasMesActual: 0, ultimoMesDescarga: mesActualClave,
+          email: emailLower, 
+          nombre: user.displayName || 'Hermano/a', 
+          role: isGodMode ? 'OWNER' : 'USER', 
+          suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', 
+          creditosIA: isGodMode ? 9999 : 3, 
+          puntosTrivia: 0, 
+          corazones: 10,
+          ultimaFechaCorazones: hoyClave,
+          amigos: [], 
+          photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
+          fechaRegistro: new Date().toISOString(), 
+          descargasMesActual: 0, 
+          ultimoMesDescarga: mesActualClave,
           ultimaConexion: new Date().toISOString()
         };
         await setDoc(userRef, userData);
@@ -393,10 +397,18 @@ if (userSnap.exists()) {
       return usrCompleto;
       
     } catch (error) { 
+      console.error("Error al cargar usuario:", error);
       return { 
-        uid: user.uid, email: emailLower, nombre: user.displayName || 'Usuario', role: isGodMode ? 'OWNER' : 'USER', 
-        suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', creditosIA: 3, puntosTrivia: 0, 
-        photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", descargasMesActual: 0 
+        uid: user.uid, 
+        email: emailLower, 
+        nombre: user.displayName || 'Usuario', 
+        role: isGodMode ? 'OWNER' : 'USER', 
+        suscripcion: isGodMode ? 'DIAMANTE' : 'GRATIS', 
+        creditosIA: 3, 
+        puntosTrivia: 0, 
+        corazones: 10,
+        photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
+        descargasMesActual: 0 
       }; 
     }
   };
