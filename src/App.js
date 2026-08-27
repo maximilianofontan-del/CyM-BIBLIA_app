@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
-  Upload, Download, Image as ImageIcon, Shield
+  Upload, Download, Image as ImageIcon, Shield, Search, Lock
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -77,11 +77,15 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
 };
 
 // --------------------------------------------------
-// MÓDULO ADMINISTRADOR / OWNER
+// MÓDULO ADMINISTRADOR / OWNER (ACTUALIZADO CON GESTIÓN COMPLETA)
 // --------------------------------------------------
 function ModuloAdmin() {
   const [listaUsuarios, setListaUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [guardandoId, setGuardandoId] = useState(null);
+
+  const NIVELES_MEMBRESIA = ['GRATIS', 'BRONCE', 'PLATA', 'ORO', 'DIAMANTE'];
 
   useEffect(() => {
     const q = query(collection(db, 'cym_usuarios'));
@@ -101,13 +105,72 @@ function ModuloAdmin() {
     return (ahora - conexion) / (1000 * 60) < 5;
   };
 
+  const cambiarSuscripcion = async (uid, nuevaSuscripcion) => {
+    setGuardandoId(uid);
+    try {
+      const userRef = doc(db, 'cym_usuarios', uid);
+      await updateDoc(userRef, {
+        suscripcion: nuevaSuscripcion,
+        fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+    } catch (e) {
+      alert("Error al cambiar membresía.");
+    } finally {
+      setGuardandoId(null);
+    }
+  };
+
+  const cambiarCorazones = async (uid, cantidadActual, delta) => {
+    setGuardandoId(uid);
+    const nuevoValor = Math.max(0, (cantidadActual || 0) + delta);
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', uid), { corazones: nuevoValor });
+    } catch (e) {
+      alert("Error al cambiar corazones.");
+    } finally {
+      setGuardandoId(null);
+    }
+  };
+
+  const cambiarPuntosTrivia = async (uid, puntosActuales, delta) => {
+    setGuardandoId(uid);
+    const nuevoValor = Math.max(0, (puntosActuales || 0) + delta);
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', uid), { puntosTrivia: nuevoValor });
+    } catch (e) {
+      alert("Error al modificar puntos.");
+    } finally {
+      setGuardandoId(null);
+    }
+  };
+
+  const usuariosFiltrados = listaUsuarios.filter(u => 
+    (u.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(busqueda.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="bg-black/80 border border-emerald-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
-        <h2 className="text-2xl font-black text-emerald-400 flex items-center gap-2 mb-2">
-          <Shield size={28} /> Panel de Control del Owner
-        </h2>
-        <p className="text-slate-400 text-xs">Métricas en tiempo real de tu aplicación y base de usuarios.</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div>
+            <h2 className="text-2xl font-black text-emerald-400 flex items-center gap-2">
+              <Shield size={28} /> Panel de Control de Administrador
+            </h2>
+            <p className="text-slate-400 text-xs">Gestión en tiempo real de membresías, corazones, puntos y pantalla activa.</p>
+          </div>
+          
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por usuario o email..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-black/70 border border-emerald-500/30 rounded-xl text-white text-xs outline-none focus:border-emerald-400"
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
@@ -135,31 +198,70 @@ function ModuloAdmin() {
         </div>
       </div>
 
-      <div className="bg-black/80 border border-white/10 p-6 rounded-3xl backdrop-blur-md overflow-x-auto">
-        <h3 className="text-white font-black text-lg mb-4">Lista de Usuarios Registrados</h3>
+      <div className="bg-black/80 border border-white/10 p-6 rounded-3xl backdrop-blur-md overflow-x-auto shadow-2xl">
+        <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2">
+          <Users size={20} className="text-emerald-400" /> Lista de Usuarios y Ajustes Directos
+        </h3>
         {cargando ? (
           <div className="text-center py-8 text-amber-400"><Loader2 className="animate-spin mx-auto" size={32} /></div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="border-b border-white/10 text-slate-400 text-xs uppercase">
-                <th className="p-3">Estado</th>
+                <th className="p-3">Estado / Ubicación</th>
                 <th className="p-3">Usuario / Email</th>
-                <th className="p-3">Suscripción</th>
-                <th className="p-3">Cursos</th>
-                <th className="p-3">Puntos</th>
+                <th className="p-3">Membresía</th>
+                <th className="p-3">Corazones</th>
+                <th className="p-3">Puntos Trivia</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
-              {listaUsuarios.map((u) => {
+              {usuariosFiltrados.map((u) => {
                 const online = esOnline(u.ultimaConexion);
                 return (
                   <tr key={u.id} className="hover:bg-white/5">
-                    <td className="p-3 font-bold">{online ? <span className="text-emerald-400">🟢 Online</span> : <span className="text-slate-500">🔴 Off</span>}</td>
-                    <td className="p-3 font-bold text-white">{u.nombre || u.email} <br/><span className="text-xs text-slate-400 font-normal">{u.email}</span></td>
-                    <td className="p-3"><span className="bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full text-xs font-bold">{u.suscripcion || 'GRATIS'}</span></td>
-                    <td className="p-3 text-xs text-slate-300">{u.cursosInscriptos ? `${u.cursosInscriptos.length} Inscripto(s)` : 'Ninguno'}</td>
-                    <td className="p-3 font-bold text-blue-400">{u.puntosTrivia || 0} PTS</td>
+                    <td className="p-3 font-bold">
+                      {online ? <span className="text-emerald-400 font-black">🟢 Online</span> : <span className="text-slate-500">🔴 Off</span>}
+                      <span className="block text-[10px] font-normal text-amber-400 uppercase mt-0.5">
+                        📍 {u.ubicacionActual || 'Home'}
+                      </span>
+                    </td>
+                    <td className="p-3 font-bold text-white">
+                      {u.nombre || u.email} 
+                      <br/>
+                      <span className="text-xs text-slate-400 font-normal">{u.email}</span>
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={(u.suscripcion || 'GRATIS').toUpperCase()}
+                        onChange={(e) => cambiarSuscripcion(u.id, e.target.value)}
+                        disabled={guardandoId === u.id}
+                        className="bg-black/80 border border-amber-500/50 text-amber-300 font-bold text-xs px-2.5 py-1.5 rounded-xl outline-none"
+                      >
+                        {NIVELES_MEMBRESIA.map(n => (
+                          <option key={n} value={n} className="bg-slate-900 text-white">{n}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1.5 bg-black/60 border border-red-500/30 px-2.5 py-1 rounded-xl w-fit">
+                        <Heart size={14} className="text-red-500 fill-red-500" />
+                        <span className="text-white font-black text-xs">{u.corazones ?? 10}</span>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button onClick={() => cambiarCorazones(u.id, u.corazones, -1)} className="bg-slate-800 hover:bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs font-black">-</button>
+                          <button onClick={() => cambiarCorazones(u.id, u.corazones, 10)} className="bg-red-600 hover:bg-red-500 text-white px-1.5 py-0.5 rounded text-xs font-black">+10</button>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1.5 bg-black/60 border border-blue-500/30 px-2.5 py-1 rounded-xl w-fit">
+                        <span className="text-blue-400 font-black text-xs">{u.puntosTrivia || 0} PTS</span>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button onClick={() => cambiarPuntosTrivia(u.id, u.puntosTrivia, -10)} className="bg-slate-800 hover:bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs font-black">-10</button>
+                          <button onClick={() => cambiarPuntosTrivia(u.id, u.puntosTrivia, 50)} className="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-xs font-black">+50</button>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -175,7 +277,7 @@ function AppMain() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  const [vistaActual, setVistaActual] = useState('home'); 
+  const [vistaActual, setVistaActualState] = useState('home'); 
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
   const [capituloActual, setCapituloActual] = useState(1);
@@ -196,6 +298,17 @@ function AppMain() {
   const versiculoRefs = useRef({});
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
+
+  // ACTUALIZAR VISTA Y REGISTRARLA EN FIRESTORE EN TIEMPO REAL
+  const setVistaActual = (nuevaVista) => {
+    setVistaActualState(nuevaVista);
+    if (currentUser?.uid) {
+      updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
+        ubicacionActual: nuevaVista,
+        ultimaConexion: new Date().toISOString()
+      }).catch(() => {});
+    }
+  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -294,7 +407,10 @@ function AppMain() {
   const cargarPredicacionesFirebase = async () => {
     setCargandoPredicas(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'cym_predicaciones'));
+      let querySnapshot = await getDocs(collection(db, 'cym_predicaciones'));
+      if (querySnapshot.empty) querySnapshot = await getDocs(collection(db, 'predicas'));
+      if (querySnapshot.empty) querySnapshot = await getDocs(collection(db, 'bosquejos'));
+
       const docs = [];
       querySnapshot.forEach(d => docs.push({ id: d.id, ...d.data() }));
       setListaPredicaciones(docs);
@@ -334,7 +450,10 @@ function AppMain() {
 
       if (userSnap.exists()) {
         userData = userSnap.data();
-        const updates = { ultimaConexion: new Date().toISOString() };
+        const updates = { 
+          ultimaConexion: new Date().toISOString(),
+          ubicacionActual: vistaActual
+        };
 
         // RESTAURACIÓN DE CORAZONES A LAS 00:00 HS
         if (userData.corazones === undefined || userData.ultimaFechaCorazones !== hoyClave) {
@@ -369,7 +488,8 @@ function AppMain() {
           fechaRegistro: new Date().toISOString(), 
           descargasMesActual: 0, 
           ultimoMesDescarga: mesActualClave,
-          ultimaConexion: new Date().toISOString()
+          ultimaConexion: new Date().toISOString(),
+          ubicacionActual: 'home'
         };
         await setDoc(userRef, userData);
       }
@@ -518,28 +638,30 @@ function AppMain() {
     const rol = currentUser?.role || 'USER';
 
     if (rol !== 'OWNER' && sub !== 'DIAMANTE') {
-      alert("🔒 Exclusivo para Plan Diamante.");
+      alert("🔒 Exclusivo para Socios DIAMANTE.");
       setVistaActual('club'); return;
     }
 
     if (tipo === 'word') {
-      let descargasUsadas = currentUser?.descargasMesActual || 0;
-      if (currentUser?.ultimoMesDescarga !== mesActualClave) descargasUsadas = 0;
-      if (rol !== 'OWNER' && descargasUsadas >= 10) { alert("⚠️ Has alcanzado el límite mensual."); return; }
+      const urlAdescargar = predica.archivoBase64 || predica.archivoUrl || predica.wordUrl || predica.url;
+      if (!urlAdescargar) { alert("Archivo Word no disponible."); return; }
 
-      const link = document.createElement('a'); link.href = predica.archivoBase64;
-      link.download = predica.nombreArchivo || `${predica.titulo}.docx`;
+      const link = document.createElement('a'); 
+      link.href = urlAdescargar;
+      link.download = predica.nombreArchivo || `${predica.titulo || 'Predica'}.docx`;
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
 
       if (rol !== 'OWNER') {
+        const descargasUsadas = currentUser?.descargasMesActual || 0;
         const nuevoTotal = descargasUsadas + 1;
         await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave });
         setCurrentUser(prev => ({ ...prev, descargasMesActual: nuevoTotal, ultimoMesDescarga: mesActualClave }));
       }
     } else if (tipo === 'portada') {
-      if (!predica.portadaBase64) { alert("Sin portada adjunta."); return; }
-      const link = document.createElement('a'); link.href = predica.portadaBase64;
-      link.download = `Portada_${predica.titulo}.jpg`;
+      if (!predica.portadaBase64 && !predica.portadaUrl) { alert("Sin portada adjunta."); return; }
+      const link = document.createElement('a'); 
+      link.href = predica.portadaBase64 || predica.portadaUrl;
+      link.download = `Portada_${predica.titulo || 'Predica'}.jpg`;
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
   };
@@ -932,18 +1054,18 @@ function AppMain() {
           </div>
         )}
 
-        {/* PREDICACIONES VIP */}
+        {/* PREDICACIONES VIP (SOCIOS DIAMANTE O VERSIÓN CONFALLBACK) */}
         {vistaActual === 'predicas' && (
           <div className="space-y-6">
             <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
               <div className="flex items-center justify-between border-b border-cyan-500/30 pb-4 mb-6">
                 <div>
-                  <h2 className="text-2xl font-black text-cyan-400 flex items-center gap-2"><FileText size={26} /> Catálogo de Prédicas VIP</h2>
-                  <p className="text-slate-400 text-xs mt-1">Prédicas completas en Word + Imagen de Portada lista para proyectar.</p>
+                  <h2 className="text-2xl font-black text-cyan-400 flex items-center gap-2"><FileText size={26} /> Catálogo de Prédicas y Bosquejos VIP</h2>
+                  <p className="text-slate-400 text-xs mt-1">Visibles para todos. Descarga exclusiva en Word (.docx) para <span className="text-yellow-400 font-bold">Socios Diamante</span>.</p>
                 </div>
                 {currentUser?.role !== 'OWNER' && (
                   <div className="bg-cyan-950/80 border border-cyan-500/50 px-4 py-2 rounded-2xl text-right">
-                    <p className="text-[10px] font-black uppercase text-cyan-300">Descargas Word del Mes</p>
+                    <p className="text-[10px] font-black uppercase text-cyan-300">Descargas del Mes</p>
                     <p className="text-xl font-black text-white">{currentUser?.descargasMesActual || 0} / 10</p>
                   </div>
                 )}
@@ -983,35 +1105,47 @@ function AppMain() {
                   {listaPredicaciones.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-slate-500"><FileText size={48} className="mx-auto mb-3 opacity-30" /><p className="font-bold">No hay prédicas subidas todavía.</p></div>
                   ) : (
-                    listaPredicaciones.map((p) => (
-                      <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl">
-                        <div>
-                          {p.portadaBase64 ? (
-                            <div className="h-48 w-full overflow-hidden relative">
-                              <img src={p.portadaBase64} alt={p.titulo} className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                    listaPredicaciones.map((p) => {
+                      const esDiamante = (currentUser?.suscripcion || '').toUpperCase() === 'DIAMANTE' || currentUser?.role === 'OWNER';
+                      return (
+                        <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl">
+                          <div>
+                            {(p.portadaBase64 || p.portadaUrl) ? (
+                              <div className="h-48 w-full overflow-hidden relative">
+                                <img src={p.portadaBase64 || p.portadaUrl} alt={p.titulo || p.nombre} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                              </div>
+                            ) : (
+                              <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileText size={48} /></div>
+                            )}
+                            <div className="p-5">
+                              <h4 className="text-white font-black text-xl mb-1 leading-snug">{p.titulo || p.nombre || 'Prédica'}</h4>
+                              <p className="text-cyan-400 font-bold text-xs">📖 {p.pasaje || p.pasajeBiblico || ''}</p>
                             </div>
-                          ) : (
-                            <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileText size={48} /></div>
-                          )}
-                          <div className="p-5">
-                            <h4 className="text-white font-black text-xl mb-1 leading-snug">{p.titulo}</h4>
-                            <p className="text-cyan-400 font-bold text-xs">📖 {p.pasaje}</p>
+                          </div>
+
+                          <div className="p-5 pt-0 flex gap-2">
+                            <button 
+                              onClick={() => handleDescargarArchivoPredica(p, 'word')} 
+                              className={`flex-1 font-black py-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md ${
+                                esDiamante 
+                                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white' 
+                                  : 'bg-black/60 border border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
+                              }`}
+                            >
+                              {esDiamante ? <Download size={14} /> : <Lock size={14} />} 
+                              {esDiamante ? 'Descargar Word (.docx)' : '🔒 Exclusivo Diamante'}
+                            </button>
+
+                            {(p.portadaBase64 || p.portadaUrl) && (
+                              <button onClick={() => handleDescargarArchivoPredica(p, 'portada')} className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-white/10">
+                                <ImageIcon size={14} /> Portada
+                              </button>
+                            )}
                           </div>
                         </div>
-
-                        <div className="p-5 pt-0 flex gap-2">
-                          <button onClick={() => handleDescargarArchivoPredica(p, 'word')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-black py-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md">
-                            <Download size={14} /> Descargar .DOCX
-                          </button>
-                          {p.portadaBase64 && (
-                            <button onClick={() => handleDescargarArchivoPredica(p, 'portada')} className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-white/10">
-                              <ImageIcon size={14} /> Portada
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
