@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   collection, addDoc, doc, getDoc, updateDoc, onSnapshot, query, where 
 } from 'firebase/firestore';
@@ -6,8 +6,6 @@ import {
   Swords, Trophy, Clock, Send, ChevronLeft, Loader2, Zap, Users, Inbox, XCircle, CheckCircle2 
 } from 'lucide-react';
 
-// MEGA BANCO DE PREGUNTAS PARA EL DUELO
-// La app seleccionará automáticamente 30 al azar para cada batalla.
 const PREGUNTAS_DUELO = [
   { p: "¿Cuántos días y noches llovió durante el diluvio?", r: ["40", "30", "50", "7"], c: 0 },
   { p: "¿Quién fue vendido por sus hermanos como esclavo?", r: ["Moisés", "José", "David", "Daniel"], c: 1 },
@@ -104,10 +102,11 @@ const PREGUNTAS_DUELO = [
 
 export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolver }) {
   const [dueloActivo, setDueloActivo] = useState(null);
-  const [preguntasPartida, setPreguntasPartida] = useState([]); // Las 30 preguntas de esta batalla
+  const [preguntasPartida, setPreguntasPartida] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [preguntaIndex, setPreguntaIndex] = useState(0);
   const [puntosDuelo, setPuntosDuelo] = useState(0);
+  const puntosDueloRef = useRef(0);
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
   const [dueloFinalizado, setDueloFinalizado] = useState(false);
 
@@ -119,6 +118,11 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
 
   const corazonesSuficientes = (currentUser?.corazones || 0) >= 2;
   const amigosParaRetar = listaAmigos.filter(a => a.uid !== currentUser.uid);
+
+  // MANTENER REFERENCIA ACTUALIZADA DE LOS PUNTOS PARA EL CORTE SÚBITO
+  useEffect(() => {
+    puntosDueloRef.current = puntosDuelo;
+  }, [puntosDuelo]);
 
   // ESCUCHAR DESAFÍOS ENTRANTES
   useEffect(() => {
@@ -144,7 +148,22 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     return () => clearInterval(timer);
   }, [tiempoRestante, dueloActivo, dueloFinalizado, respuestaSeleccionada]);
 
-  // FUNCIÓN PARA PROCESAR LAS 30 PREGUNTAS SINCRONIZADAS
+  // ESCUCHADOR DE CORTE: SI EL OPONENTE TERMINA ANTES, ME CORTA EL DUELO A MI
+  useEffect(() => {
+    if (!dueloActivo || dueloFinalizado || dueloActivo.estado !== 'ACTIVO') return;
+
+    const soyCreador = currentUser.uid === dueloActivo.creadorId;
+    const elOtroTermino = soyCreador ? dueloActivo.retadorTermino : dueloActivo.creadorTermino;
+
+    if (elOtroTermino) {
+      setDueloFinalizado(true);
+      setTimeout(() => {
+        alert("⏱️ ¡Tu oponente terminó todas las preguntas primero! El duelo se cierra con tu puntaje actual.");
+        finalizarMiTurno(puntosDueloRef.current);
+      }, 100);
+    }
+  }, [dueloActivo, dueloFinalizado, currentUser.uid]);
+
   const procesarDatosDuelo = (data, id) => {
     if (data.preguntasIds && data.preguntasIds.length > 0) {
       setPreguntasPartida(data.preguntasIds.map(indice => PREGUNTAS_DUELO[indice]));
@@ -153,7 +172,6 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     setMensajesChat(data.mensajesChat || []);
   };
 
-  // ACCIÓN 1: RETAR A UN AMIGO Y GENERAR LAS 30 PREGUNTAS
   const retarAmigo = async (amigo) => {
     if (!corazonesSuficientes) {
       alert("⚠️ Necesitás al menos 2 corazones para apostar en un Duelo Bíblico.");
@@ -164,7 +182,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     try {
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones - 2 });
 
-      // LÓGICA VITAL: Generar 30 índices aleatorios únicos sin repetirse
+      // Seleccionar 30 preguntas al azar del banco gigante
       const cantidadPreguntas = Math.min(30, PREGUNTAS_DUELO.length);
       const indicesAleatorios = [];
       while (indicesAleatorios.length < cantidadPreguntas) {
@@ -184,7 +202,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         estado: 'ESPERANDO',
         ganadorId: null,
         mensajesChat: [],
-        preguntasIds: indicesAleatorios, // Guardamos los 30 índices acá
+        preguntasIds: indicesAleatorios,
         creadorTermino: false,
         retadorTermino: false,
         fechaCreacion: new Date().toISOString()
@@ -208,7 +226,6 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     }
   };
 
-  // ACCIÓN 2: ACEPTAR Y CARGAR LAS MISMAS PREGUNTAS
   const aceptarDesafio = async (duelo) => {
     if (!corazonesSuficientes) {
       alert("⚠️ Necesitás al menos 2 corazones para aceptar y apostar.");
@@ -233,7 +250,6 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     }
   };
 
-  // ACCIÓN 3: RECHAZAR
   const rechazarDesafio = async (duelo) => {
     try {
       const docRef = doc(db, 'cym_duelos', duelo.id);
@@ -246,7 +262,6 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     } catch(e) {}
   };
 
-  // ACCIÓN 4: CANCELAR
   const cancelarDesafioEnviado = async () => {
     if (!dueloActivo) return;
     try {
@@ -269,6 +284,9 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
 
   const siguientePregunta = (puntosActuales = puntosDuelo) => {
     setTimeout(async () => {
+      // Si cortaron el duelo por muerte súbita mientras estaba en el timeout, evitamos avanzar.
+      if (dueloFinalizado) return;
+
       if (preguntaIndex + 1 < preguntasPartida.length) {
         setPreguntaIndex(preguntaIndex + 1);
         setRespuestaSeleccionada(null);
@@ -283,13 +301,15 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
   const finalizarMiTurno = async (puntosFinales) => {
     if (!dueloActivo) return;
     const dueloRef = doc(db, 'cym_duelos', dueloActivo.id);
+    const soyCreador = dueloActivo.creadorId === currentUser.uid;
 
-    if (dueloActivo.creadorId === currentUser.uid) {
+    if (soyCreador) {
       await updateDoc(dueloRef, { creadorPuntos: puntosFinales, creadorTermino: true });
     } else {
       await updateDoc(dueloRef, { retadorPuntos: puntosFinales, retadorTermino: true });
     }
 
+    // El último en guardar datos es el encargado de evaluar quién ganó
     const snap = await getDoc(dueloRef);
     const data = snap.data();
     if (data.creadorTermino && data.retadorTermino && data.estado !== 'FINALIZADO') {
@@ -303,7 +323,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     else if (pRetador > pCreador) ganador = idRetador;
 
     await updateDoc(doc(db, 'cym_duelos', id), { 
-      ganadorId: ganador,
+      ganadorId: ganador || 'EMPATE',
       estado: 'FINALIZADO' 
     });
 
@@ -342,12 +362,17 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     enviarMensajeChat();
   };
 
+  const onCerrarMenu = () => {
+    if (dueloActivo && dueloActivo.estado === 'ESPERANDO') cancelarDesafioEnviado();
+    onVolver();
+  };
+
   return (
     <div className="relative min-h-[80vh] w-full flex flex-col items-center justify-start p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-purple-950/80 to-slate-900 border-2 border-purple-500/30 text-white shadow-2xl overflow-hidden">
       
       {/* BARRA SUPERIOR */}
       <div className="w-full flex justify-between items-center z-10 mb-6">
-        <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
+        <button onClick={onCerrarMenu} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft size={22} />
         </button>
         <div className="flex items-center gap-2 bg-purple-600/30 border border-purple-400/40 px-4 py-1.5 rounded-full text-purple-300 font-black text-xs uppercase tracking-widest">
@@ -355,13 +380,13 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         </div>
       </div>
 
-      {/* VISTA 1: SALÓN DE DESAFÍOS (INBOX + LISTA DE AMIGOS) */}
+      {/* VISTA 1: SALÓN DE DESAFÍOS */}
       {!dueloActivo && (
         <div className="w-full max-w-2xl space-y-6 z-10">
           <div className="bg-purple-900/30 border border-purple-500/30 p-6 rounded-3xl text-center shadow-lg">
             <Swords size={48} className="text-purple-400 mx-auto mb-3" />
             <h2 className="text-2xl font-black text-white">Salón de Duelos</h2>
-            <p className="text-slate-300 text-xs mt-1">Apostá 2 corazones y desafiá a tus amigos en una partida de 30 preguntas al azar.</p>
+            <p className="text-slate-300 text-xs mt-1">Apostá 2 corazones y desafiá a tus amigos en una partida de 30 preguntas. El primero en terminar puede cortar la batalla.</p>
           </div>
 
           {/* INBOX */}
@@ -438,7 +463,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         </div>
       )}
 
-      {/* VISTA 3: BATALLA ACTIVA (USANDO LAS 30 PREGUNTAS ALEATORIAS) */}
+      {/* VISTA 3: BATALLA ACTIVA */}
       {dueloActivo && dueloActivo.estado === 'ACTIVO' && !dueloFinalizado && preguntasPartida.length > 0 && (
         <div className="w-full max-w-xl space-y-4 my-auto z-10">
           <div className="flex justify-between items-center bg-black/50 border border-white/10 p-4 rounded-2xl">
@@ -498,18 +523,74 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         </div>
       )}
 
-      {/* VISTA 4: PANTALLA FINAL */}
+      {/* VISTA 4: PANTALLA DE RESULTADOS FINALES */}
       {dueloFinalizado && (
         <div className="w-full max-w-lg text-center space-y-6 my-auto z-10">
-          <div className="bg-gradient-to-b from-amber-500/20 to-black/80 border border-amber-500/40 p-8 rounded-3xl space-y-4 shadow-2xl">
-            <Trophy size={60} className="text-amber-400 mx-auto" />
-            <h2 className="text-2xl font-black text-white">¡Duelo Finalizado!</h2>
-            <p className="text-slate-300 text-sm">Obtuviste <span className="text-amber-400 font-bold">{puntosDuelo} Puntos</span>.</p>
-            <div className="bg-black/60 p-4 rounded-2xl border border-amber-500/30 text-xs space-y-2">
-              <p className="text-slate-400">Si tu puntaje fue superior al de tu oponente, se te acreditarán <span className="text-emerald-400 font-bold">+4 Corazones</span> automáticamente.</p>
-            </div>
-            <button onClick={onVolver} className="w-full bg-amber-500 hover:bg-amber-400 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-lg">
-              Volver al Menú
+          <div className="bg-gradient-to-b from-slate-900 to-black/80 border border-purple-500/40 p-8 rounded-3xl space-y-4 shadow-2xl">
+            
+            {dueloActivo.estado !== 'FINALIZADO' ? (
+              <div className="py-8">
+                <Loader2 className="animate-spin text-purple-400 mx-auto mb-4" size={48} />
+                <h2 className="text-2xl font-black text-white">Sincronizando con el rival...</h2>
+                <p className="text-slate-400 text-sm mt-2">Calculando y validando los puntajes finales.</p>
+              </div>
+            ) : (
+              <>
+                {(() => {
+                  const soyCreador = currentUser.uid === dueloActivo.creadorId;
+                  const misPuntos = soyCreador ? dueloActivo.creadorPuntos : dueloActivo.retadorPuntos;
+                  const rivalPuntos = soyCreador ? dueloActivo.retadorPuntos : dueloActivo.creadorPuntos;
+                  const miNombre = soyCreador ? dueloActivo.creadorNombre : dueloActivo.retadorNombre;
+                  const rivalNombre = soyCreador ? dueloActivo.retadorNombre : dueloActivo.creadorNombre;
+
+                  let textoResultado = "";
+                  let colorCentral = "";
+                  let icono = null;
+
+                  if (misPuntos > rivalPuntos) {
+                    textoResultado = "¡VICTORIA! 🏆";
+                    colorCentral = "text-emerald-400";
+                    icono = <Trophy size={60} className="text-emerald-400 mx-auto drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]" />;
+                  } else if (misPuntos < rivalPuntos) {
+                    textoResultado = "DERROTA 💀";
+                    colorCentral = "text-red-500";
+                    icono = <XCircle size={60} className="text-red-500 mx-auto" />;
+                  } else {
+                    textoResultado = "EMPATE TÉCNICO 🤝";
+                    colorCentral = "text-amber-400";
+                    icono = <Swords size={60} className="text-amber-400 mx-auto" />;
+                  }
+
+                  return (
+                    <div className="space-y-6">
+                      {icono}
+                      <h2 className={`text-3xl font-black ${colorCentral}`}>{textoResultado}</h2>
+                      
+                      <div className="bg-black/60 p-4 rounded-2xl border border-white/10 space-y-3">
+                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                          <span className="font-bold text-white text-sm">{miNombre} (Tú)</span>
+                          <span className="font-black text-xl text-cyan-400">{misPuntos} PTS</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                          <span className="font-bold text-slate-400 text-sm">{rivalNombre}</span>
+                          <span className="font-black text-xl text-slate-300">{rivalPuntos} PTS</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-black/40 p-4 rounded-xl border border-purple-500/20 text-xs">
+                        {misPuntos > rivalPuntos 
+                          ? <p className="text-emerald-400 font-bold text-sm">¡Ganaste la apuesta! +4 Corazones y +50 Pts de Trivia.</p>
+                          : <p className="text-slate-400">Has perdido los 2 corazones apostados. ¡La revancha te espera!</p>
+                        }
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            <button onClick={onCerrarMenu} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-lg mt-4">
+              Salir del Duelo
             </button>
           </div>
         </div>
