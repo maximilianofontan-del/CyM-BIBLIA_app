@@ -101,16 +101,6 @@ function ModuloAdmin() {
   const [guardandoId, setGuardandoId] = useState(null);
 
   const NIVELES_MEMBRESIA = ['GRATIS', 'BRONCE', 'PLATA', 'ORO', 'DIAMANTE'];
-// --------------------------------------------------
-// MÓDULO ADMINISTRADOR / OWNER
-// --------------------------------------------------
-function ModuloAdmin() {
-  const [listaUsuarios, setListaUsuarios] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
-  const [guardandoId, setGuardandoId] = useState(null);
-
-  const NIVELES_MEMBRESIA = ['GRATIS', 'BRONCE', 'PLATA', 'ORO', 'DIAMANTE'];
 
   useEffect(() => {
     const q = query(collection(db, 'cym_usuarios'));
@@ -249,9 +239,9 @@ function ModuloAdmin() {
                 <th className="p-3">Estado / Ubicación</th>
                 <th className="p-3">Usuario / Email</th>
                 <th className="p-3">Membresía</th>
-                <th className="p-3">Diamantes 💎</th>
-                <th className="p-3">Corazones</th>
-                <th className="p-3">Puntos</th>
+                <th className="p-3 text-cyan-400">Diamantes 💎</th>
+                <th className="p-3 text-red-400">Corazones</th>
+                <th className="p-3 text-blue-400">Puntos Trivia</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
@@ -294,191 +284,6 @@ function ModuloAdmin() {
                       </div>
                     </td>
 
-                    <td className="p-3">
-                      <div className="flex items-center gap-1.5 bg-black/60 border border-red-500/30 px-2.5 py-1 rounded-xl w-fit">
-                        <Heart size={14} className="text-red-500 fill-red-500" />
-                        <span className="text-white font-black text-xs">{u.corazones ?? 10}</span>
-                        <div className="flex items-center gap-1 ml-2">
-                          <button onClick={() => cambiarCorazones(u.id, u.corazones, -1)} className="bg-slate-800 hover:bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs font-black">-</button>
-                          <button onClick={() => cambiarCorazones(u.id, u.corazones, 10)} className="bg-red-600 hover:bg-red-500 text-white px-1.5 py-0.5 rounded text-xs font-black">+10</button>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-1.5 bg-black/60 border border-blue-500/30 px-2.5 py-1 rounded-xl w-fit">
-                        <span className="text-blue-400 font-black text-xs">{u.puntosTrivia || 0} PTS</span>
-                        <div className="flex items-center gap-1 ml-2">
-                          <button onClick={() => cambiarPuntosTrivia(u.id, u.puntosTrivia, -10)} className="bg-slate-800 hover:bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs font-black">-10</button>
-                          <button onClick={() => cambiarPuntosTrivia(u.id, u.puntosTrivia, 50)} className="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-xs font-black">+50</button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-}
-  useEffect(() => {
-    const q = query(collection(db, 'cym_usuarios'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = [];
-      snapshot.forEach((d) => docs.push({ id: d.id, ...d.data() }));
-      setListaUsuarios(docs);
-      setCargando(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const esOnline = (ultimaConexion) => {
-    if (!ultimaConexion) return false;
-    const ahora = new Date();
-    const conexion = new Date(ultimaConexion);
-    return (ahora - conexion) / (1000 * 60) < 5;
-  };
-
-  const cambiarSuscripcion = async (uid, nuevaSuscripcion) => {
-    setGuardandoId(uid);
-    try {
-      const userRef = doc(db, 'cym_usuarios', uid);
-      await updateDoc(userRef, {
-        suscripcion: nuevaSuscripcion,
-        fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      });
-    } catch (e) {
-      alert("Error al cambiar membresía.");
-    } finally {
-      setGuardandoId(null);
-    }
-  };
-
-  const cambiarCorazones = async (uid, cantidadActual, delta) => {
-    setGuardandoId(uid);
-    const nuevoValor = Math.max(0, (cantidadActual || 0) + delta);
-    try {
-      await updateDoc(doc(db, 'cym_usuarios', uid), { corazones: nuevoValor });
-    } catch (e) {
-      alert("Error al cambiar corazones.");
-    } finally {
-      setGuardandoId(null);
-    }
-  };
-
-  const cambiarPuntosTrivia = async (uid, puntosActuales, delta) => {
-    setGuardandoId(uid);
-    const nuevoValor = Math.max(0, (puntosActuales || 0) + delta);
-    try {
-      await updateDoc(doc(db, 'cym_usuarios', uid), { puntosTrivia: nuevoValor });
-    } catch (e) {
-      alert("Error al modificar puntos.");
-    } finally {
-      setGuardandoId(null);
-    }
-  };
-
-  const usuariosFiltrados = listaUsuarios.filter(u => 
-    (u.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(busqueda.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-black/80 border border-emerald-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-          <div>
-            <h2 className="text-2xl font-black text-emerald-400 flex items-center gap-2">
-              <Shield size={28} /> Panel de Control de Administrador
-            </h2>
-            <p className="text-slate-400 text-xs">Gestión en tiempo real de membresías, corazones, puntos y pantalla activa.</p>
-          </div>
-          
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-            <input
-              type="text"
-              placeholder="Buscar por usuario o email..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-black/70 border border-emerald-500/30 rounded-xl text-white text-xs outline-none focus:border-emerald-400"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] font-black uppercase text-slate-400">Total Usuarios</p>
-            <p className="text-2xl font-black text-white mt-1">{listaUsuarios.length}</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] font-black uppercase text-emerald-400">En Línea 🟢</p>
-            <p className="text-2xl font-black text-emerald-400 mt-1">
-              {listaUsuarios.filter((u) => esOnline(u.ultimaConexion)).length}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] font-black uppercase text-amber-400">Membresías VIP ⭐</p>
-            <p className="text-2xl font-black text-amber-400 mt-1">
-              {listaUsuarios.filter((u) => u.suscripcion && u.suscripcion !== 'GRATIS').length}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] font-black uppercase text-cyan-400">Cursos / Capacitaciones</p>
-            <p className="text-2xl font-black text-cyan-400 mt-1">
-              {listaUsuarios.filter((u) => u.cursosInscriptos && u.cursosInscriptos.length > 0).length}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-black/80 border border-white/10 p-6 rounded-3xl backdrop-blur-md overflow-x-auto shadow-2xl">
-        <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2">
-          <Users size={20} className="text-emerald-400" /> Lista de Usuarios y Ajustes Directos
-        </h3>
-        {cargando ? (
-          <div className="text-center py-8 text-amber-400"><Loader2 className="animate-spin mx-auto" size={32} /></div>
-        ) : (
-          <table className="w-full text-left border-collapse min-w-[750px]">
-            <thead>
-              <tr className="border-b border-white/10 text-slate-400 text-xs uppercase">
-                <th className="p-3">Estado / Ubicación</th>
-                <th className="p-3">Usuario / Email</th>
-                <th className="p-3">Membresía</th>
-                <th className="p-3">Corazones</th>
-                <th className="p-3">Puntos Trivia</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
-              {usuariosFiltrados.map((u) => {
-                const online = esOnline(u.ultimaConexion);
-                return (
-                  <tr key={u.id} className="hover:bg-white/5">
-                    <td className="p-3 font-bold">
-                      {online ? <span className="text-emerald-400 font-black">🟢 Online</span> : <span className="text-slate-500">🔴 Off</span>}
-                      <span className="block text-[10px] font-normal text-amber-400 uppercase mt-0.5">
-                        📍 {u.ubicacionActual || 'Home'}
-                      </span>
-                    </td>
-                    <td className="p-3 font-bold text-white">
-                      {u.nombre || u.email} 
-                      <br/>
-                      <span className="text-xs text-slate-400 font-normal">{u.email}</span>
-                    </td>
-                    <td className="p-3">
-                      <select
-                        value={(u.suscripcion || 'GRATIS').toUpperCase()}
-                        onChange={(e) => cambiarSuscripcion(u.id, e.target.value)}
-                        disabled={guardandoId === u.id}
-                        className="bg-black/80 border border-amber-500/50 text-amber-300 font-bold text-xs px-2.5 py-1.5 rounded-xl outline-none"
-                      >
-                        {NIVELES_MEMBRESIA.map(n => (
-                          <option key={n} value={n} className="bg-slate-900 text-white">{n}</option>
-                        ))}
-                      </select>
-                    </td>
                     <td className="p-3">
                       <div className="flex items-center gap-1.5 bg-black/60 border border-red-500/30 px-2.5 py-1 rounded-xl w-fit">
                         <Heart size={14} className="text-red-500 fill-red-500" />
@@ -727,6 +532,7 @@ function AppMain() {
           creditosIA: isGodMode ? 9999 : 3, 
           puntosTrivia: 0, 
           corazones: 10,
+          diamantes: 0,
           ultimaFechaCorazones: hoyClave,
           amigos: [], 
           photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
@@ -772,6 +578,7 @@ function AppMain() {
         creditosIA: 3, 
         puntosTrivia: 0, 
         corazones: 10,
+        diamantes: 0,
         photoURL: user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png", 
         descargasMesActual: 0 
       }; 
