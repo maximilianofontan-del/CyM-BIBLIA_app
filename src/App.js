@@ -338,8 +338,8 @@ function AppMain() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
 
-  // NUEVOS ESTADOS PARA COMUNIDAD Y RANKING
-  const [pestañaComunidad, setPestañaComunidad] = useState('amigos'); // 'amigos' | 'global'
+  // ESTADOS PARA COMUNIDAD Y RANKING
+  const [pestañaComunidad, setPestañaComunidad] = useState('amigos');
   const [rankingGlobal, setRankingGlobal] = useState([]);
 
   // ESTADOS PARA EDICIÓN DE PRÉDICAS
@@ -488,7 +488,6 @@ function AppMain() {
     finally { setCargandoPredicas(false); }
   };
 
-  // CORRECCIÓN VITAL ACÁ (El async faltante que rompió tu código)
   const cargarAmigos = async (amigosIds, usrActual) => {
     const datos = [];
     if (usrActual) {
@@ -853,14 +852,12 @@ function AppMain() {
     } catch (e) {}
   };
 
-  // NUEVA FUNCIÓN PARA AGREGAR AMIGOS DIRECTAMENTE DESDE EL RANKING GLOBAL
   const agregarAmigoPorId = async (amigoId) => {
     if (amigoId === currentUser.uid) return;
     try {
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { amigos: arrayUnion(amigoId) });
       alert("¡Amigo agregado con éxito! Ya puedes desafiarlo.");
       
-      // Refrescar localmente para que se vea reflejado al instante en la app
       const nuevosAmigos = [...(currentUser.amigos || []), amigoId];
       setCurrentUser({...currentUser, amigos: nuevosAmigos});
       
@@ -1072,7 +1069,11 @@ function AppMain() {
             <div className="bg-black/80 border border-[#cca300]/40 p-5 rounded-3xl backdrop-blur-md flex items-center shadow-xl">
               <input type="file" accept="image/*" ref={inputRefFoto} className="hidden" onChange={handleImageUpload} />
               <div className="relative group cursor-pointer mr-4" onClick={() => inputRefFoto.current?.click()}>
-                <img src={currentUser?.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} alt="Perfil" className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-[3px] object-cover ${estiloMiPerfil.colorAro}`} />
+                <img 
+                  src={currentUser?.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} 
+                  alt="Perfil" 
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-[3px] object-cover ${currentUser?.marcoEquipado || estiloMiPerfil.colorAro}`} 
+                />
                 <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 size={18} className="text-white" /></div>
               </div>
               <div>
@@ -1421,7 +1422,7 @@ function AppMain() {
                         <div key={index} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
                           <div className="flex items-center gap-3">
                             <span className={`font-black text-lg w-8 text-center ${index < 3 ? 'text-3xl' : 'text-slate-500'}`}>{medalla || index + 1}</span>
-                            <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
+                            <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${amigo.marcoEquipado || estiloAmigo.colorAro}`} alt="foto" />
                             <div>
                               <p className="font-bold text-white leading-tight">
                                 {esYo ? 'Tú' : amigo.nombre}
@@ -1454,7 +1455,7 @@ function AppMain() {
                       <div key={user.id} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
                         <div className="flex items-center gap-3">
                           <span className={`font-black text-lg w-8 text-center ${index < 3 ? 'text-3xl' : 'text-slate-500'}`}>{medalla || index + 1}</span>
-                          <img src={user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloUsuario.colorAro}`} alt="foto" />
+                          <img src={user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${user.marcoEquipado || estiloUsuario.colorAro}`} alt="foto" />
                           <div>
                             <p className="font-bold text-white leading-tight">
                               {esYo ? 'Tú' : (user.nombre || user.email)}
