@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  collection, addDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where, getDocs, arrayUnion 
+  collection, addDoc, doc, updateDoc, onSnapshot, query, arrayUnion 
 } from 'firebase/firestore';
 import { 
-  Shield, Users, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, CheckCircle2, UserCheck, MessageSquare, Award
+  Shield, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, UserCheck, MessageSquare
 } from 'lucide-react';
 
 export default function ModuloClanes({ currentUser, db, onVolver }) {
   const [clanes, setClanes] = useState([]);
   const [miClan, setMiClan] = useState(null);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(true); // Arranca cargando
 
   // ESTADOS FORMULARIO CREAR CLAN
   const [mostrarCrear, setMostrarCrear] = useState(false);
@@ -25,6 +25,8 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   // 1. ESCUCHAR TODOS LOS CLANES Y BUSCAR EL CLAN DEL USUARIO
   useEffect(() => {
     const q = query(collection(db, 'cym_clanes'));
+    
+    // Escuchador de Firebase
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const lista = [];
       let clanUsuario = null;
@@ -42,11 +44,18 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       setClanes(lista);
       setMiClan(clanUsuario);
       if (clanUsuario) setMensajesChat(clanUsuario.mensajesChat || []);
+      
+      // APAGAR CARGA CUANDO RESPONDE
+      setCargando(false);
+      
+    }, (error) => {
+      console.error("Error consultando clanes en Firestore:", error);
+      // APAGAR CARGA INCLUSO SI HAY ERROR DE PERMISOS
       setCargando(false);
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, db]);
 
   // 2. CREAR UN NUEVO CLAN (COSTO: 50 DIAMANTES 💎)
   const handleCrearClan = async (e) => {
@@ -94,7 +103,8 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       setNombreClan('');
       setDescripcionClan('');
     } catch (err) {
-      alert("Error al intentar crear el Clan.");
+      console.error(err);
+      alert("Error al intentar crear el Clan. Revisá los permisos de la base de datos.");
     } finally {
       setCreando(false);
     }
@@ -116,7 +126,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
 
     try {
       if (clan.esPrivado) {
-        // Enviar solicitud de ingreso
         await updateDoc(clanRef, {
           solicitudesPendientes: arrayUnion({
             uid: currentUser.uid,
@@ -126,7 +135,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         });
         alert("Solicitud enviada al Líder del Clan.");
       } else {
-        // Unirse directamente
         await updateDoc(clanRef, {
           miembrosIds: arrayUnion(currentUser.uid)
         });
@@ -176,7 +184,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       {cargando ? (
         <div className="text-center py-20 text-amber-400 my-auto">
           <Shield size={48} className="animate-bounce mx-auto mb-2" />
-          <p className="font-bold text-xs uppercase tracking-widest">Cargando Santuario de Clanes...</p>
+          <p className="font-bold text-xs uppercase tracking-widest">Conectando...</p>
         </div>
       ) : miClan ? (
         
@@ -239,7 +247,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
               <h2 className="text-2xl font-black text-amber-400 flex items-center gap-2">
                 <Shield size={28} /> Salón de Clanes
               </h2>
-              <p className="text-slate-400 text-xs">Unite a un grupo o fundá el tuyo propio para competir en las Batallas 3v3.</p>
+              <p className="text-slate-400 text-xs">Unite a un grupo o fundá el tuyo propio para competir en Batallas 3v3.</p>
             </div>
             
             <button
