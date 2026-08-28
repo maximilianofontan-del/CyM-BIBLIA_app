@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  collection, addDoc, doc, getDoc, updateDoc, onSnapshot 
+  collection, addDoc, doc, getDoc, updateDoc, onSnapshot, query, where 
 } from 'firebase/firestore';
 import { 
-  Swords, Trophy, Clock, Send, ChevronLeft, Loader2, Zap, Share2
+  Swords, Trophy, Clock, Send, ChevronLeft, Loader2, Zap, Users, Inbox, XCircle, CheckCircle2 
 } from 'lucide-react';
 
 const PREGUNTAS_DUELO = [
@@ -14,7 +14,7 @@ const PREGUNTAS_DUELO = [
   { p: "¿Quién derrotó al gigante Goliat con una honda?", r: ["Saúl", "David", "Salomón", "Sansón"], c: 1 }
 ];
 
-export default function ModuloDuelo({ currentUser, db, onVolver }) {
+export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolver }) {
   const [dueloActivo, setDueloActivo] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [preguntaIndex, setPreguntaIndex] = useState(0);
@@ -22,21 +22,39 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
   const [dueloFinalizado, setDueloFinalizado] = useState(false);
 
-  // RELOJ DE 15 SEGUNDOS
   const [tiempoRestante, setTiempoRestante] = useState(15);
-
-  // CHAT DE BATALLA
   const [mensajesChat, setMensajesChat] = useState([]);
   const [inputChat, setInputChat] = useState('');
 
-  const corazonesSuficientes = (currentUser?.corazones || 0) >= 2;
+  // INBOX: Desafíos entrantes
+  const [desafiosRecibidos, setDesafiosRecibidos] = useState([]);
 
-  // EFECTO DEL RELOJ DE 15s POR PREGUNTA
+  const corazonesSuficientes = (currentUser?.corazones || 0) >= 2;
+  const amigosParaRetar = listaAmigos.filter(a => a.uid !== currentUser.uid);
+
+  // ESCUCHAR DESAFÍOS ENTRANTES EN TIEMPO REAL
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const q = query(
+      collection(db, 'cym_duelos'),
+      where('retadorId', '==', currentUser.uid),
+      where('estado', '==', 'ESPERANDO')
+    );
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const retos = [];
+      snap.forEach(d => retos.push({ id: d.id, ...d.data() }));
+      setDesafiosRecibidos(retos);
+    });
+    return () => unsubscribe();
+  }, [currentUser, db]);
+
+  // EL RELOJ DE 15 SEGUNDOS
   useEffect(() => {
     if (!dueloActivo || dueloFinalizado || respuestaSeleccionada !== null || dueloActivo.estado === 'ESPERANDO') return;
 
     if (tiempoRestante === 0) {
-      manejarTiempoAgotado();
+      setRespuestaSeleccionada(-1);
+      siguientePregunta();
       return;
     }
 
@@ -47,12 +65,8 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
     return () => clearInterval(timer);
   }, [tiempoRestante, dueloActivo, dueloFinalizado, respuestaSeleccionada]);
 
-  const manejarTiempoAgotado = () => {
-    setRespuestaSeleccionada(-1);
-    siguientePregunta();
-  };
-
-  const crearDesafio = async () => {
+  // ACCIÓN 1: RETAR A UN AMIGO
+  const retarAmigo = async (amigo) => {
     if (!corazonesSuficientes) {
       alert("⚠️ Necesitás al menos 2 corazones para apostar en un Duelo Bíblico.");
       return;
@@ -60,36 +74,92 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
 
     setBuscando(true);
     try {
-      const userRef = doc(db, 'cym_usuarios', currentUser.uid);
-      await updateDoc(userRef, { corazones: (currentUser.corazones - 2) });
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones - 2 });
 
       const docRef = await addDoc(collection(db, 'cym_duelos'), {
         creadorId: currentUser.uid,
         creadorNombre: currentUser.nombre || 'Jugador',
-        creadorFoto: currentUser.photoURL,
         creadorPuntos: 0,
-        retadorId: null,
-        retadorNombre: null,
+        retadorId: amigo.uid,
+        retadorNombre: amigo.nombre || 'Amigo',
         retadorPuntos: 0,
         estado: 'ESPERANDO',
         ganadorId: null,
         mensajesChat: [],
+        creadorTermino: false,
+        retadorTermino: false,
         fechaCreacion: new Date().toISOString()
       });
 
-      onSnapshot(doc(db, 'cym_duelos', docRef.id), (snap) => {
+      // Escuchar la batalla en vivo
+      onSnapshot(docRef, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
+          if (data.estado === 'RECHAZADO') {
+             alert(`${data.retadorNombre} ha rechazado o cancelado el desafío. Se te devolvieron los 2 corazones.`);
+             setDueloActivo(null);
+             return;
+          }
           setDueloActivo({ id: snap.id, ...data });
           setMensajesChat(data.mensajesChat || []);
         }
       });
-
     } catch (e) {
-      alert("Error al crear el desafío.");
+      alert("Error al enviar el desafío.");
     } finally {
       setBuscando(false);
     }
+  };
+
+  // ACCIÓN 2: ACEPTAR UN DESAFÍO RECIBIDO
+  const aceptarDesafio = async (duelo) => {
+    if (!corazonesSuficientes) {
+      alert("⚠️ Necesitás al menos 2 corazones para aceptar y apostar.");
+      return;
+    }
+    setBuscando(true);
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones - 2 });
+      const docRef = doc(db, 'cym_duelos', duelo.id);
+      
+      // Pasar el estado a ACTIVO arranca la partida para ambos
+      await updateDoc(docRef, { estado: 'ACTIVO' });
+
+      onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setDueloActivo({ id: docSnap.id, ...docSnap.data() });
+          setMensajesChat(docSnap.data().mensajesChat || []);
+        }
+      });
+    } catch (e) {
+      alert("Error al conectar con la partida.");
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  // ACCIÓN 3: RECHAZAR UN DESAFÍO RECIBIDO
+  const rechazarDesafio = async (duelo) => {
+    try {
+      const docRef = doc(db, 'cym_duelos', duelo.id);
+      await updateDoc(docRef, { estado: 'RECHAZADO' });
+      // Devolver corazones al creador
+      const creadorRef = doc(db, 'cym_usuarios', duelo.creadorId);
+      const creadorSnap = await getDoc(creadorRef);
+      if (creadorSnap.exists()) {
+        await updateDoc(creadorRef, { corazones: (creadorSnap.data().corazones || 0) + 2 });
+      }
+    } catch(e) {}
+  };
+
+  // ACCIÓN 4: CANCELAR DESAFÍO ENVIADO (Si el amigo tarda mucho)
+  const cancelarDesafioEnviado = async () => {
+    if (!dueloActivo) return;
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones + 2 });
+      await updateDoc(doc(db, 'cym_duelos', dueloActivo.id), { estado: 'CANCELADO' });
+      setDueloActivo(null);
+    } catch(e) {}
   };
 
   const responderPregunta = (indexOpcion) => {
@@ -121,21 +191,24 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
     const dueloRef = doc(db, 'cym_duelos', dueloActivo.id);
 
     if (dueloActivo.creadorId === currentUser.uid) {
-      await updateDoc(dueloRef, { creadorPuntos: puntosFinales });
+      await updateDoc(dueloRef, { creadorPuntos: puntosFinales, creadorTermino: true });
     } else {
-      await updateDoc(dueloRef, { retadorPuntos: puntosFinales, estado: 'FINALIZADO' });
-      evaluarGanador(dueloActivo, puntosFinales);
+      await updateDoc(dueloRef, { retadorPuntos: puntosFinales, retadorTermino: true });
+    }
+
+    const snap = await getDoc(dueloRef);
+    const data = snap.data();
+    if (data.creadorTermino && data.retadorTermino && data.estado !== 'FINALIZADO') {
+      evaluarGanador(dueloActivo.id, data.creadorPuntos, data.retadorPuntos, data.creadorId, data.retadorId);
     }
   };
 
-  const evaluarGanador = async (duelo, puntosRetador) => {
-    const pCreador = duelo.creadorPuntos;
+  const evaluarGanador = async (id, pCreador, pRetador, idCreador, idRetador) => {
     let ganador = null;
+    if (pCreador > pRetador) ganador = idCreador;
+    else if (pRetador > pCreador) ganador = idRetador;
 
-    if (pCreador > puntosRetador) ganador = duelo.creadorId;
-    else if (puntosRetador > pCreador) ganador = currentUser.uid;
-
-    await updateDoc(doc(db, 'cym_duelos', duelo.id), { 
+    await updateDoc(doc(db, 'cym_duelos', id), { 
       ganadorId: ganador,
       estado: 'FINALIZADO' 
     });
@@ -169,9 +242,7 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
     setInputChat('');
 
     try {
-      await updateDoc(doc(db, 'cym_duelos', dueloActivo.id), {
-        mensajesChat: nuevosMensajes
-      });
+      await updateDoc(doc(db, 'cym_duelos', dueloActivo.id), { mensajesChat: nuevosMensajes });
     } catch (err) {}
   };
 
@@ -180,70 +251,109 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
     enviarMensajeChat();
   };
 
-  const compartirDesafioWhatsApp = () => {
-    const linkPartida = `${window.location.origin}?duelo=${dueloActivo?.id}`;
-    const texto = `⚔️ ¡Te desafío a un Duelo Bíblico en CyM Biblia! Aposté 2 corazones. Tenés 15 segundos por pregunta. ¿Te animás?\n\nEntrá acá: ${linkPartida}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-  };
-
   return (
-    <div className="relative min-h-[80vh] w-full flex flex-col items-center justify-between p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 border-2 border-blue-500/30 text-white shadow-2xl overflow-hidden">
+    <div className="relative min-h-[80vh] w-full flex flex-col items-center justify-start p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-purple-950/80 to-slate-900 border-2 border-purple-500/30 text-white shadow-2xl overflow-hidden">
       
       {/* BARRA SUPERIOR */}
-      <div className="w-full flex justify-between items-center z-10">
+      <div className="w-full flex justify-between items-center z-10 mb-6">
         <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft size={22} />
         </button>
-        <div className="flex items-center gap-2 bg-blue-600/30 border border-blue-400/40 px-4 py-1.5 rounded-full text-blue-300 font-black text-xs uppercase tracking-widest">
-          <Swords size={16} /> Duelo Sincrónico 1v1
+        <div className="flex items-center gap-2 bg-purple-600/30 border border-purple-400/40 px-4 py-1.5 rounded-full text-purple-300 font-black text-xs uppercase tracking-widest">
+          <Swords size={16} /> Duelos Sincrónicos
         </div>
       </div>
 
-      {/* VISTA 1: CREAR PARTIDA */}
+      {/* VISTA 1: SALÓN DE DESAFÍOS (INBOX + LISTA DE AMIGOS) */}
       {!dueloActivo && (
-        <div className="w-full max-w-xl text-center space-y-6 my-auto z-10">
-          <div className="p-5 bg-blue-500/10 border border-blue-500/30 rounded-3xl inline-block">
-            <Swords size={60} className="text-blue-400 mx-auto" />
-          </div>
+        <div className="w-full max-w-2xl space-y-6 z-10">
           
-          <h2 className="text-3xl md:text-4xl font-black text-white">Desafío en Duplas 1v1</h2>
-          <p className="text-slate-300 text-xs md:text-sm max-w-md mx-auto leading-relaxed">
-            Apostá <span className="text-red-400 font-bold">2 Corazones</span>. Respondé en menos de <span className="text-amber-400 font-bold">15 segundos</span> por pregunta. El ganador se lleva <span className="text-emerald-400 font-bold">+4 Corazones</span> y el título de <span className="text-yellow-300 font-bold">🏆 GLADIADOR BÍBLICO</span>.
-          </p>
+          <div className="bg-purple-900/30 border border-purple-500/30 p-6 rounded-3xl text-center shadow-lg">
+            <Swords size={48} className="text-purple-400 mx-auto mb-3" />
+            <h2 className="text-2xl font-black text-white">Salón de Duelos</h2>
+            <p className="text-slate-300 text-xs mt-1">Apostá 2 corazones y desafiá a tus amigos en tiempo real.</p>
+          </div>
 
-          <button
-            onClick={crearDesafio}
-            disabled={buscando}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-          >
-            {buscando ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
-            {buscando ? "Creando Duelo..." : "Crear Duelo y Apostar 2 Corazones"}
-          </button>
+          {/* INBOX: DESAFÍOS RECIBIDOS */}
+          {desafiosRecibidos.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 p-5 rounded-3xl shadow-xl">
+              <h3 className="text-amber-400 font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Inbox size={18} /> Desafíos Entrantes ({desafiosRecibidos.length})
+              </h3>
+              <div className="space-y-3">
+                {desafiosRecibidos.map(reto => (
+                  <div key={reto.id} className="bg-black/60 p-4 rounded-2xl flex items-center justify-between border border-amber-500/30">
+                    <div>
+                      <p className="font-bold text-white">{reto.creadorNombre}</p>
+                      <p className="text-[10px] text-amber-300 uppercase">Ha apostado 2 ❤️</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => aceptarDesafio(reto)} disabled={buscando} className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-xl" title="Aceptar y Jugar">
+                        {buscando ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
+                      </button>
+                      <button onClick={() => rechazarDesafio(reto)} className="bg-red-600/50 hover:bg-red-500 text-white p-2 rounded-xl" title="Rechazar">
+                        <XCircle size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* LISTA DE AMIGOS PARA RETAR */}
+          <div className="bg-black/60 border border-white/10 p-5 rounded-3xl shadow-xl">
+            <h3 className="text-white font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Users size={18} className="text-purple-400" /> Mis Amigos
+            </h3>
+            {amigosParaRetar.length === 0 ? (
+              <p className="text-center text-slate-400 text-xs py-6">Todavía no tenés amigos agregados. Ve a la pestaña de "Comunidad" para buscarlos.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {amigosParaRetar.map(amigo => (
+                  <div key={amigo.uid} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className="w-10 h-10 rounded-full object-cover border-2 border-purple-500/50" alt="perfil" />
+                      <div>
+                        <p className="font-bold text-white text-sm">{amigo.nombre}</p>
+                        <p className="text-[10px] text-purple-300 uppercase">{amigo.puntosTrivia || 0} PTS Trivia</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => retarAmigo(amigo)} 
+                      disabled={buscando}
+                      className="bg-purple-600 hover:bg-purple-500 text-white font-black py-2 px-4 rounded-xl text-xs uppercase flex items-center gap-2 shadow-md transition-transform hover:scale-105"
+                    >
+                      <Zap size={14} /> Retar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* VISTA 2: ESPERANDO RIVAL POR WHATSAPP */}
+      {/* VISTA 2: ESPERANDO A QUE EL AMIGO ACEPTE */}
       {dueloActivo && dueloActivo.estado === 'ESPERANDO' && !dueloFinalizado && (
         <div className="w-full max-w-lg text-center space-y-6 my-auto z-10">
-          <div className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-4">
-            <Loader2 className="animate-spin mx-auto text-blue-400" size={40} />
-            <h3 className="text-xl font-black text-white">Esperando al Rival...</h3>
-            <p className="text-slate-300 text-xs">Mandalé el enlace a tu amigo por WhatsApp para que entre al duelo.</p>
-            
+          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-4 shadow-xl">
+            <Loader2 className="animate-spin mx-auto text-purple-400" size={40} />
+            <h3 className="text-2xl font-black text-white">Desafío Enviado</h3>
+            <p className="text-slate-300 text-sm">Esperando a que <span className="text-purple-400 font-bold">{dueloActivo.retadorNombre}</span> abra su Salón de Duelos y acepte.</p>
             <button
-              onClick={compartirDesafioWhatsApp}
-              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg"
+              onClick={cancelarDesafioEnviado}
+              className="mt-4 bg-red-600/50 hover:bg-red-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase"
             >
-              <Share2 size={18} /> Invitar por WhatsApp
+              Cancelar y recuperar corazones
             </button>
           </div>
         </div>
       )}
 
-      {/* VISTA 3: BATALLA ACTIVA CON RELOJ DE 15s */}
-      {dueloActivo && !dueloFinalizado && (
+      {/* VISTA 3: BATALLA EN CURSO */}
+      {dueloActivo && dueloActivo.estado === 'ACTIVO' && !dueloFinalizado && (
         <div className="w-full max-w-xl space-y-4 my-auto z-10">
-          
           <div className="flex justify-between items-center bg-black/50 border border-white/10 p-4 rounded-2xl">
             <div className="flex items-center gap-2">
               <Clock className={tiempoRestante <= 5 ? "text-red-500 animate-ping" : "text-amber-400"} size={20} />
@@ -252,12 +362,11 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
               </span>
             </div>
             <span className="text-xs font-bold text-slate-400">Pregunta {preguntaIndex + 1} / {PREGUNTAS_DUELO.length}</span>
-            <span className="text-xs font-black text-blue-400 flex items-center gap-1"><Trophy size={14} /> {puntosDuelo} PTS</span>
+            <span className="text-xs font-black text-purple-400 flex items-center gap-1"><Trophy size={14} /> {puntosDuelo} PTS</span>
           </div>
 
-          <div className="bg-black/60 border border-blue-500/30 p-6 rounded-3xl text-center space-y-4 shadow-xl">
+          <div className="bg-black/60 border border-purple-500/30 p-6 rounded-3xl text-center space-y-4 shadow-xl">
             <h3 className="text-lg md:text-xl font-black text-white">{PREGUNTAS_DUELO[preguntaIndex].p}</h3>
-
             <div className="grid grid-cols-1 gap-2.5">
               {PREGUNTAS_DUELO[preguntaIndex].r.map((opcion, idx) => {
                 let estilo = "bg-white/5 border-white/10 text-white hover:bg-white/10";
@@ -265,7 +374,6 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
                   if (idx === PREGUNTAS_DUELO[preguntaIndex].c) estilo = "bg-emerald-600 text-white font-bold border-emerald-400";
                   else if (idx === respuestaSeleccionada) estilo = "bg-red-600 text-white border-red-400";
                 }
-
                 return (
                   <button
                     key={idx}
@@ -280,42 +388,26 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
             </div>
           </div>
 
-          {/* CHAT DE BATALLA / REACCIONES RÁPIDAS */}
-          <div className="bg-black/80 border border-blue-500/20 p-3 rounded-2xl space-y-2">
+          <div className="bg-black/80 border border-purple-500/20 p-3 rounded-2xl space-y-2">
             <div className="flex gap-2 justify-center border-b border-white/10 pb-2">
               {['🔥', '⚡', '🙏', '👏', '😱'].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => reaccionRapida(emoji)}
-                  className="bg-white/10 hover:bg-white/20 p-1.5 rounded-xl text-lg transition-transform hover:scale-125"
-                >
+                <button key={emoji} onClick={() => reaccionRapida(emoji)} className="bg-white/10 hover:bg-white/20 p-1.5 rounded-xl text-lg transition-transform hover:scale-125">
                   {emoji}
                 </button>
               ))}
             </div>
-
             <div className="max-h-20 overflow-y-auto space-y-1 text-left text-xs">
               {mensajesChat.map((m, i) => (
                 <div key={i} className="text-slate-300">
-                  <span className="font-bold text-blue-400">{m.autor}: </span>{m.texto}
+                  <span className="font-bold text-purple-400">{m.autor}: </span>{m.texto}
                 </div>
               ))}
             </div>
-
             <form onSubmit={enviarMensajeChat} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Escribir mensaje de batalla..."
-                value={inputChat}
-                onChange={(e) => setInputChat(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
-              />
-              <button type="submit" className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500">
-                <Send size={14} />
-              </button>
+              <input type="text" placeholder="Escribir mensaje..." value={inputChat} onChange={(e) => setInputChat(e.target.value)} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none" />
+              <button type="submit" className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-500"><Send size={14} /></button>
             </form>
           </div>
-
         </div>
       )}
 
@@ -326,16 +418,10 @@ export default function ModuloDuelo({ currentUser, db, onVolver }) {
             <Trophy size={60} className="text-amber-400 mx-auto" />
             <h2 className="text-2xl font-black text-white">¡Duelo Finalizado!</h2>
             <p className="text-slate-300 text-sm">Obtuviste <span className="text-amber-400 font-bold">{puntosDuelo} Puntos</span>.</p>
-
             <div className="bg-black/60 p-4 rounded-2xl border border-amber-500/30 text-xs space-y-2">
-              <p className="text-amber-300 font-bold uppercase tracking-wider">Premio al Ganador</p>
-              <p className="text-slate-400">Si tu puntaje fue superior al de tu oponente, se te acreditarán <span className="text-emerald-400 font-bold">+4 Corazones</span> y el título honorífico <span className="text-yellow-300 font-bold">🏆 GLADIADOR BÍBLICO</span> en tu perfil.</p>
+              <p className="text-slate-400">Si tu puntaje fue superior al de tu oponente, se te acreditarán <span className="text-emerald-400 font-bold">+4 Corazones</span> automáticamente.</p>
             </div>
-
-            <button
-              onClick={onVolver}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-lg"
-            >
+            <button onClick={onVolver} className="w-full bg-amber-500 hover:bg-amber-400 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-lg">
               Volver al Menú
             </button>
           </div>

@@ -5,7 +5,7 @@ import {
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
   Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check,
-  Swords, ShoppingCart
+  Swords, ShoppingCart, Trophy, Globe
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -147,7 +147,6 @@ function ModuloAdmin() {
     }
   };
 
-  // NUEVA FUNCIÓN PARA DIAMANTES
   const cambiarDiamantes = async (uid, cantidadActual, delta) => {
     setGuardandoId(uid);
     const nuevoValor = Math.max(0, (cantidadActual || 0) + delta);
@@ -273,7 +272,6 @@ function ModuloAdmin() {
                       </select>
                     </td>
 
-                    {/* COLUMNA DIAMANTES */}
                     <td className="p-3">
                       <div className="flex items-center gap-1.5 bg-black/60 border border-cyan-500/30 px-2.5 py-1 rounded-xl w-fit">
                         <span className="text-cyan-400 font-black text-xs">{u.diamantes || 0} 💎</span>
@@ -339,6 +337,10 @@ function AppMain() {
   const versiculoRefs = useRef({});
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
+
+  // NUEVOS ESTADOS PARA COMUNIDAD Y RANKING
+  const [pestañaComunidad, setPestañaComunidad] = useState('amigos'); // 'amigos' | 'global'
+  const [rankingGlobal, setRankingGlobal] = useState([]);
 
   // ESTADOS PARA EDICIÓN DE PRÉDICAS
   const [predicaEditando, setPredicaEditando] = useState(null);
@@ -438,6 +440,28 @@ function AppMain() {
     const timer = setTimeout(() => { setIsLoadingAuth(false); }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  // CARGAR RANKING GLOBAL CUANDO ESTÁ EN LA PESTAÑA COMUNIDAD
+  useEffect(() => {
+    if (vistaActual === 'comunidad' && pestañaComunidad === 'global') {
+      const cargarRankingGlobal = async () => {
+        try {
+          const q = query(collection(db, 'cym_usuarios'));
+          const snap = await getDocs(q);
+          const usuariosData = [];
+          snap.forEach(docSnap => {
+            usuariosData.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          
+          usuariosData.sort((a, b) => (b.puntosTrivia || 0) - (a.puntosTrivia || 0));
+          setRankingGlobal(usuariosData.slice(0, 50));
+        } catch (error) {
+          console.error("Error cargando ranking global", error);
+        }
+      };
+      cargarRankingGlobal();
+    }
+  }, [vistaActual, pestañaComunidad, db]);
 
   const cargarCursosFirebase = async () => {
     setCargandoCursos(true);
@@ -944,7 +968,6 @@ function AppMain() {
           <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileText size={14} /> <span className="hidden lg:inline">Bosquejos VIP</span></button>
           <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden lg:inline">Comunidad</span></button>
           
-          {/* NUEVOS BOTONES DE MÓDULOS */}
           <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden lg:inline">Trivia</span></button>
           <button onClick={() => setVistaActual('duelo')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-purple-600 text-white shadow-md hover:scale-105 transition-transform"><Swords size={14} /> <span className="hidden lg:inline">Duelos</span></button>
           <button onClick={() => setVistaActual('clanes')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden lg:inline">Clanes</span></button>
@@ -1338,37 +1361,97 @@ function AppMain() {
           </div>
         )}
 
-        {/* COMUNIDAD */}
+        {/* COMUNIDAD (MIS AMIGOS Y RANKING GLOBAL) */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
-            <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
-            <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser?.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
-            <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
-            <div className="space-y-3">
-              {listaAmigos.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">Todavía no tenés amigos ni has sumado puntos. ¡Jugá una partida de trivia!</p>
-              ) : (
-                listaAmigos.map((amigo, index) => {
-                  const esYo = amigo.uid === currentUser?.uid || amigo.email === currentUser?.email;
-                  const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
-                  return (
-                    <div key={index} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
-                      <div className="flex items-center gap-3">
-                        <span className={`font-black text-lg w-4 ${esYo ? 'text-blue-400' : 'text-amber-500'}`}>{index + 1}</span>
-                        <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
-                        <div>
-                          <p className="font-bold text-white leading-tight">
-                            {esYo ? 'Tú' : amigo.nombre}
-                          </p>
-                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
+            <h2 className="text-2xl font-black text-[#ffd700] mb-6 flex items-center gap-2"><Trophy size={28} /> Salón de la Fama</h2>
+            
+            {/* PESTAÑAS */}
+            <div className="flex gap-2 mb-6 bg-black/50 p-1.5 rounded-2xl border border-white/10">
+              <button 
+                onClick={() => setPestañaComunidad('amigos')} 
+                className={`flex-1 py-3 rounded-xl font-black text-xs uppercase transition-all flex items-center justify-center gap-2 ${pestañaComunidad === 'amigos' ? 'bg-[#cca300] text-black shadow-lg scale-[1.02]' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Users size={16} /> Mis Amigos
+              </button>
+              <button 
+                onClick={() => setPestañaComunidad('global')} 
+                className={`flex-1 py-3 rounded-xl font-black text-xs uppercase transition-all flex items-center justify-center gap-2 ${pestañaComunidad === 'global' ? 'bg-[#cca300] text-black shadow-lg scale-[1.02]' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Globe size={16} /> Top 50 Global
+              </button>
+            </div>
+
+            {pestañaComunidad === 'amigos' ? (
+              <>
+                <button onClick={() => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Sumate a CyM Biblia y compitamos en la Trivia! Hacé clic acá para agregarnos como amigos: ${window.location.origin}?ref=${currentUser?.uid}`)}`, '_blank'); }} className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black py-4 rounded-xl mb-6 shadow-lg flex items-center justify-center gap-2">Invitar amigos por WhatsApp</button>
+                <div className="flex flex-col md:flex-row gap-2 mb-6"><input type="email" value={emailBuscar} onChange={(e) => setEmailBuscar(e.target.value)} placeholder="O buscar por email..." className="flex-1 bg-[#1a1a1a] border border-[#cca300]/40 rounded-xl px-4 py-3 text-white outline-none" /><button onClick={buscarYAgregarAmigo} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2"><UserPlus size={18}/> Buscar</button></div>
+                <div className="space-y-3">
+                  {listaAmigos.length === 0 ? (
+                    <p className="text-slate-400 text-center py-6">Todavía no tenés amigos ni has sumado puntos. ¡Jugá una partida de trivia!</p>
+                  ) : (
+                    listaAmigos.map((amigo, index) => {
+                      const esYo = amigo.uid === currentUser?.uid || amigo.email === currentUser?.email;
+                      const estiloAmigo = obtenerEstiloSuscripcion(amigo.suscripcion, amigo.role);
+                      let medalla = null;
+                      if(index === 0) medalla = "🥇";
+                      if(index === 1) medalla = "🥈";
+                      if(index === 2) medalla = "🥉";
+
+                      return (
+                        <div key={index} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
+                          <div className="flex items-center gap-3">
+                            <span className={`font-black text-lg w-8 text-center ${index < 3 ? 'text-3xl' : 'text-slate-500'}`}>{medalla || index + 1}</span>
+                            <img src={amigo.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloAmigo.colorAro}`} alt="foto" />
+                            <div>
+                              <p className="font-bold text-white leading-tight">
+                                {esYo ? 'Tú' : amigo.nombre}
+                              </p>
+                              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloAmigo.colorBadge}`}>{estiloAmigo.texto}</span>
+                            </div>
+                          </div>
+                          <div className="text-right"><p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p><p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p></div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-3">
+                {rankingGlobal.length === 0 ? (
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#ffd700]" size={40} /></div>
+                ) : (
+                  rankingGlobal.map((user, index) => {
+                    const esYo = user.id === currentUser?.uid;
+                    const estiloUsuario = obtenerEstiloSuscripcion(user.suscripcion, user.role);
+                    let medalla = null;
+                    if(index === 0) medalla = "🥇";
+                    if(index === 1) medalla = "🥈";
+                    if(index === 2) medalla = "🥉";
+
+                    return (
+                      <div key={user.id} className={`flex items-center justify-between p-4 rounded-2xl border ${esYo ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10'}`}>
+                        <div className="flex items-center gap-3">
+                          <span className={`font-black text-lg w-8 text-center ${index < 3 ? 'text-3xl' : 'text-slate-500'}`}>{medalla || index + 1}</span>
+                          <img src={user.photoURL || "https://i.postimg.cc/3RzYnbnB/image-11-png.png"} className={`w-12 h-12 rounded-full border-[3px] object-cover ${estiloUsuario.colorAro}`} alt="foto" />
+                          <div>
+                            <p className="font-bold text-white leading-tight">
+                              {esYo ? 'Tú' : (user.nombre || user.email)}
+                            </p>
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloUsuario.colorBadge}`}>{estiloUsuario.texto}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-xl text-blue-400">{user.puntosTrivia || 0}</p>
+                          <p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p>
                         </div>
                       </div>
-                      <div className="text-right"><p className="font-black text-xl text-blue-400">{amigo.puntosTrivia || 0}</p><p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p></div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -1383,7 +1466,7 @@ function AppMain() {
 
         {/* NUEVAS VISTAS MODULARES */}
         {vistaActual === 'duelo' && (
-          <ModuloDuelo currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
+          <ModuloDuelo currentUser={currentUser} db={db} listaAmigos={listaAmigos} onVolver={() => setVistaActual('home')} />
         )}
         {vistaActual === 'clanes' && (
           <ModuloClanes currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  collection, addDoc, doc, updateDoc, onSnapshot, query, arrayUnion 
+  collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, arrayUnion 
 } from 'firebase/firestore';
 import { 
-  Shield, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, UserCheck, MessageSquare
+  Shield, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, UserCheck, MessageSquare, LogOut, ArrowUpCircle
 } from 'lucide-react';
 
 export default function ModuloClanes({ currentUser, db, onVolver }) {
   const [clanes, setClanes] = useState([]);
   const [miClan, setMiClan] = useState(null);
-  const [cargando, setCargando] = useState(true); // Arranca cargando
+  const [cargando, setCargando] = useState(true);
 
   // ESTADOS FORMULARIO CREAR CLAN
   const [mostrarCrear, setMostrarCrear] = useState(false);
@@ -26,7 +26,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   useEffect(() => {
     const q = query(collection(db, 'cym_clanes'));
     
-    // Escuchador de Firebase
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const lista = [];
       let clanUsuario = null;
@@ -35,7 +34,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         const c = { id: d.id, ...d.data() };
         lista.push(c);
 
-        // Verificar si el usuario es miembro de este clan
         if (c.miembrosIds && c.miembrosIds.includes(currentUser?.uid)) {
           clanUsuario = c;
         }
@@ -45,12 +43,10 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       setMiClan(clanUsuario);
       if (clanUsuario) setMensajesChat(clanUsuario.mensajesChat || []);
       
-      // APAGAR CARGA CUANDO RESPONDE
       setCargando(false);
       
     }, (error) => {
-      console.error("Error consultando clanes en Firestore:", error);
-      // APAGAR CARGA INCLUSO SI HAY ERROR DE PERMISOS
+      console.error("Error consultando clanes:", error);
       setCargando(false);
     });
 
@@ -67,19 +63,17 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
 
     const diamantesActuales = currentUser?.diamantes || 0;
     if (diamantesActuales < 50) {
-      alert("⚠️ Necesitás 50 Diamantes 💎 para fundar un Clan ($10.000 ARS). Podes adquirirlos en la Tienda.");
+      alert("⚠️ Necesitás 50 Diamantes 💎 para fundar un Clan.");
       return;
     }
 
     setCreando(true);
     try {
-      // Descontar 50 diamantes al usuario
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
         diamantes: diamantesActuales - 50,
         tituloHonorifico: `👑 LÍDER DE CLAN`
       });
 
-      // Crear el clan en Firestore
       const nuevoClan = {
         nombre: nombreClan.trim(),
         descripcion: descripcionClan.trim(),
@@ -103,14 +97,13 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       setNombreClan('');
       setDescripcionClan('');
     } catch (err) {
-      console.error(err);
-      alert("Error al intentar crear el Clan. Revisá los permisos de la base de datos.");
+      alert("Error al intentar crear el Clan.");
     } finally {
       setCreando(false);
     }
   };
 
-  // 3. UNIRSE A UN CLAN ABIERTO O SOLICITAR INGRESO
+  // 3. UNIRSE A UN CLAN
   const handleUnirseClan = async (clan) => {
     if (miClan) {
       alert("Ya pertenecés a un Clan. Debes salir de tu clan actual para unirte a otro.");
@@ -118,7 +111,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     }
 
     if ((clan.miembrosIds?.length || 0) >= (clan.cupoMaximo || 20)) {
-      alert("⚠️ Este Clan alcanzó su límite máximo de 20 miembros.");
+      alert("⚠️ Este Clan alcanzó su límite máximo de miembros.");
       return;
     }
 
@@ -168,6 +161,65 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     } catch (err) {}
   };
 
+  // 5. SALIR DEL CLAN
+  const handleSalirClan = async () => {
+    if (miClan.liderId === currentUser.uid && miClan.miembrosIds.length > 1) {
+      alert("⚠️ Sos el Líder. Como todavía hay miembros en tu clan, no podés salir sin disolverlo. Pideles que salgan primero o contáctate con soporte.");
+      return;
+    }
+    
+    if (!window.confirm(`¿Estás seguro que querés abandonar el clan "${miClan.nombre}"?`)) return;
+
+    try {
+      if (miClan.miembrosIds.length === 1) {
+        // Si es el único miembro, el clan se elimina por completo
+        await deleteDoc(doc(db, 'cym_clanes', miClan.id));
+        alert("Saliste del clan. Al quedar vacío, el clan fue disuelto.");
+      } else {
+        // Se va y se elimina su ID del array
+        await updateDoc(doc(db, 'cym_clanes', miClan.id), {
+          miembrosIds: miClan.miembrosIds.filter(id => id !== currentUser.uid)
+        });
+        alert("Has abandonado el clan exitosamente.");
+      }
+      
+      // Quitar el título honorífico
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
+        tituloHonorifico: null
+      });
+
+      setMiClan(null);
+    } catch (e) {
+      alert("Ocurrió un error al intentar salir del clan.");
+    }
+  };
+
+  // 6. AMPLIAR CUPO DEL CLAN (Líder gasta 25 Diamantes)
+  const handleAmpliarCupo = async () => {
+    const diamantesActuales = currentUser?.diamantes || 0;
+    if (diamantesActuales < 25) {
+      alert("⚠️ Necesitás 25 Diamantes 💎 para ampliar la capacidad del Clan.");
+      return;
+    }
+
+    if (!window.confirm("¿Querés invertir 25 Diamantes para habilitar 10 lugares más en tu Clan?")) return;
+
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
+        diamantes: diamantesActuales - 25
+      });
+
+      const nuevoCupo = (miClan.cupoMaximo || 20) + 10;
+      await updateDoc(doc(db, 'cym_clanes', miClan.id), {
+        cupoMaximo: nuevoCupo
+      });
+
+      alert(`¡Éxito! Tu clan ahora tiene capacidad para ${nuevoCupo} miembros.`);
+    } catch (e) {
+      alert("Error al intentar ampliar el clan.");
+    }
+  };
+
   return (
     <div className="relative min-h-[80vh] w-full flex flex-col justify-start p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/40 border-2 border-amber-500/30 text-white shadow-2xl overflow-hidden">
       
@@ -188,20 +240,39 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         </div>
       ) : miClan ? (
         
-        /* VISTA: MI CLAN ACTUAL (CHAT PRIVADO + RANGOS) */
-        <div className="space-y-6 w-full max-w-2xl mx-auto">
+        /* VISTA: MI CLAN ACTUAL */
+        <div className="space-y-4 w-full max-w-2xl mx-auto">
           <div className="bg-black/80 border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <span className="bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-amber-500/30">
                 {miClan.liderId === currentUser.uid ? '👑 Eres el Líder' : '🛡️ Integrante'}
               </span>
-              <h2 className="text-3xl font-black text-white mt-1">{miClan.nombre}</h2>
-              <p className="text-slate-400 text-xs mt-0.5">{miClan.descripcion || "Sin descripción."}</p>
+              <h2 className="text-3xl font-black text-white mt-2">{miClan.nombre}</h2>
+              <p className="text-slate-400 text-xs mt-1">{miClan.descripcion || "Sin descripción."}</p>
             </div>
-            <div className="text-right">
-              <span className="text-xs text-slate-400 block uppercase font-bold">Miembros</span>
-              <span className="text-lg font-black text-amber-400">{miClan.miembrosIds?.length || 1} / {miClan.cupoMaximo || 20}</span>
+            <div className="text-left md:text-right">
+              <span className="text-xs text-slate-400 block uppercase font-bold">Miembros Activos</span>
+              <span className="text-xl font-black text-amber-400">{miClan.miembrosIds?.length || 1} / {miClan.cupoMaximo || 20}</span>
             </div>
+          </div>
+
+          {/* BOTONES DE ADMINISTRACIÓN DEL CLAN */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {miClan.liderId === currentUser.uid && (
+              <button 
+                onClick={handleAmpliarCupo}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black py-3 rounded-2xl text-xs uppercase tracking-wider flex justify-center items-center gap-2 shadow-lg transition-transform hover:scale-[1.02]"
+              >
+                <ArrowUpCircle size={18} /> Ampliar Cupo (+10) por 25 💎
+              </button>
+            )}
+            
+            <button 
+              onClick={handleSalirClan}
+              className="flex-1 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-400 font-bold py-3 rounded-2xl text-xs uppercase tracking-wider flex justify-center items-center gap-2 transition-colors"
+            >
+              <LogOut size={16} /> Abandonar el Clan
+            </button>
           </div>
 
           {/* CHAT PRIVADO DEL CLAN */}
