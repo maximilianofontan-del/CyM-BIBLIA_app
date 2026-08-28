@@ -488,6 +488,7 @@ function AppMain() {
     finally { setCargandoPredicas(false); }
   };
 
+  // CORRECCIÓN VITAL ACÁ (El async faltante que rompió tu código)
   const cargarAmigos = async (amigosIds, usrActual) => {
     const datos = [];
     if (usrActual) {
@@ -498,7 +499,7 @@ function AppMain() {
       for (const id of amigosIds) {
         try {
           const snap = await getDoc(doc(db, 'cym_usuarios', id));
-          if (snap.exists()) datos.push(snap.data());
+          if (snap.exists()) datos.push({ uid: snap.id, ...snap.data() });
         } catch (e) {}
       }
     }
@@ -850,6 +851,24 @@ function AppMain() {
       const userSnap = await getDoc(doc(db, 'cym_usuarios', currentUser.uid));
       cargarAmigos(userSnap.data()?.amigos, currentUser);
     } catch (e) {}
+  };
+
+  // NUEVA FUNCIÓN PARA AGREGAR AMIGOS DIRECTAMENTE DESDE EL RANKING GLOBAL
+  const agregarAmigoPorId = async (amigoId) => {
+    if (amigoId === currentUser.uid) return;
+    try {
+      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { amigos: arrayUnion(amigoId) });
+      alert("¡Amigo agregado con éxito! Ya puedes desafiarlo.");
+      
+      // Refrescar localmente para que se vea reflejado al instante en la app
+      const nuevosAmigos = [...(currentUser.amigos || []), amigoId];
+      setCurrentUser({...currentUser, amigos: nuevosAmigos});
+      
+      const userSnap = await getDoc(doc(db, 'cym_usuarios', currentUser.uid));
+      cargarAmigos(userSnap.data()?.amigos, currentUser);
+    } catch (e) {
+      alert("Error al agregar amigo.");
+    }
   };
 
   const retarAmigo = () => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Hola! Logré ${currentUser?.puntosTrivia || 0} puntos en CyM. Jugá acá: ${window.location.origin}?ref=${currentUser?.uid}`)}`, '_blank'); };
@@ -1424,6 +1443,7 @@ function AppMain() {
                 ) : (
                   rankingGlobal.map((user, index) => {
                     const esYo = user.id === currentUser?.uid;
+                    const esAmigo = (currentUser?.amigos || []).includes(user.id);
                     const estiloUsuario = obtenerEstiloSuscripcion(user.suscripcion, user.role);
                     let medalla = null;
                     if(index === 0) medalla = "🥇";
@@ -1442,9 +1462,27 @@ function AppMain() {
                             <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${estiloUsuario.colorBadge}`}>{estiloUsuario.texto}</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-black text-xl text-blue-400">{user.puntosTrivia || 0}</p>
-                          <p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right hidden sm:block">
+                            <p className="font-black text-xl text-blue-400">{user.puntosTrivia || 0}</p>
+                            <p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p>
+                          </div>
+                          
+                          {/* BOTONES DE AGREGAR AMIGO DESDE EL GLOBAL */}
+                          {!esYo && !esAmigo && (
+                            <button 
+                              onClick={() => agregarAmigoPorId(user.id)}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl shadow-md transition-transform hover:scale-105 flex items-center justify-center"
+                              title="Agregar a mis amigos"
+                            >
+                              <UserPlus size={18} />
+                            </button>
+                          )}
+                          {!esYo && esAmigo && (
+                            <div className="bg-emerald-600/20 text-emerald-400 p-2.5 rounded-xl flex items-center justify-center" title="Ya es tu amigo">
+                              <CheckCircle size={18} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
