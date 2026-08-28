@@ -4,7 +4,8 @@ import {
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
-  Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check
+  Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check,
+  Swords, ShoppingCart
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -18,23 +19,15 @@ import {
   browserLocalPersistence
 } from 'firebase/auth';
 import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  arrayUnion, 
-  addDoc, 
-  onSnapshot, 
-  deleteDoc 
+  getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, 
+  getDocs, arrayUnion, addDoc, onSnapshot, deleteDoc 
 } from 'firebase/firestore';
 
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
+import ModuloDuelo from './ModuloDuelo';
+import ModuloClanes from './ModuloClanes';
+import ModuloTienda from './ModuloTienda';
 
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
@@ -909,21 +902,28 @@ function AppMain() {
     <div className={`min-h-screen flex flex-col transition-colors duration-500 font-serif relative ${themeStyles[tema].split(' ')[0]} ${themeStyles[tema].split(' ')[1]}`}>
       {tema === 'cym' && <EstrellasFondo />}
 
-      <nav className={`sticky top-0 z-50 px-2 md:px-6 py-3 shadow-md flex items-center justify-between backdrop-blur-md border-b ${navStyles[tema]}`}>
+      <nav className={`sticky top-0 z-50 px-2 md:px-6 py-3 shadow-md flex items-center justify-between backdrop-blur-md border-b ${navStyles[tema]} overflow-x-auto`}>
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setVistaActual('home'); setVersiculoActual(''); }}>
           {vistaActual !== 'home' && <ArrowLeft size={20} className="mr-1" />}
           <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Logo CyM" className="w-10 h-10 md:w-16 md:h-16 object-contain drop-shadow-[0_0_12px_rgba(204,163,0,0.5)]" />
           <h1 className="text-lg md:text-2xl font-black tracking-wider hidden sm:block">CyM <span className="font-light opacity-80">Biblia</span></h1>
         </div>
-        <div className="flex items-center gap-1 md:gap-3 relative z-10">
+        <div className="flex items-center gap-1 md:gap-3 relative z-10 whitespace-nowrap ml-4">
           {isOwner && (
-            <button onClick={() => setVistaActual('admin')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-emerald-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden sm:inline">Admin</span></button>
+            <button onClick={() => setVistaActual('admin')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-emerald-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden lg:inline">Admin</span></button>
           )}
-          <button onClick={() => setVistaActual('capacitaciones')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-500 text-black shadow-md hover:scale-105 transition-transform"><GraduationCap size={14} /> <span className="hidden sm:inline">Academia</span></button>
-          <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileText size={14} /> <span className="hidden sm:inline">Bosquejos VIP</span></button>
-          <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden sm:inline">Comunidad</span></button>
-          <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden sm:inline">Jugar</span></button>
-          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden sm:inline">Club CyM</span></button>
+          <button onClick={() => setVistaActual('capacitaciones')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-500 text-black shadow-md hover:scale-105 transition-transform"><GraduationCap size={14} /> <span className="hidden lg:inline">Academia</span></button>
+          <button onClick={() => setVistaActual('predicas')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-cyan-600 text-white shadow-md hover:scale-105 transition-transform"><FileText size={14} /> <span className="hidden lg:inline">Bosquejos VIP</span></button>
+          <button onClick={() => setVistaActual('comunidad')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-green-600 text-white shadow-md hover:scale-105 transition-transform"><Users size={14} /> <span className="hidden lg:inline">Comunidad</span></button>
+          
+          {/* NUEVOS BOTONES DE MÓDULOS */}
+          <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden lg:inline">Trivia</span></button>
+          <button onClick={() => setVistaActual('duelo')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-purple-600 text-white shadow-md hover:scale-105 transition-transform"><Swords size={14} /> <span className="hidden lg:inline">Duelos</span></button>
+          <button onClick={() => setVistaActual('clanes')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden lg:inline">Clanes</span></button>
+          <button onClick={() => setVistaActual('tienda')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-pink-600 text-white shadow-md hover:scale-105 transition-transform"><ShoppingCart size={14} /> <span className="hidden lg:inline">Tienda</span></button>
+
+          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden lg:inline">Club CyM</span></button>
+          
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
           <button onClick={handleLogout} className="p-2 rounded-full text-red-500 hover:bg-red-500/20 transition-colors"><LogOut size={18} /></button>
         </div>
@@ -1351,6 +1351,17 @@ function AppMain() {
             <div className="mb-12 text-center flex flex-col items-center"><h2 className="text-3xl md:text-4xl font-black mb-6 text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>{libroActual} {capituloActual} <span className="opacity-60 text-lg">({versionActual})</span></h2><button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>{leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} {leyendoAudio ? 'Detener Lectura' : 'Escuchar Capítulo Completo'}</button></div>
             <div className="space-y-4 leading-relaxed text-left" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>{versiculosActuales.map((versiculo, index) => { const esVersiculoResaltado = versiculo.numero === versiculoActual; return (<p key={index} ref={el => versiculoRefs.current[versiculo.numero] = el} className="relative group cursor-text transition-all duration-500"><sup className={`absolute -left-6 md:-left-8 top-1 text-[0.6em] font-black select-none ${esVersiculoResaltado ? 'text-amber-400 text-sm' : 'text-[#ffd700]/60'}`}>{versiculo.numero}</sup><span className={`rounded p-2 transition-colors duration-500 block ${esVersiculoResaltado ? 'bg-amber-500/20 text-[#ffd700] border-l-4 border-[#ffd700] pl-3 font-bold shadow-lg' : 'hover:bg-[#ffd700]/10 hover:text-[#ffd700]'}`}>{versiculo.texto}</span></p>); })}</div>
           </div>
+        )}
+
+        {/* NUEVAS VISTAS MODULARES */}
+        {vistaActual === 'duelo' && (
+          <ModuloDuelo currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
+        )}
+        {vistaActual === 'clanes' && (
+          <ModuloClanes currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
+        )}
+        {vistaActual === 'tienda' && (
+          <ModuloTienda currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
         )}
 
         {/* TRIVIA Y CLUB */}
