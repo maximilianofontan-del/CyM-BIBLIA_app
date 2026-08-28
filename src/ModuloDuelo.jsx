@@ -6,16 +6,105 @@ import {
   Swords, Trophy, Clock, Send, ChevronLeft, Loader2, Zap, Users, Inbox, XCircle, CheckCircle2 
 } from 'lucide-react';
 
+// MEGA BANCO DE PREGUNTAS PARA EL DUELO
+// La app seleccionará automáticamente 30 al azar para cada batalla.
 const PREGUNTAS_DUELO = [
   { p: "¿Cuántos días y noches llovió durante el diluvio?", r: ["40", "30", "50", "7"], c: 0 },
   { p: "¿Quién fue vendido por sus hermanos como esclavo?", r: ["Moisés", "José", "David", "Daniel"], c: 1 },
   { p: "¿En qué libro bíblico se encuentra el Salmo 23?", r: ["Proverbios", "Salmos", "Isaías", "Génesis"], c: 1 },
   { p: "¿Cuál es el primer libro del Nuevo Testamento?", r: ["Marcos", "Lucas", "Juan", "Mateo"], c: 3 },
-  { p: "¿Quién derrotó al gigante Goliat con una honda?", r: ["Saúl", "David", "Salomón", "Sansón"], c: 1 }
+  { p: "¿Quién derrotó al gigante Goliat con una honda?", r: ["Saúl", "David", "Salomón", "Sansón"], c: 1 },
+  { p: "¿En cuántos días creó Dios los cielos y la tierra?", r: ["7", "6", "3", "40"], c: 1 },
+  { p: "¿Qué ave envió Noé por primera vez desde el arca?", r: ["Paloma", "Cuervo", "Gorrión", "Águila"], c: 1 },
+  { p: "¿Quién era el sobrino de Abraham?", r: ["Isaac", "Jacob", "Lot", "Taré"], c: 2 },
+  { p: "¿Qué edad tenía Sara cuando nació su hijo Isaac?", r: ["90 años", "100 años", "80 años", "75 años"], c: 0 },
+  { p: "¿Por qué comida vendió Esaú su primogenitura?", r: ["Plato de lentejas", "Cordero asado", "Pan y miel", "Codornices"], c: 0 },
+  { p: "¿Cómo se llamaban las dos esposas de Jacob?", r: ["Rut y Orfa", "Lea y Raquel", "Sara y Rebeca", "María y Marta"], c: 1 },
+  { p: "¿Quién era el hermano menor de José?", r: ["Rubén", "Judá", "Benjamín", "Simeón"], c: 2 },
+  { p: "¿Dónde escondió Jocabed al bebé Moisés?", r: ["Cueva", "Canasta en el Nilo", "Desierto", "Templo"], c: 1 },
+  { p: "¿Desde dónde le habló Dios a Moisés por primera vez?", r: ["Una nube", "Una zarza ardiente", "Un torbellino", "Un ángel"], c: 1 },
+  { p: "¿Cuál fue la primera plaga de Egipto?", r: ["Ranas", "Oscuridad", "Agua en sangre", "Moscas"], c: 2 },
+  { p: "¿Qué fiesta instituyó Dios para recordar la salida de Egipto?", r: ["Pentecostés", "Pascua", "Tabernáculos", "Purim"], c: 1 },
+  { p: "¿Qué ídolo de oro hizo Aarón en el desierto?", r: ["Serpiente", "Becerro", "León", "Águila"], c: 1 },
+  { p: "¿Cuántos espías envió Moisés a explorar Canaán?", r: ["2", "7", "10", "12"], c: 3 },
+  { p: "¿Qué río cruzó Israel en seco para entrar a la Tierra Prometida?", r: ["Nilo", "Tigris", "Éufrates", "Jordán"], c: 3 },
+  { p: "¿Por orden de quién se detuvo el sol en Gabaón?", r: ["Moisés", "Josué", "David", "Elías"], c: 1 },
+  { p: "¿Qué juez de Israel era zurdo?", r: ["Gedeón", "Aod", "Sansón", "Jefté"], c: 1 },
+  { p: "¿Quién fue la única mujer juez de Israel?", r: ["Rut", "Ester", "Débora", "Jael"], c: 2 },
+  { p: "¿A quién le reveló Sansón el secreto de su fuerza?", r: ["A su padre", "Filisteos", "Dalila", "A un ángel"], c: 2 },
+  { p: "¿Quién fue el sacerdote que crio a Samuel?", r: ["Elí", "Aarón", "Sadoc", "Zacarías"], c: 0 },
+  { p: "¿Qué pastoreaba David antes de ser ungido rey?", r: ["Vacas", "Camellos", "Ovejas", "Cabras"], c: 2 },
+  { p: "¿Quién construyó el primer gran templo en Jerusalén?", r: ["David", "Josías", "Salomón", "Ezequías"], c: 2 },
+  { p: "¿A qué rey le añadió Dios 15 años más de vida?", r: ["Ezequías", "Josías", "David", "Saúl"], c: 0 },
+  { p: "¿Quién era el enemigo principal de Mardoqueo y los judíos?", r: ["Faraón", "Amán", "Nabucodonosor", "Sanbalat"], c: 1 },
+  { p: "¿A quién alimentaron los cuervos en el arroyo de Querit?", r: ["Eliseo", "Elías", "Isaías", "Jeremías"], c: 1 },
+  { p: "¿Cuántas veces se zambulló Naamán en el Jordán?", r: ["3", "7", "10", "12"], c: 1 },
+  { p: "¿Qué profeta se casó con una mujer infiel por orden de Dios?", r: ["Amós", "Oseas", "Miqueas", "Joel"], c: 1 },
+  { p: "¿Hacia qué ciudad huyó Jonás para no ir a Nínive?", r: ["Babilonia", "Jope", "Tarsis", "Jerusalén"], c: 2 },
+  { p: "¿Cuántos Salmos hay en la Biblia?", r: ["100", "120", "150", "200"], c: 2 },
+  { p: "¿Qué libro dice: 'Vanidad de vanidades, todo es vanidad'?", r: ["Proverbios", "Cantares", "Job", "Eclesiastés"], c: 3 },
+  { p: "¿Qué significa el nombre Emanuel?", r: ["Salvador", "Dios con nosotros", "Príncipe de Paz", "Ungido"], c: 1 },
+  { p: "¿Cuál es la última palabra de la Biblia?", r: ["Amén", "Jesús", "Aleluya", "Dios"], c: 0 },
+  { p: "¿Qué tribu de Israel fue designada para el sacerdocio?", r: ["Judá", "Benjamín", "Leví", "Zabulón"], c: 2 },
+  { p: "¿Qué ángel le anunció a María que concebiría a Jesús?", r: ["Miguel", "Rafael", "Gabriel", "Uriel"], c: 2 },
+  { p: "¿Qué regalos llevaron los sabios de oriente a Jesús?", r: ["Oro, plata y bronce", "Oro, incienso y mirra", "Incienso, mirra y diamantes", "Pan y vino"], c: 1 },
+  { p: "¿En qué ciudad se crio Jesús?", r: ["Belén", "Jericó", "Nazaret", "Jerusalén"], c: 2 },
+  { p: "¿Por la muerte de quién lloró Jesús?", r: ["Juan el Bautista", "Lázaro", "José", "Moisés"], c: 1 },
+  { p: "¿Sobre qué animal montó Jesús para entrar triunfante a Jerusalén?", r: ["Caballo blanco", "Camello", "Asno", "Mula"], c: 2 },
+  { p: "¿En qué huerto oró Jesús antes de ser arrestado?", r: ["Edén", "Getsemaní", "Monte de los Olivos", "Gólgota"], c: 1 },
+  { p: "¿Qué decía el letrero sobre la cruz de Jesús?", r: ["Rey de los Judíos", "El Hijo de Dios", "Salvador del mundo", "El Mesías"], c: 0 },
+  { p: "¿A quién se le apareció primero Jesús resucitado?", r: ["Pedro", "María Magdalena", "Juan", "María (su madre)"], c: 1 },
+  { p: "¿Qué discípulo dijo que no creería hasta ver las heridas de Jesús?", r: ["Judas", "Felipe", "Tomás", "Mateo"], c: 2 },
+  { p: "¿Cómo se llamaba el centurión romano al que Pedro le predicó?", r: ["Julio", "Cornelio", "Félix", "Agusto"], c: 1 },
+  { p: "¿En qué ciudad a los discípulos se les llamó 'cristianos' por primera vez?", r: ["Jerusalén", "Roma", "Antioquía", "Éfeso"], c: 2 },
+  { p: "¿Qué joven se quedó dormido y cayó de un tercer piso predicando Pablo?", r: ["Timoteo", "Tito", "Eutico", "Esteban"], c: 2 },
+  { p: "¿Qué libro del Nuevo Testamento fue escrito por un médico?", r: ["Romanos", "Gálatas", "Hechos", "Hebreos"], c: 2 },
+  { p: "¿Qué epístola afirma que 'la fe sin obras es muerta'?", r: ["Romanos", "Santiago", "Efesios", "Judas"], c: 1 },
+  { p: "¿En qué capítulo de Efesios se describe la armadura de Dios?", r: ["Capítulo 1", "Capítulo 3", "Capítulo 6", "Capítulo 8"], c: 2 },
+  { p: "Completá: 'Todo lo puedo en Cristo que me...'", r: ["Ayuda", "Fortalece", "Guía", "Salva"], c: 1 },
+  { p: "¿En qué isla estaba exiliado Juan cuando escribió Apocalipsis?", r: ["Chipre", "Malta", "Patmos", "Creta"], c: 2 },
+  { p: "¿Cuántas puertas tiene la Nueva Jerusalén?", r: ["7", "10", "12", "24"], c: 2 },
+  { p: "¿De dónde sale el río de agua de vida en Apocalipsis?", r: ["Del Templo", "Del trono de Dios y del Cordero", "De la tierra", "Del cielo"], c: 1 },
+  { p: "Jesús dijo: 'Yo soy el Alfa y la...'", r: ["Beta", "Omega", "Luz", "Verdad"], c: 1 },
+  { p: "¿Qué animal tentó a Eva en el Edén?", r: ["Un león", "Una serpiente", "Un cuervo", "Un escorpión"], c: 1 },
+  { p: "¿En qué monte recibió Moisés los 10 mandamientos?", r: ["Sion", "Carmelo", "Sinaí", "Ararat"], c: 2 },
+  { p: "¿Quién fue el hombre más fuerte de la Biblia?", r: ["Goliat", "David", "Sansón", "Saúl"], c: 2 },
+  { p: "¿A quién le pidió Dios que sacrificara a su hijo Isaac?", r: ["Jacob", "Abraham", "Moisés", "Lot"], c: 1 },
+  { p: "¿Qué mar cruzaron los israelitas en seco?", r: ["Mar Muerto", "Mar de Galilea", "Mar Rojo", "Mar Mediterráneo"], c: 2 },
+  { p: "¿Quién fue el primer mártir cristiano?", r: ["Pedro", "Pablo", "Esteban", "Santiago"], c: 2 },
+  { p: "¿Cuántos libros tiene la Biblia protestante?", r: ["66", "73", "39", "27"], c: 0 },
+  { p: "¿Cuál es el libro más largo de la Biblia?", r: ["Génesis", "Isaías", "Salmos", "Jeremías"], c: 2 },
+  { p: "¿Qué alimento cayó del cielo para el pueblo de Israel?", r: ["Codornices", "Maná", "Miel", "Pan de cebada"], c: 1 },
+  { p: "¿Quién se subió a un árbol para ver a Jesús?", r: ["Zaqueo", "Bartimeo", "Nicodemo", "Lázaro"], c: 0 },
+  { p: "¿Qué hermano de Moisés fue el primer sumo sacerdote?", r: ["Coré", "Aarón", "Hur", "Josué"], c: 1 },
+  { p: "¿Qué ciudad amurallada fue conquistada primero por Josué?", r: ["Hai", "Hebrón", "Jericó", "Siquem"], c: 2 },
+  { p: "¿De qué nacionalidad era Rut?", r: ["Israelita", "Egipcia", "Moabita", "Filistea"], c: 2 },
+  { p: "¿Quién fue el primer rey de Israel?", r: ["David", "Saúl", "Salomón", "Absalón"], c: 1 },
+  { p: "¿Qué ciudad fue destruida por Dios con fuego y azufre?", r: ["Jericó", "Nínive", "Sodoma", "Babilonia"], c: 2 },
+  { p: "¿Por cuántas monedas de plata traicionó Judas a Jesús?", r: ["10", "20", "30", "40"], c: 2 },
+  { p: "¿Qué profeta fue arrojado al foso de los leones?", r: ["Daniel", "Sadrac", "Jeremías", "Ezequiel"], c: 0 },
+  { p: "¿Cómo se llamaba el ciego al que Jesús sanó en Jericó?", r: ["Zaqueo", "Bartimeo", "Jairo", "Lázaro"], c: 1 },
+  { p: "¿Qué joven mató a un oso y un león para defender a sus ovejas?", r: ["José", "Moisés", "David", "Gedeón"], c: 2 },
+  { p: "¿Cómo se llama el profeta que hizo flotar un hacha en el agua?", r: ["Elías", "Eliseo", "Isaías", "Jeremías"], c: 1 },
+  { p: "¿Quién era la madre de Salomón?", r: ["Mical", "Abigail", "Betsabé", "María"], c: 2 },
+  { p: "¿Qué apóstol era fabricante de tiendas de campaña?", r: ["Pedro", "Juan", "Pablo", "Santiago"], c: 2 },
+  { p: "¿Qué madera usó Noé para construir el arca?", r: ["Cedro", "Acacia", "Gofer", "Roble"], c: 2 },
+  { p: "¿Cuál era el nombre babilónico de Daniel?", r: ["Sadrac", "Mesac", "Abed-nego", "Beltsasar"], c: 3 },
+  { p: "¿De qué color era el caballo de Apocalipsis cuyo jinete era la Muerte?", r: ["Blanco", "Negro", "Amarillo pálido", "Rojo"], c: 2 },
+  { p: "¿Quién fue la primera mujer de la Biblia?", r: ["Sara", "Eva", "Raquel", "Rebeca"], c: 1 },
+  { p: "¿En qué río fue bautizado Jesús?", r: ["Nilo", "Éufrates", "Jordán", "Tigris"], c: 2 },
+  { p: "¿Qué discípulo caminó sobre el agua?", r: ["Juan", "Andrés", "Pedro", "Jacobo"], c: 2 },
+  { p: "¿A quién le cortó Pedro la oreja en el Getsemaní?", r: ["Caifás", "Malco", "Ananías", "Barrabás"], c: 1 },
+  { p: "¿Qué fruta comieron Adán y Eva en el paraíso?", r: ["Manzana", "Higo", "Fruto del árbol del conocimiento", "Uva"], c: 2 },
+  { p: "¿Qué mujer salvó a los espías israelitas en Jericó?", r: ["Rut", "Rahab", "Débora", "Ester"], c: 1 },
+  { p: "¿Cuántos cuernos tenía la bestia que subía del mar en Apocalipsis 13?", r: ["7", "10", "12", "4"], c: 1 },
+  { p: "¿Cómo se llamaban las hermanas de Lázaro?", r: ["Rut y Noemí", "María y Marta", "Priscila y Lidia", "Sara y Rebeca"], c: 1 },
+  { p: "¿Qué emperador romano desterró a Juan a Patmos?", r: ["Domiciano", "Nerón", "Augusto", "Julio César"], c: 0 }
 ];
 
 export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolver }) {
   const [dueloActivo, setDueloActivo] = useState(null);
+  const [preguntasPartida, setPreguntasPartida] = useState([]); // Las 30 preguntas de esta batalla
   const [buscando, setBuscando] = useState(false);
   const [preguntaIndex, setPreguntaIndex] = useState(0);
   const [puntosDuelo, setPuntosDuelo] = useState(0);
@@ -26,20 +115,15 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
   const [mensajesChat, setMensajesChat] = useState([]);
   const [inputChat, setInputChat] = useState('');
 
-  // INBOX: Desafíos entrantes
   const [desafiosRecibidos, setDesafiosRecibidos] = useState([]);
 
   const corazonesSuficientes = (currentUser?.corazones || 0) >= 2;
   const amigosParaRetar = listaAmigos.filter(a => a.uid !== currentUser.uid);
 
-  // ESCUCHAR DESAFÍOS ENTRANTES EN TIEMPO REAL
+  // ESCUCHAR DESAFÍOS ENTRANTES
   useEffect(() => {
     if (!currentUser?.uid) return;
-    const q = query(
-      collection(db, 'cym_duelos'),
-      where('retadorId', '==', currentUser.uid),
-      where('estado', '==', 'ESPERANDO')
-    );
+    const q = query(collection(db, 'cym_duelos'), where('retadorId', '==', currentUser.uid), where('estado', '==', 'ESPERANDO'));
     const unsubscribe = onSnapshot(q, (snap) => {
       const retos = [];
       snap.forEach(d => retos.push({ id: d.id, ...d.data() }));
@@ -48,24 +132,28 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     return () => unsubscribe();
   }, [currentUser, db]);
 
-  // EL RELOJ DE 15 SEGUNDOS
+  // RELOJ DE 15 SEGUNDOS
   useEffect(() => {
     if (!dueloActivo || dueloFinalizado || respuestaSeleccionada !== null || dueloActivo.estado === 'ESPERANDO') return;
-
     if (tiempoRestante === 0) {
       setRespuestaSeleccionada(-1);
       siguientePregunta();
       return;
     }
-
-    const timer = setInterval(() => {
-      setTiempoRestante((prev) => prev - 1);
-    }, 1000);
-
+    const timer = setInterval(() => setTiempoRestante((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [tiempoRestante, dueloActivo, dueloFinalizado, respuestaSeleccionada]);
 
-  // ACCIÓN 1: RETAR A UN AMIGO
+  // FUNCIÓN PARA PROCESAR LAS 30 PREGUNTAS SINCRONIZADAS
+  const procesarDatosDuelo = (data, id) => {
+    if (data.preguntasIds && data.preguntasIds.length > 0) {
+      setPreguntasPartida(data.preguntasIds.map(indice => PREGUNTAS_DUELO[indice]));
+    }
+    setDueloActivo({ id, ...data });
+    setMensajesChat(data.mensajesChat || []);
+  };
+
+  // ACCIÓN 1: RETAR A UN AMIGO Y GENERAR LAS 30 PREGUNTAS
   const retarAmigo = async (amigo) => {
     if (!corazonesSuficientes) {
       alert("⚠️ Necesitás al menos 2 corazones para apostar en un Duelo Bíblico.");
@@ -75,6 +163,16 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     setBuscando(true);
     try {
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones - 2 });
+
+      // LÓGICA VITAL: Generar 30 índices aleatorios únicos sin repetirse
+      const cantidadPreguntas = Math.min(30, PREGUNTAS_DUELO.length);
+      const indicesAleatorios = [];
+      while (indicesAleatorios.length < cantidadPreguntas) {
+        const rand = Math.floor(Math.random() * PREGUNTAS_DUELO.length);
+        if (!indicesAleatorios.includes(rand)) {
+          indicesAleatorios.push(rand);
+        }
+      }
 
       const docRef = await addDoc(collection(db, 'cym_duelos'), {
         creadorId: currentUser.uid,
@@ -86,12 +184,12 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         estado: 'ESPERANDO',
         ganadorId: null,
         mensajesChat: [],
+        preguntasIds: indicesAleatorios, // Guardamos los 30 índices acá
         creadorTermino: false,
         retadorTermino: false,
         fechaCreacion: new Date().toISOString()
       });
 
-      // Escuchar la batalla en vivo
       onSnapshot(docRef, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
@@ -100,8 +198,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
              setDueloActivo(null);
              return;
           }
-          setDueloActivo({ id: snap.id, ...data });
-          setMensajesChat(data.mensajesChat || []);
+          procesarDatosDuelo(data, snap.id);
         }
       });
     } catch (e) {
@@ -111,7 +208,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     }
   };
 
-  // ACCIÓN 2: ACEPTAR UN DESAFÍO RECIBIDO
+  // ACCIÓN 2: ACEPTAR Y CARGAR LAS MISMAS PREGUNTAS
   const aceptarDesafio = async (duelo) => {
     if (!corazonesSuficientes) {
       alert("⚠️ Necesitás al menos 2 corazones para aceptar y apostar.");
@@ -122,13 +219,11 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { corazones: currentUser.corazones - 2 });
       const docRef = doc(db, 'cym_duelos', duelo.id);
       
-      // Pasar el estado a ACTIVO arranca la partida para ambos
       await updateDoc(docRef, { estado: 'ACTIVO' });
 
       onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
-          setDueloActivo({ id: docSnap.id, ...docSnap.data() });
-          setMensajesChat(docSnap.data().mensajesChat || []);
+          procesarDatosDuelo(docSnap.data(), docSnap.id);
         }
       });
     } catch (e) {
@@ -138,12 +233,11 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     }
   };
 
-  // ACCIÓN 3: RECHAZAR UN DESAFÍO RECIBIDO
+  // ACCIÓN 3: RECHAZAR
   const rechazarDesafio = async (duelo) => {
     try {
       const docRef = doc(db, 'cym_duelos', duelo.id);
       await updateDoc(docRef, { estado: 'RECHAZADO' });
-      // Devolver corazones al creador
       const creadorRef = doc(db, 'cym_usuarios', duelo.creadorId);
       const creadorSnap = await getDoc(creadorRef);
       if (creadorSnap.exists()) {
@@ -152,7 +246,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     } catch(e) {}
   };
 
-  // ACCIÓN 4: CANCELAR DESAFÍO ENVIADO (Si el amigo tarda mucho)
+  // ACCIÓN 4: CANCELAR
   const cancelarDesafioEnviado = async () => {
     if (!dueloActivo) return;
     try {
@@ -166,7 +260,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
     if (respuestaSeleccionada !== null) return;
     setRespuestaSeleccionada(indexOpcion);
 
-    const esCorrecta = indexOpcion === PREGUNTAS_DUELO[preguntaIndex].c;
+    const esCorrecta = indexOpcion === preguntasPartida[preguntaIndex].c;
     const nuevosPuntos = esCorrecta ? puntosDuelo + 10 : puntosDuelo;
     if (esCorrecta) setPuntosDuelo(nuevosPuntos);
 
@@ -175,7 +269,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
 
   const siguientePregunta = (puntosActuales = puntosDuelo) => {
     setTimeout(async () => {
-      if (preguntaIndex + 1 < PREGUNTAS_DUELO.length) {
+      if (preguntaIndex + 1 < preguntasPartida.length) {
         setPreguntaIndex(preguntaIndex + 1);
         setRespuestaSeleccionada(null);
         setTiempoRestante(15);
@@ -219,7 +313,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
       if (snapGanador.exists()) {
         const datosG = snapGanador.data();
         await updateDoc(ganadorRef, {
-          corazones: (datosG.corazones || 0) + 4,
+          corazones: (datosG.corazones || 0) + 4, // Premio 4 corazones
           puntosTrivia: (datosG.puntosTrivia || 0) + 50,
           tituloHonorifico: '🏆 GLADIADOR BÍBLICO'
         });
@@ -230,17 +324,14 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
   const enviarMensajeChat = async (e) => {
     if (e) e.preventDefault();
     if (!inputChat.trim() || !dueloActivo) return;
-
     const nuevoMsg = {
       autor: currentUser.nombre || 'Jugador',
       texto: inputChat.trim(),
       fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-
     const nuevosMensajes = [...mensajesChat, nuevoMsg];
     setMensajesChat(nuevosMensajes);
     setInputChat('');
-
     try {
       await updateDoc(doc(db, 'cym_duelos', dueloActivo.id), { mensajesChat: nuevosMensajes });
     } catch (err) {}
@@ -260,21 +351,20 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
           <ChevronLeft size={22} />
         </button>
         <div className="flex items-center gap-2 bg-purple-600/30 border border-purple-400/40 px-4 py-1.5 rounded-full text-purple-300 font-black text-xs uppercase tracking-widest">
-          <Swords size={16} /> Duelos Sincrónicos
+          <Swords size={16} /> Duelos Sincrónicos (30 Preguntas)
         </div>
       </div>
 
       {/* VISTA 1: SALÓN DE DESAFÍOS (INBOX + LISTA DE AMIGOS) */}
       {!dueloActivo && (
         <div className="w-full max-w-2xl space-y-6 z-10">
-          
           <div className="bg-purple-900/30 border border-purple-500/30 p-6 rounded-3xl text-center shadow-lg">
             <Swords size={48} className="text-purple-400 mx-auto mb-3" />
             <h2 className="text-2xl font-black text-white">Salón de Duelos</h2>
-            <p className="text-slate-300 text-xs mt-1">Apostá 2 corazones y desafiá a tus amigos en tiempo real.</p>
+            <p className="text-slate-300 text-xs mt-1">Apostá 2 corazones y desafiá a tus amigos en una partida de 30 preguntas al azar.</p>
           </div>
 
-          {/* INBOX: DESAFÍOS RECIBIDOS */}
+          {/* INBOX */}
           {desafiosRecibidos.length > 0 && (
             <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 p-5 rounded-3xl shadow-xl">
               <h3 className="text-amber-400 font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -301,7 +391,7 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
             </div>
           )}
 
-          {/* LISTA DE AMIGOS PARA RETAR */}
+          {/* LISTA DE AMIGOS */}
           <div className="bg-black/60 border border-white/10 p-5 rounded-3xl shadow-xl">
             <h3 className="text-white font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
               <Users size={18} className="text-purple-400" /> Mis Amigos
@@ -334,25 +424,22 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
         </div>
       )}
 
-      {/* VISTA 2: ESPERANDO A QUE EL AMIGO ACEPTE */}
+      {/* VISTA 2: ESPERANDO */}
       {dueloActivo && dueloActivo.estado === 'ESPERANDO' && !dueloFinalizado && (
         <div className="w-full max-w-lg text-center space-y-6 my-auto z-10">
           <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-4 shadow-xl">
             <Loader2 className="animate-spin mx-auto text-purple-400" size={40} />
             <h3 className="text-2xl font-black text-white">Desafío Enviado</h3>
             <p className="text-slate-300 text-sm">Esperando a que <span className="text-purple-400 font-bold">{dueloActivo.retadorNombre}</span> abra su Salón de Duelos y acepte.</p>
-            <button
-              onClick={cancelarDesafioEnviado}
-              className="mt-4 bg-red-600/50 hover:bg-red-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase"
-            >
+            <button onClick={cancelarDesafioEnviado} className="mt-4 bg-red-600/50 hover:bg-red-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase">
               Cancelar y recuperar corazones
             </button>
           </div>
         </div>
       )}
 
-      {/* VISTA 3: BATALLA EN CURSO */}
-      {dueloActivo && dueloActivo.estado === 'ACTIVO' && !dueloFinalizado && (
+      {/* VISTA 3: BATALLA ACTIVA (USANDO LAS 30 PREGUNTAS ALEATORIAS) */}
+      {dueloActivo && dueloActivo.estado === 'ACTIVO' && !dueloFinalizado && preguntasPartida.length > 0 && (
         <div className="w-full max-w-xl space-y-4 my-auto z-10">
           <div className="flex justify-between items-center bg-black/50 border border-white/10 p-4 rounded-2xl">
             <div className="flex items-center gap-2">
@@ -361,17 +448,17 @@ export default function ModuloDuelo({ currentUser, db, listaAmigos = [], onVolve
                 {tiempoRestante}s
               </span>
             </div>
-            <span className="text-xs font-bold text-slate-400">Pregunta {preguntaIndex + 1} / {PREGUNTAS_DUELO.length}</span>
+            <span className="text-xs font-bold text-slate-400">Pregunta {preguntaIndex + 1} / {preguntasPartida.length}</span>
             <span className="text-xs font-black text-purple-400 flex items-center gap-1"><Trophy size={14} /> {puntosDuelo} PTS</span>
           </div>
 
           <div className="bg-black/60 border border-purple-500/30 p-6 rounded-3xl text-center space-y-4 shadow-xl">
-            <h3 className="text-lg md:text-xl font-black text-white">{PREGUNTAS_DUELO[preguntaIndex].p}</h3>
+            <h3 className="text-lg md:text-xl font-black text-white">{preguntasPartida[preguntaIndex].p}</h3>
             <div className="grid grid-cols-1 gap-2.5">
-              {PREGUNTAS_DUELO[preguntaIndex].r.map((opcion, idx) => {
+              {preguntasPartida[preguntaIndex].r.map((opcion, idx) => {
                 let estilo = "bg-white/5 border-white/10 text-white hover:bg-white/10";
                 if (respuestaSeleccionada !== null) {
-                  if (idx === PREGUNTAS_DUELO[preguntaIndex].c) estilo = "bg-emerald-600 text-white font-bold border-emerald-400";
+                  if (idx === preguntasPartida[preguntaIndex].c) estilo = "bg-emerald-600 text-white font-bold border-emerald-400";
                   else if (idx === respuestaSeleccionada) estilo = "bg-red-600 text-white border-red-400";
                 }
                 return (
