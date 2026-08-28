@@ -318,7 +318,7 @@ function AppMain() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  const [vistaActual, setVistaActualState] = useState('home'); 
+  const [vistaActual, setVistaActualState] = useState(new URLSearchParams(window.location.search).get('duelo') ? 'duelo' : 'home');
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
   const [capituloActual, setCapituloActual] = useState(1);
