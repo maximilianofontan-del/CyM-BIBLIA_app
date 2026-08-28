@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { Mic, MicOff, Volume2, Square, Trophy, Star, ChevronLeft, CheckCircle2, XCircle, Loader2, Sparkles, Heart, ShoppingBag } from 'lucide-react';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { Mic, MicOff, Volume2, Square, Trophy, Star, ChevronLeft, CheckCircle2, XCircle, Loader2, Sparkles, Heart, Gem, ShoppingBag } from 'lucide-react';
 
-// ¡TUS 100 PREGUNTAS ORIGINALES COMPLETAS!
 const PREGUNTAS_LOCALES = [
     { "pregunta": "¿En cuántos días creó Dios los cielos y la tierra?", "opciones": ["7", "6", "3", "40"], "respuestaCorrecta": "6" },
     { "pregunta": "¿Qué ave envió Noé por primera vez desde el arca?", "opciones": ["Una paloma", "Un cuervo", "Un gorrión", "Un águila"], "respuestaCorrecta": "Un cuervo" },
@@ -206,7 +205,7 @@ const PREGUNTAS_LOCALES = [
     { "pregunta": "¿Quién fue el primogénito de Jacob?", "opciones": ["José", "Judá", "Rubén", "Simeón"], "respuestaCorrecta": "Rubén" },
     { "pregunta": "¿A quiénes masacraron Simeón y Leví?", "opciones": ["A los madianitas", "A los de Siquem", "A los egipcios", "A los filisteos"], "respuestaCorrecta": "A los de Siquem" },
     { "pregunta": "¿Qué soñó José en su primer sueño?", "opciones": ["Manjos de trigo", "El sol y la luna", "Siete vacas", "Siete espigas"], "respuestaCorrecta": "Manjos de trigo" },
-    { "pregunta": "¿A quién fue vendido José en Egipto?", "opciones": ["Al Faraón", "A Potifar", "A un panadero", "A un copero"], "respuestaCorrecta": "A Potifar" },
+    { "pregunta": "¿A quién fue vendido José en Egipto?", "opciones": ["Al Faraón", "A Potifar", "A un panadero", "A un copero"], "respuestaCorrecta": "Potifar" },
     { "pregunta": "¿De qué acusó la esposa de Potifar a José?", "opciones": ["De robo", "De intento de abuso", "De asesinato", "De traición"], "respuestaCorrecta": "De intento de abuso" },
     { "pregunta": "¿A quién perdonó la vida el Faraón según el sueño que interpretó José?", "opciones": ["Al panadero", "Al jefe de la guardia", "Al copero", "A su hermano"], "respuestaCorrecta": "Al copero" },
     { "pregunta": "¿Qué edad tenía José cuando se presentó ante Faraón?", "opciones": ["20 años", "30 años", "40 años", "50 años"], "respuestaCorrecta": "30 años" },
@@ -481,23 +480,36 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
   const [escuchando, setEscuchando] = useState(false);
   const [textoEscuchado, setTextoEscuchado] = useState("");
 
-  // ESTADOS PARA LA LÓGICA DE CORAZONES
   const [mostrarModalSinVidas, setMostrarModalSinVidas] = useState(false);
   const [comprandoCorazones, setComprandoCorazones] = useState(false);
 
-  const corazonesActuales = currentUser?.corazones ?? 10;
-  
+  // LECTURA EN TIEMPO REAL
+  const [corazonesEnVivo, setCorazonesEnVivo] = useState(currentUser?.corazones ?? 10);
+  const [diamantesEnVivo, setDiamantesEnVivo] = useState(currentUser?.diamantes ?? 0);
+
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const userRef = doc(db, 'cym_usuarios', currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setCorazonesEnVivo(data.corazones ?? 10);
+        setDiamantesEnVivo(data.diamantes ?? 0);
+      }
+    });
+    return () => unsubscribe();
+  }, [currentUser, db]);
+
   const recognitionRef = useRef(null);
   const procesarVozRef = useRef(null);
   
   const LETRAS = ['A', 'B', 'C', 'D'];
 
-  // PARCHE 1: MUESTRA EL MODAL SI ENTRAS A LA TRIVIA CON 0 CORAZONES
   useEffect(() => {
-    if (corazonesActuales <= 0 && !juegoTerminado) {
+    if (corazonesEnVivo <= 0 && !juegoTerminado) {
       setMostrarModalSinVidas(true);
     }
-  }, [corazonesActuales, juegoTerminado]);
+  }, [corazonesEnVivo, juegoTerminado]);
 
   const normalizar = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
@@ -629,36 +641,32 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
     }
   };
 
-  // FUNCIÓN PARA COMPRAR 10 CORAZONES ($2.000)
-  const handleComprarCorazones = async () => {
+  // NUEVA FUNCIÓN: COMPRAR 10 CORAZONES EXCLUSIVAMENTE CON 10 DIAMANTES 💎
+  const handleComprarCorazonesConDiamantes = async () => {
+    if (diamantesEnVivo < 10) {
+      alert("⚠️ No tenés suficientes Diamantes. Podés adquirir paquetes en la Tienda.");
+      onVolver(); // Lo lleva a la tienda
+      return;
+    }
+
     setComprandoCorazones(true);
     try {
-      const res = await fetch('/api/crear-preferencia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipoProducto: 'CORAZONES',
-          userId: currentUser?.uid,
-          email: currentUser?.email
-        })
+      const userRef = doc(db, 'cym_usuarios', currentUser.uid);
+      await updateDoc(userRef, {
+        diamantes: diamantesEnVivo - 10,
+        corazones: corazonesEnVivo + 10
       });
-
-      const data = await res.json();
-      if (data.init_point) {
-        window.location.href = data.init_point;
-      } else {
-        alert("No se pudo iniciar el proceso de cobro. Intentá de nuevo.");
-      }
+      alert("💎 ¡Recarga exitosa! Se descontaron 10 Diamantes y sumaste 10 Corazones.");
+      setMostrarModalSinVidas(false);
     } catch (err) {
-      alert("Error al conectar con la pasarela de pago.");
+      alert("Error al procesar el canje de Diamantes.");
     } finally {
       setComprandoCorazones(false);
     }
   };
 
   const manejarRespuesta = async (opcionSeleccionada, vieneDeVoz = false) => {
-    // PARCHE 2: REABRE EL MODAL SI SE HACE CLIC CON 0 CORAZONES
-    if (corazonesActuales <= 0) {
+    if (corazonesEnVivo <= 0) {
       setMostrarModalSinVidas(true);
       return;
     }
@@ -676,16 +684,13 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
       setPuntosSesion(prev => prev + 10);
       if (currentUser && db) {
         const puntosTotales = (currentUser.puntosTrivia || 0) + 10;
-        currentUser.puntosTrivia = puntosTotales;
         updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { 
           puntosTrivia: puntosTotales 
         }).catch(() => {});
       }
     } else {
-      // RESPUESTA INCORRECTA: RESTA 1 CORAZÓN
-      const nuevosCorazones = Math.max(0, corazonesActuales - 1);
+      const nuevosCorazones = Math.max(0, corazonesEnVivo - 1);
       if (currentUser && db) {
-        currentUser.corazones = nuevosCorazones;
         updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { 
           corazones: nuevosCorazones 
         }).catch(() => {});
@@ -699,8 +704,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
 
     setTimeout(() => {
       setEfectoCasino(false); 
-      if (!esCorrecta && corazonesActuales - 1 <= 0) {
-        // Se quedó sin corazones tras la respuesta incorrecta
+      if (!esCorrecta && corazonesEnVivo - 1 <= 0) {
         setMostrarModalSinVidas(true);
       } else if (preguntaActual + 1 < preguntasMezcladas.length) {
         setPreguntaActual(preguntaActual + 1);
@@ -791,7 +795,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
           {/* MARCADOR DE CORAZONES */}
           <div className="bg-black/60 border border-red-500/40 px-4 py-2 rounded-full backdrop-blur-md flex items-center gap-2 shadow-lg">
             <Heart size={20} className="text-red-500 fill-red-500 animate-pulse" />
-            <span className="text-white font-black text-sm">{corazonesActuales} / 10</span>
+            <span className="text-white font-black text-sm">{corazonesEnVivo} / 10</span>
           </div>
 
           <div className={`bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black px-6 py-2 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.5)] flex items-center gap-2 transition-all ${efectoCasino ? 'animacion-jackpot border-2 border-white' : ''}`}>
@@ -889,7 +893,7 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
         
       </div>
 
-      {/* MODAL EMERGENTE DE COMPRA CUANDO LLEGA A 0 CORAZONES */}
+      {/* MODAL EMERGENTE DE CANJE CON DIAMANTES CUANDO LLEGA A 0 CORAZONES */}
       {mostrarModalSinVidas && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-[#141414] border-2 border-red-500/50 p-6 md:p-8 rounded-3xl max-w-md w-full text-center space-y-6 shadow-2xl">
@@ -900,23 +904,26 @@ export default function ModuloTrivia({ currentUser, db, onVolver }) {
             <div>
               <h3 className="text-2xl font-black text-white">¡Te quedaste sin corazones!</h3>
               <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-                Cada error resta 1 corazón. Tus 10 corazones diarios se restauran automáticamente gratis a las 00:00 hs.
+                Tus 10 corazones diarios se restauran gratis a las 00:00 hs, o podés recargarlos usando tus Diamantes.
               </p>
             </div>
 
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-2">
               <p className="text-xs font-bold uppercase text-amber-400">¿Querés seguir jugando ahora?</p>
-              <p className="text-2xl font-black text-white">$2.000 <span className="text-xs font-normal text-slate-400">/ Pack 10 Corazones Extra</span></p>
+              <p className="text-2xl font-black text-cyan-400 flex items-center justify-center gap-2">
+                10 💎 <span className="text-xs font-normal text-slate-400">/ 10 Corazones Extra</span>
+              </p>
+              <p className="text-[10px] text-slate-400">Saldo actual: {diamantesEnVivo} 💎</p>
             </div>
 
             <div className="space-y-3">
               <button
-                onClick={handleComprarCorazones}
+                onClick={handleComprarCorazonesConDiamantes}
                 disabled={comprandoCorazones}
-                className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"
               >
-                {comprandoCorazones ? <Loader2 className="animate-spin" size={18} /> : <ShoppingBag size={18} />}
-                Comprar 10 Corazones ($2.000)
+                {comprandoCorazones ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />}
+                {diamantesEnVivo >= 10 ? "Canjear 10 Diamantes por 10 Corazones" : "Ir a la Tienda de Diamantes"}
               </button>
 
               <button
