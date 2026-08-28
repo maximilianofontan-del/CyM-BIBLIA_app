@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
-  Upload, Download, Image as ImageIcon, Shield, Search, Lock
+  Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -17,7 +17,21 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc, onSnapshot } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  arrayUnion, 
+  addDoc, 
+  onSnapshot, 
+  deleteDoc 
+} from 'firebase/firestore';
 
 import ModuloTrivia from './ModuloTrivia';
 import ModuloClub from './ModuloClub';
@@ -85,7 +99,7 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
 };
 
 // --------------------------------------------------
-// MÓDULO ADMINISTRADOR / OWNER (ACTUALIZADO CON GESTIÓN COMPLETA)
+// MÓDULO ADMINISTRADOR / OWNER
 // --------------------------------------------------
 function ModuloAdmin() {
   const [listaUsuarios, setListaUsuarios] = useState([]);
@@ -306,6 +320,12 @@ function AppMain() {
   const versiculoRefs = useRef({});
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
+
+  // ESTADOS PARA EDICIÓN DE PRÉDICAS
+  const [predicaEditando, setPredicaEditando] = useState(null);
+  const [editTitulo, setEditTitulo] = useState('');
+  const [editPasaje, setEditPasaje] = useState('');
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
 
   const setVistaActual = (nuevaVista) => {
     setVistaActualState(nuevaVista);
@@ -629,15 +649,22 @@ function AppMain() {
     if (!tituloPredicaInput.trim() || !pasajePredicaInput.trim() || !archivoWordTemp) {
       alert("Completá título, pasaje y Word."); return;
     }
+
+    const TAMANO_MAXIMO_BYTES = 850 * 1024;
+    if (archivoWordTemp.size > TAMANO_MAXIMO_BYTES) {
+      alert("⚠️ El archivo Word es muy pesado (máx 850 KB). Subí un documento más liviano.");
+      return;
+    }
+
     setSubiendoPredica(true);
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
         await addDoc(collection(db, 'predicas'), {
-          titulo: tituloPredicaInput,
-          nombre: tituloPredicaInput,
-          pasaje: pasajePredicaInput,
-          pasajeBiblico: pasajePredicaInput,
+          titulo: tituloPredicaInput.trim(),
+          nombre: tituloPredicaInput.trim(),
+          pasaje: pasajePredicaInput.trim(),
+          pasajeBiblico: pasajePredicaInput.trim(),
           nombreArchivo: archivoWordTemp.name, 
           archivoBase64: ev.target.result,
           wordUrl: ev.target.result,
@@ -645,16 +672,64 @@ function AppMain() {
           portadaUrl: portadaImageTemp || null,
           fechaSubida: new Date().toISOString()
         });
-        alert("¡Prédica subida!");
+        alert("¡Prédica subida con éxito!");
         setTituloPredicaInput(''); setPasajePredicaInput(''); setArchivoWordTemp(null); setPortadaImageTemp(null);
+        if (inputRefWord.current) inputRefWord.current.value = '';
+        if (inputRefPortada.current) inputRefPortada.current.value = '';
         cargarPredicacionesFirebase();
       } catch (err) {
-        alert("Error al subir la prédica.");
+        alert("Error al subir la prédica. Verificá permisos.");
       } finally { 
         setSubiendoPredica(false); 
       }
     };
     reader.readAsDataURL(archivoWordTemp);
+  };
+
+  const handleEliminarPredica = async (idPredica) => {
+    if (!window.confirm("¿Estás seguro de que querés borrar esta prédica del catálogo?")) return;
+    try {
+      await deleteDoc(doc(db, 'predicas', idPredica));
+      await deleteDoc(doc(db, 'cym_predicaciones', idPredica));
+      alert("Prédica eliminada.");
+      cargarPredicacionesFirebase();
+    } catch (e) {
+      alert("Error al eliminar la prédica.");
+    }
+  };
+
+  const handleAbrirEdicion = (predica) => {
+    setPredicaEditando(predica);
+    setEditTitulo(predica.titulo || predica.nombre || '');
+    setEditPasaje(predica.pasaje || predica.pasajeBiblico || '');
+  };
+
+  const handleGuardarEdicionPredica = async (e) => {
+    e.preventDefault();
+    if (!editTitulo.trim() || !editPasaje.trim()) {
+      alert("Completá título y pasaje.");
+      return;
+    }
+    setGuardandoEdit(true);
+    try {
+      const updates = {
+        titulo: editTitulo.trim(),
+        nombre: editTitulo.trim(),
+        pasaje: editPasaje.trim(),
+        pasajeBiblico: editPasaje.trim()
+      };
+      
+      try { await updateDoc(doc(db, 'predicas', predicaEditando.id), updates); } catch (err) {}
+      try { await updateDoc(doc(db, 'cym_predicaciones', predicaEditando.id), updates); } catch (err) {}
+
+      alert("¡Prédica actualizada!");
+      setPredicaEditando(null);
+      cargarPredicacionesFirebase();
+    } catch (e) {
+      alert("Error al actualizar la prédica.");
+    } finally {
+      setGuardandoEdit(false);
+    }
   };
 
   const handleDescargarArchivoPredica = async (predica, tipo) => {
@@ -887,6 +962,35 @@ function AppMain() {
         </div>
       )}
 
+      {/* MODAL EDICIÓN DE PRÉDICA */}
+      {predicaEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#0e1626] border border-cyan-500/50 p-6 rounded-3xl shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="text-cyan-400 font-black text-lg flex items-center gap-2"><Edit2 size={20} /> Editar Prédica</h3>
+              <button onClick={() => setPredicaEditando(null)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+            </div>
+            <form onSubmit={handleGuardarEdicionPredica} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Título de la Prédica</label>
+                <input type="text" value={editTitulo} onChange={(e) => setEditTitulo(e.target.value)} className="w-full bg-black/70 border border-cyan-500/30 rounded-xl p-3 text-white text-sm outline-none focus:border-cyan-400" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Pasaje Bíblico</label>
+                <input type="text" value={editPasaje} onChange={(e) => setEditPasaje(e.target.value)} className="w-full bg-black/70 border border-cyan-500/30 rounded-xl p-3 text-white text-sm outline-none focus:border-cyan-400" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={guardandoEdit} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-black py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2 shadow-lg">
+                  {guardandoEdit ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
+                  {guardandoEdit ? "Guardando..." : "Guardar Cambios"}
+                </button>
+                <button type="button" onClick={() => setPredicaEditando(null)} className="bg-white/10 hover:bg-white/20 text-slate-300 px-4 py-3 rounded-xl text-xs font-bold">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-8 relative z-10">
         
         {/* PANEL ADMIN (SOLO OWNER) */}
@@ -1078,7 +1182,7 @@ function AppMain() {
           </div>
         )}
 
-        {/* PREDICACIONES VIP (SOCIOS DIAMANTE O VERSIÓN CONFALLBACK) */}
+        {/* PREDICACIONES VIP */}
         {vistaActual === 'predicas' && (
           <div className="space-y-6">
             <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
@@ -1123,16 +1227,43 @@ function AppMain() {
               )}
 
               {cargandoPredicas ? (
-                <div className="text-center py-16 text-cyan-400"><Loader2 className="animate-spin mx-auto mb-3" size={36} /><p className="font-bold text-xs uppercase tracking-widest">Cargando Prédicas...</p></div>
+                <div className="text-center py-16 text-cyan-400">
+                  <Loader2 className="animate-spin mx-auto mb-3" size={36} />
+                  <p className="font-bold text-xs uppercase tracking-widest">Cargando Prédicas...</p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {listaPredicaciones.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-slate-500"><FileText size={48} className="mx-auto mb-3 opacity-30" /><p className="font-bold">No hay prédicas subidas todavía.</p></div>
+                    <div className="col-span-full text-center py-12 text-slate-500">
+                      <FileText size={48} className="mx-auto mb-3 opacity-30" />
+                      <p className="font-bold">No hay prédicas subidas todavía.</p>
+                    </div>
                   ) : (
                     listaPredicaciones.map((p) => {
-                      const esDiamante = (currentUser?.suscripcion || '').toUpperCase() === 'DIAMANTE' || currentUser?.role === 'OWNER';
+                      const esDiamante = (currentUser?.suscripcion || '').toUpperCase() === 'DIAMANTE' || isOwner;
                       return (
-                        <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl">
+                        <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl relative group">
+                          
+                          {/* BOTONES EXCLUSIVOS OWNER: EDITAR Y BORRAR */}
+                          {isOwner && (
+                            <div className="absolute top-3 right-3 z-20 flex gap-2">
+                              <button
+                                onClick={() => handleAbrirEdicion(p)}
+                                className="bg-blue-600/90 hover:bg-blue-500 text-white p-2 rounded-xl backdrop-blur-md shadow-lg transition-transform hover:scale-110"
+                                title="Editar Prédica"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleEliminarPredica(p.id)}
+                                className="bg-red-600/90 hover:bg-red-500 text-white p-2 rounded-xl backdrop-blur-md shadow-lg transition-transform hover:scale-110"
+                                title="Eliminar Prédica"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+
                           <div>
                             {(p.portadaBase64 || p.portadaUrl) ? (
                               <div className="h-48 w-full overflow-hidden relative">
@@ -1140,7 +1271,9 @@ function AppMain() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                               </div>
                             ) : (
-                              <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40"><FileText size={48} /></div>
+                              <div className="h-32 w-full bg-cyan-950/40 border-b border-white/10 flex items-center justify-center text-cyan-500/40">
+                                <FileText size={48} />
+                              </div>
                             )}
                             <div className="p-5">
                               <h4 className="text-white font-black text-xl mb-1 leading-snug">{p.titulo || p.nombre || 'Prédica'}</h4>
@@ -1177,7 +1310,7 @@ function AppMain() {
           </div>
         )}
 
-        {/* COMUNIDAD (RANKING CON USUARIO DESTACADO) */}
+        {/* COMUNIDAD */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-4 flex items-center gap-2"><Users /> Mis Amigos / Ranking</h2>
