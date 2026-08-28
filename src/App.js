@@ -8,7 +8,15 @@ import {
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  onAuthStateChanged, 
+  signOut,
+  setPersistence,
+  browserLocalPersistence
+} from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion, addDoc, onSnapshot } from 'firebase/firestore';
 
 import ModuloTrivia from './ModuloTrivia';
@@ -299,7 +307,6 @@ function AppMain() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
 
-  // ACTUALIZAR VISTA Y REGISTRARLA EN FIRESTORE EN TIEMPO REAL
   const setVistaActual = (nuevaVista) => {
     setVistaActualState(nuevaVista);
     if (currentUser?.uid) {
@@ -407,8 +414,8 @@ function AppMain() {
   const cargarPredicacionesFirebase = async () => {
     setCargandoPredicas(true);
     try {
-      let querySnapshot = await getDocs(collection(db, 'cym_predicaciones'));
-      if (querySnapshot.empty) querySnapshot = await getDocs(collection(db, 'predicas'));
+      let querySnapshot = await getDocs(collection(db, 'predicas'));
+      if (querySnapshot.empty) querySnapshot = await getDocs(collection(db, 'cym_predicaciones'));
       if (querySnapshot.empty) querySnapshot = await getDocs(collection(db, 'bosquejos'));
 
       const docs = [];
@@ -455,12 +462,16 @@ function AppMain() {
           ubicacionActual: vistaActual
         };
 
-        // RESTAURACIÓN DE CORAZONES A LAS 00:00 HS
-        if (userData.corazones === undefined || userData.ultimaFechaCorazones !== hoyClave) {
+        const fechaUltimoReseteo = userData.ultimaFechaCorazones;
+
+        if (fechaUltimoReseteo !== hoyClave) {
           userData.corazones = 10;
           userData.ultimaFechaCorazones = hoyClave;
           updates.corazones = 10;
           updates.ultimaFechaCorazones = hoyClave;
+        } else if (userData.corazones === undefined || userData.corazones === null) {
+          userData.corazones = 0;
+          updates.corazones = 0;
         }
 
         if (isGodMode && userData.role !== 'OWNER') {
@@ -534,6 +545,9 @@ function AppMain() {
   };
 
   useEffect(() => { 
+    setPersistence(auth, browserLocalPersistence)
+      .catch((error) => console.error("Error fijando persistencia de sesión:", error));
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => { 
       try {
         if (user) {
@@ -619,16 +633,26 @@ function AppMain() {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
-        await addDoc(collection(db, 'cym_predicaciones'), {
-          titulo: tituloPredicaInput, pasaje: pasajePredicaInput,
-          nombreArchivo: archivoWordTemp.name, archivoBase64: ev.target.result,
-          portadaBase64: portadaImageTemp || null, fechaSubida: new Date().toISOString()
+        await addDoc(collection(db, 'predicas'), {
+          titulo: tituloPredicaInput,
+          nombre: tituloPredicaInput,
+          pasaje: pasajePredicaInput,
+          pasajeBiblico: pasajePredicaInput,
+          nombreArchivo: archivoWordTemp.name, 
+          archivoBase64: ev.target.result,
+          wordUrl: ev.target.result,
+          portadaBase64: portadaImageTemp || null, 
+          portadaUrl: portadaImageTemp || null,
+          fechaSubida: new Date().toISOString()
         });
         alert("¡Prédica subida!");
         setTituloPredicaInput(''); setPasajePredicaInput(''); setArchivoWordTemp(null); setPortadaImageTemp(null);
         cargarPredicacionesFirebase();
-      } catch (err) {}
-      finally { setSubiendoPredica(false); }
+      } catch (err) {
+        alert("Error al subir la prédica.");
+      } finally { 
+        setSubiendoPredica(false); 
+      }
     };
     reader.readAsDataURL(archivoWordTemp);
   };
@@ -648,7 +672,7 @@ function AppMain() {
 
       const link = document.createElement('a'); 
       link.href = urlAdescargar;
-      link.download = predica.nombreArchivo || `${predica.titulo || 'Predica'}.docx`;
+      link.download = predica.nombreArchivo || `${predica.titulo || predica.nombre || 'Predica'}.docx`;
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
 
       if (rol !== 'OWNER') {
@@ -661,7 +685,7 @@ function AppMain() {
       if (!predica.portadaBase64 && !predica.portadaUrl) { alert("Sin portada adjunta."); return; }
       const link = document.createElement('a'); 
       link.href = predica.portadaBase64 || predica.portadaUrl;
-      link.download = `Portada_${predica.titulo || 'Predica'}.jpg`;
+      link.download = `Portada_${predica.titulo || predica.nombre || 'Predica'}.jpg`;
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
   };
