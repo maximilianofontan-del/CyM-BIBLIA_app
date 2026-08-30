@@ -5,7 +5,7 @@ import {
 import { 
   Shield, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, UserCheck, 
   MessageSquare, LogOut, ArrowUpCircle, Trophy, Users, Heart, CheckCircle, 
-  ChevronDown, Swords, UserX, Clock, Target, Edit2, Check, X
+  ChevronDown, Swords, UserX, Clock, Target, Edit2, Check, X, Flame
 } from 'lucide-react';
 
 const RANGOS = ['Seguidor', 'Amigo', 'Discípulo', 'Apóstol'];
@@ -282,7 +282,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     } catch (e) {}
   };
 
-  // SISTEMA DE DESAFÍOS (BATALLAS)
+  // BATALLAS: DESAFIAR
   const handleDesafiar = async (rival) => {
     if (!miClan) { alert("Debés pertenecer a un clan para desafiar."); return; }
     if (miClanProcesado?.desafioActivo) { alert("Tu clan ya tiene una batalla activa."); return; }
@@ -304,12 +304,23 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     } catch (e) { alert("Error al enviar el desafío."); }
   };
 
+  // BATALLAS: ACEPTAR (Guarda los puntos base para contar desde 0)
   const aceptarDesafio = async (desafio) => {
     try {
+      const clanRetador = clanesProcesados.find(c => c.id === desafio.retadorId);
+      const puntosBaseRetador = clanRetador ? clanRetador.puntosTotales : 0;
+      const puntosBaseMios = miClanProcesado.puntosTotales;
+
       const objDesafio = {
-        retadorId: desafio.retadorId, retadorNombre: desafio.retadorNombre,
-        rivalId: miClan.id, rivalNombre: miClan.nombre, meta: desafio.meta
+        retadorId: desafio.retadorId, 
+        retadorNombre: desafio.retadorNombre,
+        rivalId: miClan.id, 
+        rivalNombre: miClan.nombre, 
+        meta: desafio.meta,
+        baseRetador: puntosBaseRetador,
+        baseRival: puntosBaseMios
       };
+
       await updateDoc(doc(db, 'cym_clanes', miClan.id), {
         desafiosPendientes: arrayRemove(desafio),
         desafioActivo: objDesafio
@@ -326,13 +337,85 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   };
 
   const finalizarDuelo = async () => {
-    if (!window.confirm("¿Seguro que querés terminar este duelo?")) return;
+    if (!window.confirm("¿Seguro que querés terminar este duelo? Se borrará el historial de la batalla.")) return;
     try {
       const rivalId = miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalId : miClanProcesado.desafioActivo.retadorId;
       await updateDoc(doc(db, 'cym_clanes', miClan.id), { desafioActivo: null });
-      await updateDoc(doc(db, 'cym_clanes', rivalId), { desafioActivo: null });
+      if (rivalId) await updateDoc(doc(db, 'cym_clanes', rivalId), { desafioActivo: null });
     } catch(e) { alert("Error al finalizar duelo."); }
   };
+
+  // Lógica de Renderizado del Marcador en Vivo
+  let renderGuerra = null;
+  if (miClanProcesado?.desafioActivo) {
+    const guerra = miClanProcesado.desafioActivo;
+    const esRetador = guerra.retadorId === miClan.id;
+    
+    // Calcular progreso de Mi Clan
+    const miBase = esRetador ? guerra.baseRetador : guerra.baseRival;
+    const misPuntosActuales = miClanProcesado.puntosTotales;
+    const miProgresoGuerra = Math.max(0, misPuntosActuales - (miBase || 0));
+
+    // Calcular progreso del Rival
+    const rivalId = esRetador ? guerra.rivalId : guerra.retadorId;
+    const clanRival = clanesProcesados.find(c => c.id === rivalId);
+    const rivalBase = esRetador ? guerra.baseRival : guerra.baseRetador;
+    const rivalPuntosActuales = clanRival ? clanRival.puntosTotales : 0;
+    const rivalProgresoGuerra = Math.max(0, rivalPuntosActuales - (rivalBase || 0));
+
+    const meta = guerra.meta;
+    const ganeYo = miProgresoGuerra >= meta;
+    const ganoRival = rivalProgresoGuerra >= meta;
+
+    if (ganeYo || ganoRival) {
+      renderGuerra = (
+        <div className={`border p-6 rounded-3xl mb-4 shadow-2xl text-center ${ganeYo ? 'bg-emerald-950/80 border-emerald-500/50' : 'bg-red-950/80 border-red-500/50'}`}>
+          <h3 className={`text-3xl font-black mb-2 uppercase ${ganeYo ? 'text-emerald-400' : 'text-red-500'}`}>
+            {ganeYo ? '🏆 ¡VICTORIA GLORIOSA!' : '💀 DERROTA APLASTANTE'}
+          </h3>
+          <p className="text-white text-sm mb-4">
+            {ganeYo ? `¡Tu clan destrozó a ${esRetador ? guerra.rivalNombre : guerra.retadorNombre}!` : `El clan ${esRetador ? guerra.rivalNombre : guerra.retadorNombre} alcanzó la meta primero.`}
+          </p>
+          <div className="flex justify-center gap-6 text-xl font-black mb-6">
+            <div className={ganeYo ? 'text-emerald-400' : 'text-slate-400'}>{miClanProcesado.nombre}: {miProgresoGuerra}</div>
+            <div className={ganoRival ? 'text-red-400' : 'text-slate-400'}>{esRetador ? guerra.rivalNombre : guerra.retadorNombre}: {rivalProgresoGuerra}</div>
+          </div>
+          {esLider && (
+            <button onClick={finalizarDuelo} className="bg-white text-black font-black uppercase px-6 py-3 rounded-xl hover:scale-105">
+              Cerrar y Limpiar Marcador
+            </button>
+          )}
+        </div>
+      );
+    } else {
+      renderGuerra = (
+        <div className="bg-gradient-to-r from-red-950 to-black border border-red-500/50 p-5 rounded-3xl mb-4 shadow-xl">
+          <h4 className="font-black text-red-500 text-center mb-1 flex justify-center items-center gap-2"><Swords size={20}/> ⚔️ GUERRA DE CLANES ACTIVA ⚔️</h4>
+          <p className="text-center text-xs text-slate-300 mb-5 uppercase tracking-widest font-bold">Meta a alcanzar jugando Trivia: {meta} Puntos</p>
+          
+          <div className="flex justify-between items-center text-center">
+            <div className="flex-1">
+              <p className="font-black text-amber-400 text-xs sm:text-sm truncate px-1">{miClanProcesado.nombre}</p>
+              <p className="text-3xl font-black text-white mt-1">{miProgresoGuerra}</p>
+            </div>
+            <div className="px-2 sm:px-4 font-black text-slate-600 text-2xl">VS</div>
+            <div className="flex-1">
+              <p className="font-black text-red-400 text-xs sm:text-sm truncate px-1">{esRetador ? guerra.rivalNombre : guerra.retadorNombre}</p>
+              <p className="text-3xl font-black text-white mt-1">{rivalProgresoGuerra}</p>
+            </div>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2 mt-5 overflow-hidden flex">
+             <div className="bg-amber-500 h-2" style={{width: `${(miProgresoGuerra / meta) * 100}%`}}></div>
+          </div>
+          {esLider && (
+            <button onClick={finalizarDuelo} className="mt-5 w-full bg-white/5 border border-white/10 text-slate-400 hover:text-white py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest hover:bg-white/10 transition-colors">
+              Rendirse / Cancelar
+            </button>
+          )}
+        </div>
+      );
+    }
+  }
 
 
   return (
@@ -354,13 +437,13 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
           <div className="space-y-4 w-full max-w-2xl mx-auto">
             
             {/* NOTIFICACIÓN DE DESAFÍOS RECIBIDOS */}
-            {miClanProcesado.desafiosPendientes?.length > 0 && (
+            {miClanProcesado.desafiosPendientes?.length > 0 && !miClanProcesado.desafioActivo && (
               <div className="space-y-2 mb-4">
                 {miClanProcesado.desafiosPendientes.map(desafio => (
                   <div key={desafio.id} className="bg-red-950/80 border border-red-500/50 p-4 rounded-3xl flex justify-between items-center shadow-xl">
                     <div>
-                      <h4 className="font-black text-red-500 text-sm uppercase flex items-center gap-1.5"><Swords size={16}/> ¡DESAFÍO RECIBIDO!</h4>
-                      <p className="text-xs text-white mt-1">El clan <span className="font-bold text-amber-400">{desafio.retadorNombre}</span> los retó a llegar a <span className="font-bold text-amber-400">{desafio.meta}</span> puntos.</p>
+                      <h4 className="font-black text-red-500 text-sm uppercase flex items-center gap-1.5"><Flame size={16}/> ¡DESAFÍO RECIBIDO!</h4>
+                      <p className="text-xs text-white mt-1">El clan <span className="font-bold text-amber-400">{desafio.retadorNombre}</span> los retó a sumar <span className="font-bold text-amber-400">{desafio.meta}</span> puntos.</p>
                     </div>
                     {esLider && (
                       <div className="flex gap-2">
@@ -373,34 +456,8 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
               </div>
             )}
 
-            {/* MARCADOR DE GUERRA ACTIVA */}
-            {miClanProcesado.desafioActivo && (
-              <div className="bg-gradient-to-r from-red-950 to-black border border-red-500/50 p-5 rounded-3xl mb-4 shadow-xl">
-                <h4 className="font-black text-red-500 text-center mb-1 flex justify-center items-center gap-2"><Swords size={20}/> ⚔️ GUERRA DE CLANES ACTIVA ⚔️</h4>
-                <p className="text-center text-xs text-slate-300 mb-5 uppercase tracking-widest font-bold">Meta a alcanzar: {miClanProcesado.desafioActivo.meta} Puntos</p>
-                
-                <div className="flex justify-between items-center text-center">
-                  <div className="flex-1">
-                    <p className="font-black text-amber-400 text-xs sm:text-sm truncate px-1">{miClanProcesado.nombre}</p>
-                    <p className="text-3xl font-black text-white mt-1">{miClanProcesado.puntosTotales}</p>
-                  </div>
-                  <div className="px-2 sm:px-4 font-black text-slate-600 text-2xl">VS</div>
-                  <div className="flex-1">
-                    <p className="font-black text-red-400 text-xs sm:text-sm truncate px-1">
-                      {miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalNombre : miClanProcesado.desafioActivo.retadorNombre}
-                    </p>
-                    <p className="text-3xl font-black text-white mt-1">
-                      {clanesProcesados.find(c => c.id === (miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalId : miClanProcesado.desafioActivo.retadorId))?.puntosTotales || 0}
-                    </p>
-                  </div>
-                </div>
-                {esLider && (
-                  <button onClick={finalizarDuelo} className="mt-5 w-full bg-white/5 border border-white/10 text-slate-400 hover:text-white py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest hover:bg-white/10 transition-colors">
-                    Finalizar o Rendirse
-                  </button>
-                )}
-              </div>
-            )}
+            {/* MARCADOR DE GUERRA */}
+            {renderGuerra}
             
             <div className="bg-black/80 border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10"><Shield size={100} color="#f59e0b" /></div>
