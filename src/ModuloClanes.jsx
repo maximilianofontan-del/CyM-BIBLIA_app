@@ -5,14 +5,13 @@ import {
 import { 
   Shield, Crown, Lock, Unlock, Send, ChevronLeft, PlusCircle, UserCheck, 
   MessageSquare, LogOut, ArrowUpCircle, Trophy, Users, Heart, CheckCircle, 
-  ChevronDown, Swords, UserX, Clock, Target, Edit2, Check
+  ChevronDown, Swords, UserX, Clock, Target, Edit2, Check, X
 } from 'lucide-react';
 
 const RANGOS = ['Seguidor', 'Amigo', 'Discípulo', 'Apóstol'];
 const ORDEN_RANGOS = { 'Líder': 1, 'Apóstol': 2, 'Discípulo': 3, 'Amigo': 4, 'Seguidor': 5 };
 const ICONOS_RANGO = { 'Líder': '👑', 'Apóstol': '⚔️', 'Discípulo': '📖', 'Amigo': '🤝', 'Seguidor': '🚶' };
 
-// Función para calcular hace cuánto se conectó
 const tiempoTranscurrido = (fechaIso) => {
   if (!fechaIso) return 'Desconocida';
   const ahora = new Date();
@@ -30,7 +29,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   const [cargando, setCargando] = useState(true);
   const [pestaña, setPestaña] = useState('miclan'); 
 
-  // ESTADOS FORMULARIO CREAR CLAN
   const [mostrarCrear, setMostrarCrear] = useState(false);
   const [nombreClan, setNombreClan] = useState('');
   const [descripcionClan, setDescripcionClan] = useState('');
@@ -38,15 +36,12 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   const [procesando, setProcesando] = useState(false);
   const [asistenciaDada, setAsistenciaDada] = useState(false);
 
-  // META DEL CLAN
   const [editandoMeta, setEditandoMeta] = useState(false);
   const [inputMeta, setInputMeta] = useState('');
 
-  // CHAT INTERNO
   const [mensajesClan, setMensajesChat] = useState([]);
   const [inputChat, setInputChat] = useState('');
 
-  // 1. CARGA EN TIEMPO REAL
   useEffect(() => {
     const unsubUsr = onSnapshot(collection(db, 'cym_usuarios'), (snap) => {
       const uMap = {};
@@ -77,23 +72,18 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     return () => { unsubUsr(); unsubClanes(); };
   }, [currentUser, db]);
 
-  // 2. PROCESAR PUNTOS Y MIEMBROS
   const clanesProcesados = clanes.map(clan => {
     let puntosTotales = 0;
     const miembrosDetalle = (clan.miembrosIds || []).map(uid => {
       const usr = usuariosMap[uid] || { id: uid, nombre: 'Usuario Desconocido', puntosTrivia: 0, corazones: 0, ultimaConexion: null };
       puntosTotales += (usr.puntosTrivia || 0);
-      
       const esElLider = uid === clan.liderId;
       const rangoReal = esElLider ? 'Líder' : (clan.rangos?.[uid] || 'Seguidor');
-
       return { ...usr, rango: rangoReal };
     });
 
     miembrosDetalle.sort((a, b) => {
-      if (ORDEN_RANGOS[a.rango] !== ORDEN_RANGOS[b.rango]) {
-        return ORDEN_RANGOS[a.rango] - ORDEN_RANGOS[b.rango];
-      }
+      if (ORDEN_RANGOS[a.rango] !== ORDEN_RANGOS[b.rango]) return ORDEN_RANGOS[a.rango] - ORDEN_RANGOS[b.rango];
       return (b.puntosTrivia || 0) - (a.puntosTrivia || 0);
     });
 
@@ -102,9 +92,8 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
 
   const miClanProcesado = clanesProcesados.find(c => c.id === miClan?.id);
   const posicionMiClan = clanesProcesados.findIndex(c => c.id === miClan?.id) + 1;
-  const metaIndividual = miClanProcesado?.metaSemanal || 1000; // Meta por defecto 1000
+  const metaIndividual = miClanProcesado?.metaSemanal || 1000;
   
-  // PERMISOS DE RANGO
   const esLider = miClan?.liderId === currentUser?.uid;
   const miRango = miClanProcesado?.miembrosDetalle.find(m => m.id === currentUser.uid)?.rango || 'Seguidor';
   const puedeAdministrar = miRango === 'Líder' || miRango === 'Apóstol';
@@ -112,7 +101,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
   const hoyStr = new Date().toISOString().split('T')[0];
   const yaDioAsistencia = currentUser?.ultimaAsistenciaClan === hoyStr || asistenciaDada;
 
-  // 3. CREAR UN NUEVO CLAN
   const handleCrearClan = async (e) => {
     e.preventDefault();
     if (!nombreClan.trim()) { alert("Ingresá un nombre para tu Clan."); return; }
@@ -137,6 +125,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         rangos: { [currentUser.uid]: 'Líder' },
         solicitudesPendientes: [],
         mensajesChat: [],
+        desafiosPendientes: [],
         metaSemanal: 1000,
         fechaCreacion: new Date().toISOString()
       };
@@ -146,14 +135,13 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
       setMostrarCrear(false);
       setNombreClan('');
       setDescripcionClan('');
-    } catch (err) { alert("Error al intentar crear el Clan."); } 
+    } catch (err) { alert("Error al crear el Clan."); } 
     finally { setProcesando(false); }
   };
 
-  // 4. UNIRSE A UN CLAN
   const handleUnirseClan = async (clan) => {
     if (miClan) { alert("Ya pertenecés a un Clan."); return; }
-    if ((clan.miembrosIds?.length || 0) >= (clan.cupoMaximo || 20)) { alert("⚠️ Este Clan alcanzó su límite máximo de miembros."); return; }
+    if ((clan.miembrosIds?.length || 0) >= (clan.cupoMaximo || 20)) { alert("⚠️ Clan lleno."); return; }
     if (!window.confirm(`¿Seguro que querés unirte a ${clan.nombre}?`)) return;
 
     const clanRef = doc(db, 'cym_clanes', clan.id);
@@ -162,7 +150,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         await updateDoc(clanRef, {
           solicitudesPendientes: arrayUnion({ uid: currentUser.uid, nombre: currentUser.nombre || 'Hermano/a', foto: currentUser.photoURL })
         });
-        alert("Solicitud enviada al Líder/Apóstoles del Clan.");
+        alert("Solicitud enviada al Líder.");
       } else {
         await updateDoc(clanRef, {
           miembrosIds: arrayUnion(currentUser.uid),
@@ -173,7 +161,6 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     } catch (e) { alert("Error al procesar la solicitud."); }
   };
 
-  // 5. CHAT PRIVADO
   const handleEnviarMensajeChat = async (e) => {
     e.preventDefault();
     if (!inputChat.trim() || !miClan) return;
@@ -188,23 +175,20 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     const nuevosMensajes = [...mensajesClan, nuevoMsg];
     setMensajesChat(nuevosMensajes);
     setInputChat('');
-
-    try { await updateDoc(doc(db, 'cym_clanes', miClan.id), { mensajesChat: nuevosMensajes }); } 
-    catch (err) {}
+    try { await updateDoc(doc(db, 'cym_clanes', miClan.id), { mensajesChat: nuevosMensajes }); } catch (err) {}
   };
 
-  // 6. SALIR DEL CLAN
   const handleSalirClan = async () => {
     if (esLider && miClan.miembrosIds.length > 1) {
-      alert("⚠️ Sos el Líder. Como todavía hay miembros, no podés salir sin disolverlo. Expulsa a los demás primero.");
+      alert("⚠️ Sos el Líder. No podés salir sin disolverlo. Expulsa a los demás primero.");
       return;
     }
-    if (!window.confirm(`¿Estás seguro que querés abandonar el clan "${miClan.nombre}"?`)) return;
+    if (!window.confirm(`¿Abandonar el clan "${miClan.nombre}"?`)) return;
 
     try {
       if (miClan.miembrosIds.length === 1) {
         await deleteDoc(doc(db, 'cym_clanes', miClan.id));
-        alert("Saliste del clan. Al quedar vacío, el clan fue disuelto.");
+        alert("Clan disuelto.");
       } else {
         const rangosActualizados = { ...miClan.rangos };
         delete rangosActualizados[currentUser.uid];
@@ -212,18 +196,16 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
           miembrosIds: arrayRemove(currentUser.uid),
           rangos: rangosActualizados
         });
-        alert("Has abandonado el clan exitosamente.");
       }
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { tituloHonorifico: null });
       setMiClan(null);
-    } catch (e) { alert("Ocurrió un error al intentar salir del clan."); }
+    } catch (e) { alert("Error al salir."); }
   };
 
-  // 7. EXPULSAR MIEMBROS
   const handleExpulsarMiembro = async (miembro) => {
-    if (miembro.rango === 'Líder') { alert("No se puede expulsar al Líder del clan."); return; }
+    if (miembro.rango === 'Líder') return;
     if (miRango === 'Apóstol' && miembro.rango === 'Apóstol') { alert("Un Apóstol no puede expulsar a otro Apóstol."); return; }
-    if (!window.confirm(`¿Estás seguro de expulsar a ${miembro.nombre} del clan?`)) return;
+    if (!window.confirm(`¿Expulsar a ${miembro.nombre} del clan?`)) return;
 
     try {
       const rangosActualizados = { ...miClan.rangos };
@@ -232,30 +214,25 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         miembrosIds: arrayRemove(miembro.id),
         rangos: rangosActualizados
       });
-      alert("Miembro expulsado.");
     } catch (e) { alert("Error al expulsar."); }
   };
 
-  // 8. ADMINISTRAR SOLICITUDES
   const procesarSolicitud = async (solicitud, aceptar) => {
     try {
-      const nuevasSolicitudes = (miClan.solicitudesPendientes || []).filter(s => s.uid !== solicitud.uid);
-      
+      const nuevasSol = (miClan.solicitudesPendientes || []).filter(s => s.uid !== solicitud.uid);
       if (aceptar) {
-        if ((miClan.miembrosIds.length || 0) >= (miClan.cupoMaximo || 20)) { alert("El clan ya está lleno."); return; }
+        if ((miClan.miembrosIds.length || 0) >= (miClan.cupoMaximo || 20)) { alert("El clan está lleno."); return; }
         await updateDoc(doc(db, 'cym_clanes', miClan.id), {
-          solicitudesPendientes: nuevasSolicitudes,
+          solicitudesPendientes: nuevasSol,
           miembrosIds: arrayUnion(solicitud.uid),
           [`rangos.${solicitud.uid}`]: 'Seguidor'
         });
-        alert(`${solicitud.nombre} fue aceptado en el clan.`);
       } else {
-        await updateDoc(doc(db, 'cym_clanes', miClan.id), { solicitudesPendientes: nuevasSolicitudes });
+        await updateDoc(doc(db, 'cym_clanes', miClan.id), { solicitudesPendientes: nuevasSol });
       }
     } catch (e) { alert("Error al procesar solicitud."); }
   };
 
-  // 9. ASISTENCIA INMEDIATA
   const handleAsistencia = async () => {
     if (yaDioAsistencia) return;
     setAsistenciaDada(true);
@@ -273,43 +250,88 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         }
       }
     } catch (error) { 
-      alert("Error al registrar asistencia."); 
       setAsistenciaDada(false); 
+      alert("Error al registrar asistencia."); 
     } 
     finally { setProcesando(false); }
   };
 
-  // 10. CAMBIAR RANGOS
   const handleCambiarRango = async (miembroId, nuevoRango) => {
     try { await updateDoc(doc(db, 'cym_clanes', miClan.id), { [`rangos.${miembroId}`]: nuevoRango }); } 
-    catch (error) { alert("Error al actualizar el rango."); }
+    catch (error) {}
   };
 
-  // 11. CAMBIAR META (Solo Líder)
   const handleGuardarMeta = async () => {
-    if (inputMeta < 0 || inputMeta === '') return;
+    const val = parseInt(inputMeta, 10);
+    if (isNaN(val) || val < 0) return;
     try {
-      await updateDoc(doc(db, 'cym_clanes', miClan.id), { metaSemanal: Number(inputMeta) });
+      await updateDoc(doc(db, 'cym_clanes', miClan.id), { metaSemanal: val });
       setEditandoMeta(false);
     } catch (e) { alert("Error al actualizar meta."); }
   };
 
   const handleAmpliarCupo = async () => {
     const diamantesActuales = currentUser?.diamantes || 0;
-    if (diamantesActuales < 25) { alert("⚠️ Necesitás 25 Diamantes 💎 para ampliar la capacidad del Clan."); return; }
-    if (!window.confirm("¿Querés invertir 25 Diamantes para habilitar 10 lugares más en tu Clan?")) return;
+    if (diamantesActuales < 25) { alert("⚠️ Necesitás 25 Diamantes 💎."); return; }
+    if (!window.confirm("¿Ampliar cupo en 10 lugares por 25 Diamantes?")) return;
 
     try {
       await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), { diamantes: diamantesActuales - 25 });
       const nuevoCupo = (miClan.cupoMaximo || 20) + 10;
       await updateDoc(doc(db, 'cym_clanes', miClan.id), { cupoMaximo: nuevoCupo });
-      alert(`¡Éxito! Tu clan ahora tiene capacidad para ${nuevoCupo} miembros.`);
-    } catch (e) { alert("Error al intentar ampliar el clan."); }
+    } catch (e) {}
   };
 
-  const handleDesafiar = (rivalNombre) => {
-    if (!miClan) { alert("Debés pertenecer a un clan para poder desafiar."); return; }
-    alert(`⚔️ ¡Has enviado un grito de guerra a ${rivalNombre}! Preparate para superarlos en los puntos de Trivia.`);
+  // SISTEMA DE DESAFÍOS (BATALLAS)
+  const handleDesafiar = async (rival) => {
+    if (!miClan) { alert("Debés pertenecer a un clan para desafiar."); return; }
+    if (miClanProcesado?.desafioActivo) { alert("Tu clan ya tiene una batalla activa."); return; }
+
+    const metaDuelo = prompt(`¿A cuántos puntos querés desafiar a ${rival.nombre}? (Ej: 5000)`);
+    const valMeta = parseInt(metaDuelo, 10);
+    if (isNaN(valMeta) || valMeta <= 0) return;
+
+    try {
+      await updateDoc(doc(db, 'cym_clanes', rival.id), {
+        desafiosPendientes: arrayUnion({
+          id: Date.now().toString(),
+          retadorId: miClan.id,
+          retadorNombre: miClan.nombre,
+          meta: valMeta
+        })
+      });
+      alert(`⚔️ ¡Has enviado un grito de guerra a ${rival.nombre} por ${valMeta} puntos!`);
+    } catch (e) { alert("Error al enviar el desafío."); }
+  };
+
+  const aceptarDesafio = async (desafio) => {
+    try {
+      const objDesafio = {
+        retadorId: desafio.retadorId, retadorNombre: desafio.retadorNombre,
+        rivalId: miClan.id, rivalNombre: miClan.nombre, meta: desafio.meta
+      };
+      await updateDoc(doc(db, 'cym_clanes', miClan.id), {
+        desafiosPendientes: arrayRemove(desafio),
+        desafioActivo: objDesafio
+      });
+      await updateDoc(doc(db, 'cym_clanes', desafio.retadorId), {
+        desafioActivo: objDesafio
+      });
+    } catch(e) { alert("Error al aceptar."); }
+  };
+
+  const rechazarDesafio = async (desafio) => {
+    try { await updateDoc(doc(db, 'cym_clanes', miClan.id), { desafiosPendientes: arrayRemove(desafio) }); } 
+    catch(e) {}
+  };
+
+  const finalizarDuelo = async () => {
+    if (!window.confirm("¿Seguro que querés terminar este duelo?")) return;
+    try {
+      const rivalId = miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalId : miClanProcesado.desafioActivo.retadorId;
+      await updateDoc(doc(db, 'cym_clanes', miClan.id), { desafioActivo: null });
+      await updateDoc(doc(db, 'cym_clanes', rivalId), { desafioActivo: null });
+    } catch(e) { alert("Error al finalizar duelo."); }
   };
 
 
@@ -331,6 +353,55 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
         miClanProcesado ? (
           <div className="space-y-4 w-full max-w-2xl mx-auto">
             
+            {/* NOTIFICACIÓN DE DESAFÍOS RECIBIDOS */}
+            {miClanProcesado.desafiosPendientes?.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {miClanProcesado.desafiosPendientes.map(desafio => (
+                  <div key={desafio.id} className="bg-red-950/80 border border-red-500/50 p-4 rounded-3xl flex justify-between items-center shadow-xl">
+                    <div>
+                      <h4 className="font-black text-red-500 text-sm uppercase flex items-center gap-1.5"><Swords size={16}/> ¡DESAFÍO RECIBIDO!</h4>
+                      <p className="text-xs text-white mt-1">El clan <span className="font-bold text-amber-400">{desafio.retadorNombre}</span> los retó a llegar a <span className="font-bold text-amber-400">{desafio.meta}</span> puntos.</p>
+                    </div>
+                    {esLider && (
+                      <div className="flex gap-2">
+                        <button onClick={() => aceptarDesafio(desafio)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-black shadow-md"><Check size={16}/></button>
+                        <button onClick={() => rechazarDesafio(desafio)} className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-xl text-xs font-black shadow-md"><X size={16}/></button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* MARCADOR DE GUERRA ACTIVA */}
+            {miClanProcesado.desafioActivo && (
+              <div className="bg-gradient-to-r from-red-950 to-black border border-red-500/50 p-5 rounded-3xl mb-4 shadow-xl">
+                <h4 className="font-black text-red-500 text-center mb-1 flex justify-center items-center gap-2"><Swords size={20}/> ⚔️ GUERRA DE CLANES ACTIVA ⚔️</h4>
+                <p className="text-center text-xs text-slate-300 mb-5 uppercase tracking-widest font-bold">Meta a alcanzar: {miClanProcesado.desafioActivo.meta} Puntos</p>
+                
+                <div className="flex justify-between items-center text-center">
+                  <div className="flex-1">
+                    <p className="font-black text-amber-400 text-xs sm:text-sm truncate px-1">{miClanProcesado.nombre}</p>
+                    <p className="text-3xl font-black text-white mt-1">{miClanProcesado.puntosTotales}</p>
+                  </div>
+                  <div className="px-2 sm:px-4 font-black text-slate-600 text-2xl">VS</div>
+                  <div className="flex-1">
+                    <p className="font-black text-red-400 text-xs sm:text-sm truncate px-1">
+                      {miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalNombre : miClanProcesado.desafioActivo.retadorNombre}
+                    </p>
+                    <p className="text-3xl font-black text-white mt-1">
+                      {clanesProcesados.find(c => c.id === (miClanProcesado.desafioActivo.retadorId === miClan.id ? miClanProcesado.desafioActivo.rivalId : miClanProcesado.desafioActivo.retadorId))?.puntosTotales || 0}
+                    </p>
+                  </div>
+                </div>
+                {esLider && (
+                  <button onClick={finalizarDuelo} className="mt-5 w-full bg-white/5 border border-white/10 text-slate-400 hover:text-white py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest hover:bg-white/10 transition-colors">
+                    Finalizar o Rendirse
+                  </button>
+                )}
+              </div>
+            )}
+            
             <div className="bg-black/80 border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10"><Shield size={100} color="#f59e0b" /></div>
               <div className="relative z-10">
@@ -346,7 +417,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
               </div>
             </div>
 
-            {/* Meta del Clan (Individual) */}
+            {/* Meta Individual */}
             <div className="bg-black/40 border border-white/10 p-5 rounded-3xl flex justify-between items-center">
               <div>
                 <h4 className="text-white font-black text-sm flex items-center gap-2"><Target size={16} className="text-amber-400"/> Meta Individual Evaluativa</h4>
@@ -414,7 +485,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
                   const esYo = miembro.id === currentUser.uid;
                   const puntosAportados = miembro.puntosTrivia || 0;
                   const alcanzoMeta = puntosAportados >= metaIndividual;
-                  const colorEstatus = alcanzoMeta ? 'text-emerald-400' : 'text-red-500'; // SEMÁFORO APLICADO AQUÍ
+                  const colorEstatus = alcanzoMeta ? 'text-emerald-400' : 'text-red-500';
 
                   return (
                     <div key={miembro.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${esYo ? 'bg-amber-900/20' : 'hover:bg-white/5'}`}>
@@ -601,7 +672,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
                       
                       {!esMio && (
                         <button 
-                          onClick={() => handleDesafiar(c.nombre)}
+                          onClick={() => handleDesafiar(c)}
                           className="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 font-black px-4 py-2 rounded-xl text-[10px] uppercase flex items-center gap-1.5 transition-colors"
                         >
                           <Swords size={14}/> Desafiar
