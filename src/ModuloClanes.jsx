@@ -282,9 +282,10 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     } catch (e) {}
   };
 
-  // BATALLAS: DESAFIAR
+  // BATALLAS: DESAFIAR (SOLO PARA ALTOS MANDOS)
   const handleDesafiar = async (rival) => {
     if (!miClan) { alert("Debés pertenecer a un clan para desafiar."); return; }
+    if (!puedeAdministrar) { alert("❌ Rango Insuficiente. Solo el Líder o los Apóstoles pueden iniciar un desafío de guerra."); return; }
     if (miClanProcesado?.desafioActivo) { alert("Tu clan ya tiene una batalla activa."); return; }
 
     const metaDuelo = prompt(`¿A cuántos puntos querés desafiar a ${rival.nombre}? (Ej: 5000)`);
@@ -351,17 +352,16 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
     const guerra = miClanProcesado.desafioActivo;
     const esRetador = guerra.retadorId === miClan.id;
     
-    // Calcular progreso de Mi Clan
-    const miBase = esRetador ? guerra.baseRetador : guerra.baseRival;
+    // Seguro Anti-Bug: Si por un duelo viejo guardado no existe base, arrancamos desde los puntos actuales.
+    const miBase = esRetador ? (guerra.baseRetador ?? miClanProcesado.puntosTotales) : (guerra.baseRival ?? miClanProcesado.puntosTotales);
     const misPuntosActuales = miClanProcesado.puntosTotales;
-    const miProgresoGuerra = Math.max(0, misPuntosActuales - (miBase || 0));
+    const miProgresoGuerra = Math.max(0, misPuntosActuales - miBase);
 
-    // Calcular progreso del Rival
     const rivalId = esRetador ? guerra.rivalId : guerra.retadorId;
     const clanRival = clanesProcesados.find(c => c.id === rivalId);
-    const rivalBase = esRetador ? guerra.baseRival : guerra.baseRetador;
     const rivalPuntosActuales = clanRival ? clanRival.puntosTotales : 0;
-    const rivalProgresoGuerra = Math.max(0, rivalPuntosActuales - (rivalBase || 0));
+    const rivalBase = esRetador ? (guerra.baseRival ?? rivalPuntosActuales) : (guerra.baseRetador ?? rivalPuntosActuales);
+    const rivalProgresoGuerra = Math.max(0, rivalPuntosActuales - rivalBase);
 
     const meta = guerra.meta;
     const ganeYo = miProgresoGuerra >= meta;
@@ -727,7 +727,7 @@ export default function ModuloClanes({ currentUser, db, onVolver }) {
                         <p className="text-[9px] uppercase text-slate-500 font-bold">Pts Totales</p>
                       </div>
                       
-                      {!esMio && (
+                      {!esMio && puedeAdministrar && (
                         <button 
                           onClick={() => handleDesafiar(c)}
                           className="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 font-black px-4 py-2 rounded-xl text-[10px] uppercase flex items-center gap-1.5 transition-colors"
