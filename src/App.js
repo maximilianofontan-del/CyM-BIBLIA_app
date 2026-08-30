@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BookOpen, Settings, Type, Sun, Sparkles, ArrowLeft, ChevronRight,
+  BookOpen, Settings, Type, Sun, Sparkles, ArrowLeft, ChevronRight, ChevronLeft,
   Heart, MessageCircle, X, Send, FileText, Volume2, Square, Crown,
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
@@ -337,6 +337,9 @@ function AppMain() {
   const versiculoRefs = useRef({});
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
+
+  // REFERENCIAS PARA EL LECTOR DE VOZ
+  const lectorEstadoRef = useRef({ libro: libroActual, capitulo: capituloActual, leyendoAudio });
 
   // ESTADOS PARA COMUNIDAD Y RANKING
   const [pestañaComunidad, setPestañaComunidad] = useState('amigos');
@@ -873,32 +876,6 @@ function AppMain() {
   const isOwner = currentUser?.role === 'OWNER';
   const isPremium = isOwner || (currentUser?.suscripcion && currentUser?.suscripcion !== 'GRATIS');
 
-  useEffect(() => { window.speechSynthesis.cancel(); setLeyendoAudio(false); }, [capituloActual, libroActual, vistaActual]);
-
-  const toggleLecturaAudio = () => {
-    if (!isPremium) { setVistaActual('club'); return; }
-    if (leyendoAudio) { window.speechSynthesis.cancel(); setLeyendoAudio(false); return; }
-    const textoCompleto = obtenerVersiculos().map(v => v.texto).join('. ');
-    const utterance = new SpeechSynthesisUtterance(textoCompleto);
-    utterance.lang = 'es-ES'; utterance.rate = 0.9; utterance.onend = () => setLeyendoAudio(false);
-    window.speechSynthesis.speak(utterance); setLeyendoAudio(true);
-  };
-
-  const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
-  const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
-  const devocionalHoy = lecturaHoy.devocional || devocionalPorDefecto;
-
-  const handleAbrirDevocional = () => {
-    const sub = currentUser?.suscripcion || 'GRATIS'; const rol = currentUser?.role || 'USER';
-    if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') { setMostrarModalDevocional(true); } 
-    else { if (window.confirm("🔒 Devocional exclusivo Oro/Diamante. ¿Ir al Club CyM?")) { setVistaActual('club'); } }
-  };
-
-  const compartirDevocional = () => {
-    const textoCompartir = `*${devocionalHoy.titulo}*\n\n${devocionalHoy.reflexion}\n\n✨ *MINISTERIO CRECER Y MULTIPLICAR* ✨`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoCompartir)}`, '_blank');
-  };
-
   const obtenerVersiculos = () => {
     try {
       const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
@@ -919,6 +896,164 @@ function AppMain() {
     } catch (e) { return [{ numero: '⚠️', texto: 'Contenido no disponible' }]; }
   };
   const versiculosActuales = obtenerVersiculos();
+
+  // ACTUALIZAR REF PARA LA LECTURA EN VOZ ALTA CADA VEZ QUE CAMBIAN
+  useEffect(() => {
+    lectorEstadoRef.current = { libro: libroActual, capitulo: capituloActual, leyendoAudio };
+  }, [libroActual, capituloActual, leyendoAudio]);
+
+  // CANCELAR AUDIO SI SALIMOS DEL LECTOR
+  useEffect(() => { 
+    if (vistaActual !== 'lector') {
+      window.speechSynthesis.cancel(); 
+      setLeyendoAudio(false); 
+    }
+  }, [vistaActual]);
+
+  const avanzarCapituloAutomatico = () => {
+    const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], lectorEstadoRef.current.libro);
+    if (!libroData) return;
+    
+    let maxCapitulos = 1;
+    if (libroData.chapters) {
+      maxCapitulos = libroData.chapters.filter(c => c && c.is_chapter === true).length;
+    } else if (libroData.verses) {
+      const capitulosUnicos = [...new Set(libroData.verses.map(v => Number(v.chapter)))];
+      maxCapitulos = Math.max(...capitulosUnicos);
+    }
+
+    if (lectorEstadoRef.current.capitulo < maxCapitulos) {
+      // Siguiente capítulo del mismo libro
+      setCapituloActual(lectorEstadoRef.current.capitulo + 1);
+      setVersiculoActual('');
+      // Damos un milisegundo para que React actualice el DOM antes de leer
+      setTimeout(() => iniciarLecturaVoz(false), 500); 
+    } else {
+      // Siguiente libro
+      const indexLibro = LIBROS_MENU.findIndex(l => l.nombre === lectorEstadoRef.current.libro);
+      if (indexLibro >= 0 && indexLibro < LIBROS_MENU.length - 1) {
+        const proximoLibro = LIBROS_MENU[indexLibro + 1].nombre;
+        setLibroActual(proximoLibro);
+        setCapituloActual(1);
+        setVersiculoActual('');
+        setTimeout(() => iniciarLecturaVoz(false), 500);
+      } else {
+        // Fin de la Biblia
+        setLeyendoAudio(false);
+      }
+    }
+  };
+
+  const iniciarLecturaVoz = (respetarVersiculoSeleccionado = true) => {
+    window.speechSynthesis.cancel();
+    
+    // Obtenemos los versículos del estado actual (que ya se actualizó si vinimos de avanzarCapitulo)
+    const versos = obtenerVersiculos();
+    if (!versos || versos.length === 0) {
+      setLeyendoAudio(false);
+      return;
+    }
+
+    let versiculosAleer = versos;
+    
+    // Si hay un versículo seleccionado y queremos respetarlo, filtramos.
+    if (respetarVersiculoSeleccionado && versiculoActual !== '') {
+      const indexVerso = versos.findIndex(v => String(v.numero) === String(versiculoActual));
+      if (indexVerso !== -1) {
+        versiculosAleer = versos.slice(indexVerso);
+      }
+    }
+
+    const textoCompleto = versiculosAleer.map(v => v.texto).join('. ');
+    
+    const utterance = new SpeechSynthesisUtterance(textoCompleto);
+    utterance.lang = 'es-ES'; 
+    utterance.rate = 0.9; 
+    
+    utterance.onend = () => {
+      // Cuando termina, revisamos si el botón de "Leyendo" sigue activo.
+      // Si está activo, significa que terminó de leer naturalmente y debe avanzar.
+      if (lectorEstadoRef.current.leyendoAudio) {
+        avanzarCapituloAutomatico();
+      }
+    };
+    
+    window.speechSynthesis.speak(utterance); 
+    setLeyendoAudio(true);
+  };
+
+  const toggleLecturaAudio = () => {
+    if (!isPremium) { setVistaActual('club'); return; }
+    
+    if (leyendoAudio) { 
+      // Detener lectura
+      window.speechSynthesis.cancel(); 
+      setLeyendoAudio(false); 
+    } else {
+      // Iniciar lectura
+      iniciarLecturaVoz(true);
+    }
+  };
+
+  // FUNCIONES PARA FLECHAS MANUALES
+  const irCapituloAnterior = () => {
+    if (capituloActual > 1) {
+      setCapituloActual(capituloActual - 1);
+      setVersiculoActual('');
+      window.scrollTo(0, 0);
+    } else {
+      const indexLibro = LIBROS_MENU.findIndex(l => l.nombre === libroActual);
+      if (indexLibro > 0) {
+        const libroAnterior = LIBROS_MENU[indexLibro - 1].nombre;
+        setLibroActual(libroAnterior);
+        setCapituloActual(1); // Idealmente iría al último cap, pero 1 es seguro
+        setVersiculoActual('');
+        window.scrollTo(0, 0);
+      }
+    }
+  };
+
+  const irCapituloSiguiente = () => {
+    const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
+    let maxCapitulos = 1;
+    if (libroData && libroData.chapters) {
+      maxCapitulos = libroData.chapters.filter(c => c && c.is_chapter === true).length;
+    } else if (libroData && libroData.verses) {
+      const capitulosUnicos = [...new Set(libroData.verses.map(v => Number(v.chapter)))];
+      maxCapitulos = Math.max(...capitulosUnicos);
+    }
+
+    if (capituloActual < maxCapitulos) {
+      setCapituloActual(capituloActual + 1);
+      setVersiculoActual('');
+      window.scrollTo(0, 0);
+    } else {
+      const indexLibro = LIBROS_MENU.findIndex(l => l.nombre === libroActual);
+      if (indexLibro >= 0 && indexLibro < LIBROS_MENU.length - 1) {
+        const proximoLibro = LIBROS_MENU[indexLibro + 1].nombre;
+        setLibroActual(proximoLibro);
+        setCapituloActual(1);
+        setVersiculoActual('');
+        window.scrollTo(0, 0);
+      }
+    }
+  };
+
+
+  const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
+  const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
+  const devocionalHoy = lecturaHoy.devocional || devocionalPorDefecto;
+
+  const handleAbrirDevocional = () => {
+    const sub = currentUser?.suscripcion || 'GRATIS'; const rol = currentUser?.role || 'USER';
+    if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') { setMostrarModalDevocional(true); } 
+    else { if (window.confirm("🔒 Devocional exclusivo Oro/Diamante. ¿Ir al Club CyM?")) { setVistaActual('club'); } }
+  };
+
+  const compartirDevocional = () => {
+    const textoCompartir = `*${devocionalHoy.titulo}*\n\n${devocionalHoy.reflexion}\n\n✨ *MINISTERIO CRECER Y MULTIPLICAR* ✨`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoCompartir)}`, '_blank');
+  };
 
   const enviarMensaje = async (e) => {
     e.preventDefault();
@@ -1497,9 +1632,34 @@ function AppMain() {
         {/* LECTOR BÍBLICO */}
         {vistaActual === 'lector' && (
           <div className="bg-black/70 p-4 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
-            <div className="mb-8 p-4 bg-black/50 border border-[#cca300]/30 rounded-2xl"><div className="grid grid-cols-2 md:grid-cols-4 gap-2"><select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="DHH">DHH</option><option value="LBLA">LBLA</option><option value="TLA">TLA</option></select><select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}</select><select value={capituloActual} onChange={(e) => setCapituloActual(Number(e.target.value))} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select><select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="">Ir a Versículo</option>{versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}</select></div></div>
-            <div className="mb-12 text-center flex flex-col items-center"><h2 className="text-3xl md:text-4xl font-black mb-6 text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>{libroActual} {capituloActual} <span className="opacity-60 text-lg">({versionActual})</span></h2><button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>{leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} {leyendoAudio ? 'Detener Lectura' : 'Escuchar Capítulo Completo'}</button></div>
-            <div className="space-y-4 leading-relaxed text-left" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>{versiculosActuales.map((versiculo, index) => { const esVersiculoResaltado = versiculo.numero === versiculoActual; return (<p key={index} ref={el => versiculoRefs.current[versiculo.numero] = el} className="relative group cursor-text transition-all duration-500"><sup className={`absolute -left-6 md:-left-8 top-1 text-[0.6em] font-black select-none ${esVersiculoResaltado ? 'text-amber-400 text-sm' : 'text-[#ffd700]/60'}`}>{versiculo.numero}</sup><span className={`rounded p-2 transition-colors duration-500 block ${esVersiculoResaltado ? 'bg-amber-500/20 text-[#ffd700] border-l-4 border-[#ffd700] pl-3 font-bold shadow-lg' : 'hover:bg-[#ffd700]/10 hover:text-[#ffd700]'}`}>{versiculo.texto}</span></p>); })}</div>
+            <div className="mb-8 p-4 bg-black/50 border border-[#cca300]/30 rounded-2xl"><div className="grid grid-cols-2 md:grid-cols-4 gap-2"><select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="DHH">DHH</option><option value="LBLA">LBLA</option><option value="TLA">TLA</option></select><select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); setVersiculoActual(''); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}</select><select value={capituloActual} onChange={(e) => { setCapituloActual(Number(e.target.value)); setVersiculoActual(''); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select><select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="">Todo el cap.</option>{versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}</select></div></div>
+            
+            <div className="mb-12 text-center flex flex-col items-center">
+              <div className="flex items-center gap-4 mb-6">
+                <button onClick={irCapituloAnterior} className="p-2 hover:bg-[#cca300]/20 rounded-full text-[#ffd700] transition-colors"><ChevronLeft size={32}/></button>
+                <h2 className="font-black text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>{libroActual} {capituloActual} <span className="opacity-60 text-lg">({versionActual})</span></h2>
+                <button onClick={irCapituloSiguiente} className="p-2 hover:bg-[#cca300]/20 rounded-full text-[#ffd700] transition-colors"><ChevronRight size={32}/></button>
+              </div>
+              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>{leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} {leyendoAudio ? 'Detener Lectura' : (versiculoActual ? 'Leer desde el versículo' : 'Escuchar Capítulo Completo')}</button>
+            </div>
+
+            <div className="space-y-4 leading-relaxed text-left" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>
+              {versiculosActuales.map((versiculo, index) => { 
+                const esVersiculoResaltado = versiculo.numero === versiculoActual; 
+                return (
+                  <p key={index} ref={el => versiculoRefs.current[versiculo.numero] = el} className="relative group cursor-text transition-all duration-500">
+                    <sup className={`absolute -left-6 md:-left-8 top-1 text-[0.6em] font-black select-none ${esVersiculoResaltado ? 'text-amber-400 text-sm' : 'text-[#ffd700]/60'}`}>{versiculo.numero}</sup>
+                    <span className={`rounded p-2 transition-colors duration-500 block ${esVersiculoResaltado ? 'bg-amber-500/20 text-[#ffd700] border-l-4 border-[#ffd700] pl-3 font-bold shadow-lg' : 'hover:bg-[#ffd700]/10 hover:text-[#ffd700]'}`}>{versiculo.texto}</span>
+                  </p>
+                ); 
+              })}
+            </div>
+            
+            {/* Navegación al final del capítulo */}
+            <div className="mt-12 pt-8 border-t border-[#cca300]/30 flex justify-between items-center">
+               <button onClick={irCapituloAnterior} className="flex items-center gap-2 text-slate-400 hover:text-[#ffd700] font-bold uppercase tracking-wider text-xs transition-colors"><ChevronLeft size={20}/> Capítulo Anterior</button>
+               <button onClick={irCapituloSiguiente} className="flex items-center gap-2 text-slate-400 hover:text-[#ffd700] font-bold uppercase tracking-wider text-xs transition-colors">Siguiente Capítulo <ChevronRight size={20}/></button>
+            </div>
           </div>
         )}
 
