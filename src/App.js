@@ -91,9 +91,6 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   return { colorAro: 'border-[#3b82f6]', colorBadge: 'bg-[#3b82f6] text-white', texto: 'MEMBRESÍA GRATIS' };
 };
 
-// --------------------------------------------------
-// MÓDULO ADMINISTRADOR / OWNER
-// --------------------------------------------------
 function ModuloAdmin() {
   const [listaUsuarios, setListaUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -327,7 +324,12 @@ function AppMain() {
   const [mostrarModalDevocional, setMostrarModalDevocional] = useState(false);
   
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
+  
+  // ESTADOS DE VOCES PARA LECTURA
   const [leyendoAudio, setLeyendoAudio] = useState(false);
+  const [vocesDisponibles, setVocesDisponibles] = useState([]);
+  const [vozSeleccionada, setVozSeleccionada] = useState('');
+
   const [chatInput, setChatInput] = useState('');
   const [chatHistorial, setChatHistorial] = useState([{ rol: 'asistente', texto: '¡Hola! Soy tu asistente bíblico CyM. Pregúntame lo que necesites sobre la Biblia.' }]);
 
@@ -350,6 +352,23 @@ function AppMain() {
   const [editTitulo, setEditTitulo] = useState('');
   const [editPasaje, setEditPasaje] = useState('');
   const [guardandoEdit, setGuardandoEdit] = useState(false);
+
+  // CARGAR LAS VOCES DISPONIBLES EN EL SISTEMA
+  useEffect(() => {
+    const cargarVoces = () => {
+      // Filtrar para buscar solo voces en español
+      const voces = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
+      setVocesDisponibles(voces);
+      if (voces.length > 0 && !vozSeleccionada) {
+        setVozSeleccionada(voces[0].voiceURI); // Seleccionar la primera por defecto
+      }
+    };
+
+    cargarVoces(); // Cargar inicial
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = cargarVoces; // Cargar si cambian/tardan en cargar
+    }
+  }, [vozSeleccionada]);
 
   const setVistaActual = (nuevaVista) => {
     setVistaActualState(nuevaVista);
@@ -876,16 +895,16 @@ function AppMain() {
   const isOwner = currentUser?.role === 'OWNER';
   const isPremium = isOwner || (currentUser?.suscripcion && currentUser?.suscripcion !== 'GRATIS');
 
-  const obtenerVersiculos = () => {
+  const obtenerVersiculos = (libro = libroActual, capitulo = capituloActual) => {
     try {
-      const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libroActual);
+      const libroData = encontrarLibro(BIBLIA_VERSIONES[versionActual], libro);
       if (!libroData) return [];
       if (!libroData.chapters) {
-        if (libroData.verses) return libroData.verses.filter(v => Number(v.chapter) === capituloActual).map(v => ({ numero: String(v.verse), texto: v.text }));
+        if (libroData.verses) return libroData.verses.filter(v => Number(v.chapter) === capitulo).map(v => ({ numero: String(v.verse), texto: v.text }));
         return [];
       }
       const capitulosReales = libroData.chapters.filter(c => c && c.is_chapter === true);
-      const capituloData = capitulosReales[capituloActual - 1];
+      const capituloData = capitulosReales[capitulo - 1];
       if (!capituloData || !capituloData.items) return [];
 
       return capituloData.items.filter(item => item && item.type === "verse").map(item => {
@@ -924,10 +943,11 @@ function AppMain() {
 
     if (lectorEstadoRef.current.capitulo < maxCapitulos) {
       // Siguiente capítulo del mismo libro
-      setCapituloActual(lectorEstadoRef.current.capitulo + 1);
+      const nuevoCapitulo = lectorEstadoRef.current.capitulo + 1;
+      setCapituloActual(nuevoCapitulo);
       setVersiculoActual('');
-      // Damos un milisegundo para que React actualice el DOM antes de leer
-      setTimeout(() => iniciarLecturaVoz(false), 500); 
+      // Le pasamos el libro y el NUEVO capítulo directamente
+      setTimeout(() => iniciarLecturaVoz(false, lectorEstadoRef.current.libro, nuevoCapitulo), 500); 
     } else {
       // Siguiente libro
       const indexLibro = LIBROS_MENU.findIndex(l => l.nombre === lectorEstadoRef.current.libro);
@@ -936,7 +956,8 @@ function AppMain() {
         setLibroActual(proximoLibro);
         setCapituloActual(1);
         setVersiculoActual('');
-        setTimeout(() => iniciarLecturaVoz(false), 500);
+        // Le pasamos el NUEVO libro y el capítulo 1 directamente
+        setTimeout(() => iniciarLecturaVoz(false, proximoLibro, 1), 500);
       } else {
         // Fin de la Biblia
         setLeyendoAudio(false);
@@ -944,11 +965,11 @@ function AppMain() {
     }
   };
 
-  const iniciarLecturaVoz = (respetarVersiculoSeleccionado = true) => {
+  const iniciarLecturaVoz = (respetarVersiculoSeleccionado = true, libroToRead = libroActual, capituloToRead = capituloActual) => {
     window.speechSynthesis.cancel();
     
-    // Obtenemos los versículos del estado actual (que ya se actualizó si vinimos de avanzarCapitulo)
-    const versos = obtenerVersiculos();
+    // Obtenemos los versículos EXACTOS que queremos leer
+    const versos = obtenerVersiculos(libroToRead, capituloToRead);
     if (!versos || versos.length === 0) {
       setLeyendoAudio(false);
       return;
@@ -956,7 +977,6 @@ function AppMain() {
 
     let versiculosAleer = versos;
     
-    // Si hay un versículo seleccionado y queremos respetarlo, filtramos.
     if (respetarVersiculoSeleccionado && versiculoActual !== '') {
       const indexVerso = versos.findIndex(v => String(v.numero) === String(versiculoActual));
       if (indexVerso !== -1) {
@@ -965,14 +985,17 @@ function AppMain() {
     }
 
     const textoCompleto = versiculosAleer.map(v => v.texto).join('. ');
-    
     const utterance = new SpeechSynthesisUtterance(textoCompleto);
     utterance.lang = 'es-ES'; 
+    
+    if (vozSeleccionada) {
+      const voz = vocesDisponibles.find(v => v.voiceURI === vozSeleccionada);
+      if (voz) utterance.voice = voz;
+    }
+    
     utterance.rate = 0.9; 
     
     utterance.onend = () => {
-      // Cuando termina, revisamos si el botón de "Leyendo" sigue activo.
-      // Si está activo, significa que terminó de leer naturalmente y debe avanzar.
       if (lectorEstadoRef.current.leyendoAudio) {
         avanzarCapituloAutomatico();
       }
@@ -986,11 +1009,9 @@ function AppMain() {
     if (!isPremium) { setVistaActual('club'); return; }
     
     if (leyendoAudio) { 
-      // Detener lectura
       window.speechSynthesis.cancel(); 
       setLeyendoAudio(false); 
     } else {
-      // Iniciar lectura
       iniciarLecturaVoz(true);
     }
   };
@@ -1137,6 +1158,23 @@ function AppMain() {
           <div className="flex items-center justify-between mb-6 bg-black/5 rounded-lg p-1 border border-current/10"><button onClick={() => setTamañoFuente(Math.max(14, tamañoFuente - 2))} className="p-2 hover:bg-black/10 rounded"><Type size={16} /></button><span className="font-bold text-sm">{tamañoFuente}px</span><button onClick={() => setTamañoFuente(Math.min(32, tamañoFuente + 2))} className="p-2 hover:bg-black/10 rounded"><Type size={22} /></button></div>
           <p className="text-[10px] font-black uppercase tracking-widest mb-3 opacity-50">Estilo Visual</p>
           <div className="flex gap-2"><button onClick={() => setTema('claro')} className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'claro' ? 'border-slate-800 bg-slate-100' : 'border-transparent bg-white text-slate-900'}`}><Sun size={18} /></button><button onClick={() => setTema('sepia')} className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'sepia' ? 'border-[#8b6b4a] bg-[#e6d5b8]' : 'border-transparent bg-[#fbf0d9] text-[#5f4b32]'}`}><BookOpen size={18} /></button><button onClick={() => setTema('cym')} title="Modo CyM" className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'cym' ? 'border-[#ffd700] bg-black' : 'border-transparent bg-[#0a0a0a] text-[#ffd700]'}`}><Sparkles size={18} /></button></div>
+          
+          {/* NUEVO SELECTOR DE VOCES */}
+          {vocesDisponibles.length > 0 && (
+            <>
+              <p className="text-[10px] font-black uppercase tracking-widest mt-6 mb-3 opacity-50">Voz de Lectura (Equipo)</p>
+              <select 
+                value={vozSeleccionada} 
+                onChange={(e) => setVozSeleccionada(e.target.value)} 
+                className="w-full bg-black/20 border border-current/10 rounded-lg p-2 text-xs font-bold outline-none mb-2"
+              >
+                {vocesDisponibles.map(v => (
+                  <option key={v.voiceURI} value={v.voiceURI} className="text-black bg-white">{v.name}</option>
+                ))}
+              </select>
+            </>
+          )}
+
         </div>
       )}
 
