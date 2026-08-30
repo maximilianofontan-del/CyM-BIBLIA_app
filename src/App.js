@@ -339,6 +339,9 @@ function AppMain() {
   const versiculoRefs = useRef({});
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
+  
+  // ESTADOS PARA EL INSTALADOR INTELIGENTE
+  const [esDispositivoIOS, setEsDispositivoIOS] = useState(false);
 
   // REFERENCIAS PARA EL LECTOR DE VOZ
   const lectorEstadoRef = useRef({ libro: libroActual, capitulo: capituloActual, leyendoAudio });
@@ -353,22 +356,50 @@ function AppMain() {
   const [editPasaje, setEditPasaje] = useState('');
   const [guardandoEdit, setGuardandoEdit] = useState(false);
 
-  // CARGAR LAS VOCES DISPONIBLES EN EL SISTEMA
+  // 1. CARGA ROBUSTA DE VOCES (Especial para arreglar el bug de Safari/Edge Mobile)
   useEffect(() => {
+    let intentoCarga;
     const cargarVoces = () => {
-      // Filtrar para buscar solo voces en español
-      const voces = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
-      setVocesDisponibles(voces);
-      if (voces.length > 0 && !vozSeleccionada) {
-        setVozSeleccionada(voces[0].voiceURI); // Seleccionar la primera por defecto
+      const voces = window.speechSynthesis.getVoices();
+      if (voces.length > 0) {
+        const vocesEspanol = voces.filter(v => v.lang.toLowerCase().includes('es'));
+        const vocesFinales = vocesEspanol.length > 0 ? vocesEspanol : voces;
+        setVocesDisponibles(vocesFinales);
+        setVozSeleccionada(prev => {
+          if (!prev && vocesFinales.length > 0) return vocesFinales[0].voiceURI;
+          return prev;
+        });
+        clearInterval(intentoCarga);
       }
     };
 
-    cargarVoces(); // Cargar inicial
+    cargarVoces();
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = cargarVoces; // Cargar si cambian/tardan en cargar
+      window.speechSynthesis.onvoiceschanged = cargarVoces;
     }
-  }, [vozSeleccionada]);
+    intentoCarga = setInterval(cargarVoces, 500);
+    return () => clearInterval(intentoCarga);
+  }, []);
+
+  // 2. INSTALADOR INTELIGENTE (Detecta iPhone vs Android)
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setEsDispositivoIOS(isIOS);
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      if (!isStandalone) setMostrarInstalador(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    if (isIOS && !isStandalone) {
+      setTimeout(() => setMostrarInstalador(true), 2500);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
 
   const setVistaActual = (nuevaVista) => {
     setVistaActualState(nuevaVista);
@@ -379,16 +410,6 @@ function AppMain() {
       }).catch(() => {});
     }
   };
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setMostrarInstalador(true);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
 
   const handleInstalarApp = async () => {
     if (!deferredPrompt) return;
@@ -942,24 +963,19 @@ function AppMain() {
     }
 
     if (lectorEstadoRef.current.capitulo < maxCapitulos) {
-      // Siguiente capítulo del mismo libro
       const nuevoCapitulo = lectorEstadoRef.current.capitulo + 1;
       setCapituloActual(nuevoCapitulo);
       setVersiculoActual('');
-      // Le pasamos el libro y el NUEVO capítulo directamente
       setTimeout(() => iniciarLecturaVoz(false, lectorEstadoRef.current.libro, nuevoCapitulo), 500); 
     } else {
-      // Siguiente libro
       const indexLibro = LIBROS_MENU.findIndex(l => l.nombre === lectorEstadoRef.current.libro);
       if (indexLibro >= 0 && indexLibro < LIBROS_MENU.length - 1) {
         const proximoLibro = LIBROS_MENU[indexLibro + 1].nombre;
         setLibroActual(proximoLibro);
         setCapituloActual(1);
         setVersiculoActual('');
-        // Le pasamos el NUEVO libro y el capítulo 1 directamente
         setTimeout(() => iniciarLecturaVoz(false, proximoLibro, 1), 500);
       } else {
-        // Fin de la Biblia
         setLeyendoAudio(false);
       }
     }
@@ -968,7 +984,6 @@ function AppMain() {
   const iniciarLecturaVoz = (respetarVersiculoSeleccionado = true, libroToRead = libroActual, capituloToRead = capituloActual) => {
     window.speechSynthesis.cancel();
     
-    // Obtenemos los versículos EXACTOS que queremos leer
     const versos = obtenerVersiculos(libroToRead, capituloToRead);
     if (!versos || versos.length === 0) {
       setLeyendoAudio(false);
@@ -1016,7 +1031,6 @@ function AppMain() {
     }
   };
 
-  // FUNCIONES PARA FLECHAS MANUALES
   const irCapituloAnterior = () => {
     if (capituloActual > 1) {
       setCapituloActual(capituloActual - 1);
@@ -1027,7 +1041,7 @@ function AppMain() {
       if (indexLibro > 0) {
         const libroAnterior = LIBROS_MENU[indexLibro - 1].nombre;
         setLibroActual(libroAnterior);
-        setCapituloActual(1); // Idealmente iría al último cap, pero 1 es seguro
+        setCapituloActual(1);
         setVersiculoActual('');
         window.scrollTo(0, 0);
       }
@@ -1158,23 +1172,6 @@ function AppMain() {
           <div className="flex items-center justify-between mb-6 bg-black/5 rounded-lg p-1 border border-current/10"><button onClick={() => setTamañoFuente(Math.max(14, tamañoFuente - 2))} className="p-2 hover:bg-black/10 rounded"><Type size={16} /></button><span className="font-bold text-sm">{tamañoFuente}px</span><button onClick={() => setTamañoFuente(Math.min(32, tamañoFuente + 2))} className="p-2 hover:bg-black/10 rounded"><Type size={22} /></button></div>
           <p className="text-[10px] font-black uppercase tracking-widest mb-3 opacity-50">Estilo Visual</p>
           <div className="flex gap-2"><button onClick={() => setTema('claro')} className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'claro' ? 'border-slate-800 bg-slate-100' : 'border-transparent bg-white text-slate-900'}`}><Sun size={18} /></button><button onClick={() => setTema('sepia')} className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'sepia' ? 'border-[#8b6b4a] bg-[#e6d5b8]' : 'border-transparent bg-[#fbf0d9] text-[#5f4b32]'}`}><BookOpen size={18} /></button><button onClick={() => setTema('cym')} title="Modo CyM" className={`flex-1 p-3 rounded-xl border-2 flex justify-center ${tema === 'cym' ? 'border-[#ffd700] bg-black' : 'border-transparent bg-[#0a0a0a] text-[#ffd700]'}`}><Sparkles size={18} /></button></div>
-          
-          {/* NUEVO SELECTOR DE VOCES */}
-          {vocesDisponibles.length > 0 && (
-            <>
-              <p className="text-[10px] font-black uppercase tracking-widest mt-6 mb-3 opacity-50">Voz de Lectura (Equipo)</p>
-              <select 
-                value={vozSeleccionada} 
-                onChange={(e) => setVozSeleccionada(e.target.value)} 
-                className="w-full bg-black/20 border border-current/10 rounded-lg p-2 text-xs font-bold outline-none mb-2"
-              >
-                {vocesDisponibles.map(v => (
-                  <option key={v.voiceURI} value={v.voiceURI} className="text-black bg-white">{v.name}</option>
-                ))}
-              </select>
-            </>
-          )}
-
         </div>
       )}
 
@@ -1678,7 +1675,27 @@ function AppMain() {
                 <h2 className="font-black text-[#ffd700]" style={{ fontSize: `${tamañoFuente * 1.8}px` }}>{libroActual} {capituloActual} <span className="opacity-60 text-lg">({versionActual})</span></h2>
                 <button onClick={irCapituloSiguiente} className="p-2 hover:bg-[#cca300]/20 rounded-full text-[#ffd700] transition-colors"><ChevronRight size={32}/></button>
               </div>
-              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>{leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} {leyendoAudio ? 'Detener Lectura' : (versiculoActual ? 'Leer desde el versículo' : 'Escuchar Capítulo Completo')}</button>
+
+              {/* SELECTOR DE VOCES VISIBLE */}
+              {vocesDisponibles.length > 0 && (
+                <div className="mb-6 flex items-center gap-2 bg-black/40 border border-[#cca300]/30 px-4 py-2 rounded-full">
+                  <Volume2 size={16} className="text-[#ffd700]" />
+                  <select 
+                    value={vozSeleccionada} 
+                    onChange={(e) => setVozSeleccionada(e.target.value)} 
+                    className="bg-transparent text-amber-100 text-xs font-bold outline-none max-w-[200px] md:max-w-[300px] truncate cursor-pointer appearance-none"
+                  >
+                    {vocesDisponibles.map(v => (
+                      <option key={v.voiceURI} value={v.voiceURI} className="text-black">{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <button onClick={toggleLecturaAudio} className={`flex items-center gap-2 px-6 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all shadow-lg ${leyendoAudio ? 'bg-red-600 text-white animate-pulse' : 'bg-[#cca300]/20 text-[#ffd700] hover:bg-[#cca300]/40'}`}>
+                {leyendoAudio ? <Square size={18} fill="currentColor"/> : <Volume2 size={18} />} 
+                {leyendoAudio ? 'Detener Lectura' : (versiculoActual ? 'Leer desde el versículo' : 'Escuchar Capítulo Completo')}
+              </button>
             </div>
 
             <div className="space-y-4 leading-relaxed text-left" style={{ fontSize: `${tamañoFuente}px`, lineHeight: '1.7' }}>
@@ -1757,7 +1774,7 @@ function AppMain() {
         </div>
       )}
 
-      {/* CARTEL DE DESCARGA / INSTALACIÓN */}
+      {/* CARTEL INTELIGENTE DE DESCARGA / INSTALACIÓN */}
       {mostrarInstalador && (
         <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent backdrop-blur-md animate-in slide-in-from-bottom flex flex-col items-center justify-center">
           <div className="w-full max-w-md bg-[#141414] border-2 border-[#cca300] rounded-3xl p-5 shadow-[0_0_40px_rgba(204,163,0,0.3)] flex flex-col gap-4 relative">
@@ -1766,12 +1783,22 @@ function AppMain() {
               <img src="https://i.postimg.cc/3RzYnbnB/image-11-png.png" alt="Icono" className="w-14 h-14 object-contain" />
               <div>
                 <h3 className="text-white font-black text-lg leading-tight">Instalar App Oficial</h3>
-                <p className="text-slate-400 text-xs font-bold mt-1">Más rápida, sin abrir el navegador y no ocupa espacio.</p>
+                <p className="text-slate-400 text-xs font-bold mt-1">Más rápida y sin usar el navegador.</p>
               </div>
             </div>
-            <button onClick={handleInstalarApp} className="w-full bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-2">
-              <Download size={18} /> Descargar e Instalar
-            </button>
+            
+            {esDispositivoIOS ? (
+              <div className="bg-white/10 p-4 rounded-xl text-slate-200 text-xs text-center border border-white/20 mt-2">
+                <p className="font-bold mb-3 text-[#ffd700]">Para instalar en tu iPhone o iPad:</p>
+                <p className="mb-2">1. Tocá el ícono de <b>Compartir</b> <Share2 size={16} className="inline opacity-80"/> en la barra del navegador.</p>
+                <p>2. Elegí <b>"Agregar a inicio"</b> <PlusCircle size={16} className="inline opacity-80"/>.</p>
+                <button onClick={() => setMostrarInstalador(false)} className="mt-5 w-full bg-slate-800 text-white font-bold py-3 rounded-xl uppercase tracking-widest text-[10px]">Entendido</button>
+              </div>
+            ) : (
+              <button onClick={handleInstalarApp} className="w-full bg-gradient-to-r from-[#ffe066] to-[#b38600] text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-2">
+                <Download size={18} /> Instalar Ahora
+              </button>
+            )}
           </div>
         </div>
       )}
