@@ -122,7 +122,7 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
   const desbloqueoEspecial = estrellas >= 50;
 
   return (
-    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '36px', color: '#facc15', textShadow: '3px 3px #b45309', margin: '0 0 8px 0' }}>🎨 CYM KIDS 🎨</h1>
       <p style={{ fontSize: '16px', color: '#38bdf8', fontWeight: 'bold', marginBottom: '24px' }}>¡Ganá estrellas jugando para desbloquear la Corona!</p>
       
@@ -133,54 +133,54 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', paddingBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', paddingBottom: '40px' }}>
         <button onClick={() => onSeleccionar('PECES')} style={{ backgroundColor: '#0284c7', border: '4px solid #38bdf8', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0369a1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🎣</span>
-          <span style={{ fontSize: '16px' }}>Atrapá el Pez</span>
+          <span style={{ fontSize: '14px' }}>Atrapá el Pez</span>
         </button>
         <button onClick={() => onSeleccionar('JESUS')} style={{ backgroundColor: '#16a34a', border: '4px solid #4ade80', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #15803d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🔍</span>
-          <span style={{ fontSize: '16px' }}>¿Dónde está Jesús?</span>
+          <span style={{ fontSize: '14px' }}>Buscar a Jesús</span>
         </button>
         <button onClick={() => onSeleccionar('BARCO')} style={{ backgroundColor: '#d97706', border: '4px solid #fbbf24', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #b45309', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🌊</span>
-          <span style={{ fontSize: '16px' }}>Cruzando el Mar</span>
+          <span style={{ fontSize: '14px' }}>Cruzando el Mar</span>
         </button>
         <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🔤</span>
-          <span style={{ fontSize: '16px' }}>Leo con Jesús</span>
+          <span style={{ fontSize: '14px' }}>Leo con Jesús</span>
         </button>
         <button onClick={() => onSeleccionar('LABERINTO')} style={{ backgroundColor: '#10b981', border: '4px solid #34d399', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #059669', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🐑</span>
-          <span style={{ fontSize: '16px' }}>El Camino a Jesús</span>
+          <span style={{ fontSize: '14px' }}>Camino a Jesús</span>
         </button>
         <button onClick={() => onSeleccionar('MEMORIA')} style={{ backgroundColor: '#ec4899', border: '4px solid #f472b6', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #be185d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🦓</span>
-          <span style={{ fontSize: '16px' }}>Parejas del Arca</span>
+          <span style={{ fontSize: '14px' }}>Parejas del Arca</span>
         </button>
         <button onClick={() => onSeleccionar('REBANO')} style={{ backgroundColor: '#f97316', border: '4px solid #fdba74', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #c2410c', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🐺</span>
-          <span style={{ fontSize: '16px' }}>Rebaño Seguro</span>
+          <span style={{ fontSize: '14px' }}>Rebaño Seguro</span>
         </button>
         <button onClick={() => onSeleccionar('ARPA')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🪕</span>
-          <span style={{ fontSize: '16px' }}>El Arpa de David</span>
+          <span style={{ fontSize: '14px' }}>Arpa de David</span>
         </button>
         <button onClick={() => onSeleccionar('COSECHA')} style={{ backgroundColor: '#eab308', border: '4px solid #fde047', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #a16207', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🍎</span>
-          <span style={{ fontSize: '16px' }}>La Cosecha</span>
+          <span style={{ fontSize: '14px' }}>La Cosecha</span>
         </button>
         <button onClick={() => onSeleccionar('PINCELADAS')} style={{ backgroundColor: '#06b6d4', border: '4px solid #67e8f9', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0e7490', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🎨</span>
-          <span style={{ fontSize: '16px' }}>Pinceladas</span>
+          <span style={{ fontSize: '14px' }}>Pinceladas</span>
         </button>
         <button onClick={() => onSeleccionar('ARMADURA')} style={{ backgroundColor: '#94a3b8', border: '4px solid #cbd5e1', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🛡️</span>
-          <span style={{ fontSize: '16px' }}>Armadura de Dios</span>
+          <span style={{ fontSize: '14px' }}>Atrapá Armadura</span>
         </button>
         <button onClick={() => onSeleccionar('TEMPLO')} style={{ backgroundColor: '#a855f7', border: '4px solid #d8b4fe', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #7e22ce', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '48px' }}>🧹</span>
-          <span style={{ fontSize: '16px' }}>Limpiando el Templo</span>
+          <span style={{ fontSize: '14px' }}>Limpiá el Templo</span>
         </button>
       </div>
     </div>
@@ -1200,94 +1200,113 @@ function JuegoCosecha({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 10: PINCELADAS DE LA CREACIÓN
+// JUEGO 10: PINCELADAS DE LA CREACIÓN (SVG Interactivo Real)
 // ==========================================
 function JuegoPinceladas({ onGanar }) {
-  // Simplificado: Tocar partes de la pantalla para "pintarlas"
-  const [zonas, setZonas] = useState([
-    { id: 'cielo', pintado: false, color: '#38bdf8', emoji: '☁️', top: '10%', left: '50%', w: '80%', h: '30%' },
-    { id: 'sol', pintado: false, color: '#facc15', emoji: '☀️', top: '15%', left: '80%', w: '25%', h: '25%' },
-    { id: 'tierra', pintado: false, color: '#4ade80', emoji: '🌱', top: '70%', left: '50%', w: '100%', h: '40%' },
-    { id: 'mar', pintado: false, color: '#2563eb', emoji: '🌊', top: '50%', left: '30%', w: '40%', h: '20%' },
-    { id: 'animales', pintado: false, color: '#d97706', emoji: '🦁', top: '65%', left: '70%', w: '20%', h: '20%' }
-  ]);
-  const [colorActivo, setColorActivo] = useState(null);
+  const [nivel, setNivel] = useState(1);
+  const [colorActivo, setColorActivo] = useState('#facc15');
+  const [ganado, setGanado] = useState(false);
 
-  const colores = ['#38bdf8', '#facc15', '#4ade80', '#2563eb', '#d97706'];
+  // Paleta de colores para que los chicos elijan
+  const COLORES = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#3b82f6', '#a855f7', '#ec4899', '#ffffff', '#000000', '#8b4513'];
 
-  const pintarZona = (index) => {
-    if (!colorActivo) return;
-    
-    const nuevas = [...zonas];
-    // Si el color activo coincide con el color que necesita la zona
-    if (nuevas[index].color === colorActivo) {
-      SoundFX.pop();
-      nuevas[index].pintado = true;
-      setZonas(nuevas);
+  // Estado que guarda los colores de TODAS las zonas de los 3 dibujos
+  const [zonas, setZonas] = useState({
+    // Leon
+    melena: '#ffffff', cara: '#ffffff', orejaIzq: '#ffffff', orejaDer: '#ffffff', nariz: '#ffffff',
+    // Arbol
+    tronco: '#ffffff', hojasIzq: '#ffffff', hojasDer: '#ffffff', hojasCentro: '#ffffff', fruto1: '#ffffff', fruto2: '#ffffff', fruto3: '#ffffff',
+    // Ballena
+    agua: '#ffffff', cuerpo: '#ffffff', aleta: '#ffffff', chorro: '#ffffff'
+  });
 
-      if (nuevas.every(z => z.pintado)) {
-        SoundFX.exito();
-        onGanar(10);
-        setTimeout(() => {
-          setZonas(zonas.map(z => ({...z, pintado: false}))); // Resetea
-          setColorActivo(null);
-        }, 3000);
-      }
-    } else {
-      SoundFX.error();
-    }
+  const pintar = (zona) => {
+    SoundFX.pop();
+    setZonas(prev => ({ ...prev, [zona]: colorActivo }));
   };
+
+  const terminarObra = () => {
+    SoundFX.exito();
+    setGanado(true);
+    onGanar(10);
+    setTimeout(() => {
+      setNivel(n => n + 1);
+      setGanado(false);
+      // Opcional: limpiar los colores si querés que arranquen de 0 en la próxima vuelta
+    }, 3000);
+  };
+
+  // Dependiendo del nivel (rotando entre 3 dibujos), renderizamos un SVG distinto
+  const figuraId = nivel % 3;
 
   return (
     <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '24px', color: '#06b6d4', margin: '0 0 16px 0' }}>¡Pintá la Creación!</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+        <h2 style={{ fontSize: '24px', color: '#06b6d4', margin: '0' }}>¡Pintá la Creación!</h2>
+        <button onClick={terminarObra} style={{ backgroundColor: '#06b6d4', color: 'white', border: 'none', borderRadius: '12px', padding: '8px 16px', fontWeight: 'bold', cursor: 'pointer' }}>
+          ¡Terminé! ✨
+        </button>
+      </div>
       
-      <div style={{ position: 'relative', height: '350px', backgroundColor: 'white', borderRadius: '20px', border: '6px solid #67e8f9', overflow: 'hidden', marginBottom: '20px' }}>
-        {zonas.map((z, i) => (
-          <div 
-            key={z.id}
-            onClick={() => pintarZona(i)}
-            style={{
-              position: 'absolute',
-              top: z.top,
-              left: z.left,
-              width: z.w,
-              height: z.h,
-              transform: 'translate(-50%, -50%)',
-              backgroundColor: z.pintado ? z.color : '#f1f5f9',
-              border: '2px dashed #cbd5e1',
-              borderRadius: z.id === 'sol' || z.id === 'animales' ? '50%' : '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '40px',
-              cursor: 'pointer',
-              transition: 'background-color 0.5s ease'
-            }}
-          >
-            {z.pintado ? z.emoji : '❓'}
+      <div style={{ position: 'relative', height: '350px', backgroundColor: '#f8fafc', borderRadius: '20px', border: '6px solid #67e8f9', overflow: 'hidden', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        
+        {ganado && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '40px', fontWeight: 'black', color: '#0891b2', animation: 'bounce 1s infinite' }}>
+            ¡HERMOSO! 🎨
           </div>
-        ))}
+        )}
 
-        {zonas.every(z => z.pintado) && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '40px', fontWeight: 'black', color: '#0891b2', animation: 'pulse 1s infinite' }}>
-            ¡HERMOSO! ✨
-          </div>
+        {/* DIBUJO 1: LEÓN */}
+        {figuraId === 1 && (
+          <svg viewBox="0 0 100 100" style={{ width: '80%', height: '80%', cursor: 'pointer' }}>
+            <circle cx="50" cy="50" r="45" fill={zonas.melena} stroke="#000" strokeWidth="2" onClick={() => pintar('melena')} />
+            <circle cx="25" cy="30" r="12" fill={zonas.orejaIzq} stroke="#000" strokeWidth="2" onClick={() => pintar('orejaIzq')} />
+            <circle cx="75" cy="30" r="12" fill={zonas.orejaDer} stroke="#000" strokeWidth="2" onClick={() => pintar('orejaDer')} />
+            <circle cx="50" cy="55" r="25" fill={zonas.cara} stroke="#000" strokeWidth="2" onClick={() => pintar('cara')} />
+            <circle cx="40" cy="45" r="4" fill="#000" />
+            <circle cx="60" cy="45" r="4" fill="#000" />
+            <polygon points="45,55 55,55 50,65" fill={zonas.nariz} stroke="#000" strokeWidth="1" onClick={() => pintar('nariz')} />
+            <path d="M50,65 Q40,75 35,65 M50,65 Q60,75 65,65" fill="none" stroke="#000" strokeWidth="2" />
+          </svg>
+        )}
+
+        {/* DIBUJO 2: ÁRBOL CON FRUTOS */}
+        {figuraId === 2 && (
+          <svg viewBox="0 0 100 100" style={{ width: '80%', height: '80%', cursor: 'pointer' }}>
+            <rect x="40" y="50" width="20" height="45" fill={zonas.tronco} stroke="#000" strokeWidth="2" onClick={() => pintar('tronco')} />
+            <circle cx="50" cy="35" r="25" fill={zonas.hojasCentro} stroke="#000" strokeWidth="2" onClick={() => pintar('hojasCentro')} />
+            <circle cx="30" cy="45" r="20" fill={zonas.hojasIzq} stroke="#000" strokeWidth="2" onClick={() => pintar('hojasIzq')} />
+            <circle cx="70" cy="45" r="20" fill={zonas.hojasDer} stroke="#000" strokeWidth="2" onClick={() => pintar('hojasDer')} />
+            <circle cx="50" cy="25" r="6" fill={zonas.fruto1} stroke="#000" strokeWidth="2" onClick={() => pintar('fruto1')} />
+            <circle cx="35" cy="45" r="6" fill={zonas.fruto2} stroke="#000" strokeWidth="2" onClick={() => pintar('fruto2')} />
+            <circle cx="65" cy="40" r="6" fill={zonas.fruto3} stroke="#000" strokeWidth="2" onClick={() => pintar('fruto3')} />
+          </svg>
+        )}
+
+        {/* DIBUJO 0 (3): BALLENA Y MAR */}
+        {figuraId === 0 && (
+          <svg viewBox="0 0 100 100" style={{ width: '80%', height: '80%', cursor: 'pointer' }}>
+            <path d="M0,70 Q25,60 50,70 T100,70 L100,100 L0,100 Z" fill={zonas.agua} stroke="#000" strokeWidth="2" onClick={() => pintar('agua')} />
+            <path d="M10,50 Q40,20 80,40 Q95,50 90,30 Q90,60 80,60 Q50,80 10,50 Z" fill={zonas.cuerpo} stroke="#000" strokeWidth="2" onClick={() => pintar('cuerpo')} />
+            <path d="M40,55 Q50,45 60,60 Z" fill={zonas.aleta} stroke="#000" strokeWidth="2" onClick={() => pintar('aleta')} />
+            <path d="M60,32 Q60,10 50,15 M60,32 Q60,10 70,15" fill="none" stroke={zonas.chorro} strokeWidth="4" onClick={() => pintar('chorro')} />
+            <circle cx="25" cy="45" r="3" fill="#000" />
+          </svg>
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-        {colores.map(c => (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {COLORES.map(c => (
           <button 
             key={c}
             onClick={() => setColorActivo(c)}
             style={{
-              width: '50px',
-              height: '50px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
               backgroundColor: c,
-              border: colorActivo === c ? '4px solid white' : 'none',
-              boxShadow: colorActivo === c ? '0 0 15px rgba(255,255,255,0.5)' : 'none',
+              border: colorActivo === c ? '4px solid #cbd5e1' : '2px solid #e2e8f0',
+              boxShadow: colorActivo === c ? '0 0 15px rgba(0,0,0,0.3)' : 'none',
               cursor: 'pointer',
               transform: colorActivo === c ? 'scale(1.2)' : 'scale(1)',
               transition: 'all 0.2s'
@@ -1300,90 +1319,143 @@ function JuegoPinceladas({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 11: LA ARMADURA DE DIOS
+// JUEGO 11: LA ARMADURA DE DIOS (Arcade: Cae del cielo)
 // ==========================================
 function JuegoArmadura({ onGanar }) {
-  const PIEZAS = [
-    { id: 'casco', nombre: 'Casco de la Salvación', emoji: '🪖', equipada: false },
-    { id: 'escudo', nombre: 'Escudo de la Fe', emoji: '🛡️', equipada: false },
-    { id: 'espada', nombre: 'Espada del Espíritu', emoji: '🗡️', equipada: false },
-    { id: 'cinturon', nombre: 'Cinturón de la Verdad', emoji: '🥋', equipada: false },
-    { id: 'calzado', nombre: 'Calzado de la Paz', emoji: '🥾', equipada: false }
-  ];
+  const [posicionPersonaje, setPosicionPersonaje] = useState(50);
+  const [caidas, setCaidas] = useState([]);
+  const [equipadas, setEquipadas] = useState([]);
+  const [vidas, setVidas] = useState(3);
+  const [nivel, setNivel] = useState(1);
+  const [gameOver, setGameOver] = useState(false);
 
-  const [piezas, setPiezas] = useState(PIEZAS);
-  const [piezaSeleccionada, setPiezaSeleccionada] = useState(null);
+  const PIEZAS_FALTANTES = ['🪖', '🛡️', '🗡️', '🥋', '🥾'];
+  const velocidadCaida = 6 + nivel; // Va cayendo más rápido
+  const frameRate = 50;
 
-  const equipar = (id) => {
-    if (!piezaSeleccionada || piezaSeleccionada !== id) {
-      SoundFX.error();
-      return;
-    }
-    
-    SoundFX.pop();
-    const nuevas = piezas.map(p => p.id === id ? { ...p, equipada: true } : p);
-    setPiezas(nuevas);
-    setPiezaSeleccionada(null);
+  const personajeRef = useRef(posicionPersonaje);
+  const vidasRef = useRef(vidas);
+  const equipadasRef = useRef(equipadas);
 
-    if (nuevas.every(p => p.equipada)) {
-      SoundFX.exito();
-      onGanar(10);
-      setTimeout(() => {
-        setPiezas(PIEZAS); // Resetea
-      }, 3000);
-    }
+  useEffect(() => { personajeRef.current = posicionPersonaje; }, [posicionPersonaje]);
+  useEffect(() => { vidasRef.current = vidas; }, [vidas]);
+  useEffect(() => { equipadasRef.current = equipadas; }, [equipadas]);
+
+  const moverIzquierda = () => { if(!gameOver) setPosicionPersonaje(p => Math.max(p - 15, 10)); };
+  const moverDerecha = () => { if(!gameOver) setPosicionPersonaje(p => Math.min(p + 15, 90)); };
+
+  useEffect(() => {
+    if (gameOver) return;
+    const intervalGen = setInterval(() => {
+      // 30% chance de fuego, 70% chance de armadura
+      const esFuego = Math.random() < 0.3;
+      // Solo tira piezas que no haya atrapado todavía
+      const piezasNecesarias = PIEZAS_FALTANTES.filter(p => !equipadasRef.current.includes(p));
+      
+      if (piezasNecesarias.length === 0) return; // Ya agarró todo
+      
+      const objeto = esFuego ? '🔥' : piezasNecesarias[Math.floor(Math.random() * piezasNecesarias.length)];
+      setCaidas(prev => [...prev, { id: Date.now(), x: Math.floor(Math.random() * 80) + 10, y: 0, tipo: objeto }]);
+    }, Math.max(2000 - (nivel * 200), 800));
+
+    return () => clearInterval(intervalGen);
+  }, [nivel, gameOver]);
+
+  useEffect(() => {
+    if (gameOver) return;
+    const intervalMove = setInterval(() => {
+      setCaidas(prev => {
+        let nuevas = [];
+        for (let obj of prev) {
+          const newY = obj.y + velocidadCaida;
+          
+          if (newY > 80 && newY < 100) {
+            const distanciaX = Math.abs(obj.x - personajeRef.current);
+            if (distanciaX < 15) { // Lo atrapó
+              if (obj.tipo === '🔥') {
+                SoundFX.choque();
+                const vidasRestantes = vidasRef.current - 1;
+                setVidas(vidasRestantes);
+                if (vidasRestantes <= 0) setGameOver(true);
+              } else {
+                if (!equipadasRef.current.includes(obj.tipo)) {
+                  SoundFX.exito();
+                  const nuevasEquipadas = [...equipadasRef.current, obj.tipo];
+                  setEquipadas(nuevasEquipadas);
+                  if (nuevasEquipadas.length === 5) {
+                    SoundFX.levelUp();
+                    setNivel(n => n + 1);
+                    setEquipadas([]); // Resetea para el próximo nivel
+                    setCaidas([]);
+                    onGanar(15);
+                  }
+                } else {
+                  SoundFX.pop(); // Ya la tenía
+                }
+              }
+              continue; // Destruye el objeto
+            }
+          }
+          if (newY < 110) nuevas.push({ ...obj, y: newY });
+        }
+        return nuevas;
+      });
+    }, frameRate);
+
+    return () => clearInterval(intervalMove);
+  }, [velocidadCaida, gameOver, onGanar]);
+
+  const reiniciar = () => {
+    setVidas(3);
+    setNivel(1);
+    setEquipadas([]);
+    setCaidas([]);
+    setGameOver(false);
+    setPosicionPersonaje(50);
   };
 
   return (
     <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '24px', color: '#cbd5e1', margin: '0 0 16px 0' }}>Vestite con la Armadura</h2>
-      
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-        
-        {/* Inventario */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {piezas.map(p => !p.equipada && (
-            <button 
-              key={p.id}
-              onClick={() => setPiezaSeleccionada(p.id)}
-              style={{
-                backgroundColor: piezaSeleccionada === p.id ? '#cbd5e1' : '#334155',
-                color: piezaSeleccionada === p.id ? 'black' : 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '10px',
-                fontSize: '30px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {p.emoji}
-            </button>
-          ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '0 16px' }}>
+        <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '20px' }}>
+          {Array.from({ length: 3 }).map((_, i) => <span key={i} style={{ opacity: i < vidas ? 1 : 0.3 }}>❤️</span>)}
         </div>
-
-        {/* Personaje */}
-        <div style={{ flex: 2, backgroundColor: '#0f172a', borderRadius: '20px', padding: '20px', border: '4px solid #475569', position: 'relative', height: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div onClick={() => equipar('casco')} style={{ width: '60px', height: '60px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='casco').equipada ? '🪖' : '👤'}</div>
-          
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div onClick={() => equipar('espada')} style={{ width: '50px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px' }}>{piezas.find(p=>p.id==='espada').equipada ? '🗡️' : ''}</div>
-            <div onClick={() => equipar('cinturon')} style={{ width: '80px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='cinturon').equipada ? '🥋' : '👕'}</div>
-            <div onClick={() => equipar('escudo')} style={{ width: '50px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px' }}>{piezas.find(p=>p.id==='escudo').equipada ? '🛡️' : ''}</div>
-          </div>
-
-          <div onClick={() => equipar('calzado')} style={{ width: '80px', height: '60px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='calzado').equipada ? '🥾' : '🦶'}</div>
-
-          {piezas.every(p => p.equipada) && (
-            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '24px', fontWeight: 'black', color: '#4ade80', animation: 'pulse 1s infinite' }}>
-              ¡ESTÁS PROTEGIDO! ✨
-            </div>
-          )}
-        </div>
+        <div style={{ color: '#94a3b8', fontWeight: 'bold', fontSize: '18px' }}>Nivel {nivel}</div>
       </div>
+
+      {/* Barra de progreso de armadura */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '16px' }}>
+        {PIEZAS_FALTANTES.map(p => (
+          <div key={p} style={{ width: '40px', height: '40px', backgroundColor: equipadas.includes(p) ? '#4ade80' : '#334155', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', transition: 'background-color 0.3s' }}>
+            {p}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ position: 'relative', height: '350px', backgroundColor: '#0f172a', borderRadius: '20px', border: '6px solid #475569', overflow: 'hidden' }}>
+        
+        {caidas.map(c => (
+          <div key={c.id} style={{ position: 'absolute', left: `${c.x}%`, top: `${c.y}%`, fontSize: '36px', transform: 'translateX(-50%)', zIndex: 10 }}>{c.tipo}</div>
+        ))}
+
+        {!gameOver ? (
+          <div style={{ position: 'absolute', bottom: '20px', left: `${posicionPersonaje}%`, transform: 'translateX(-50%)', fontSize: '56px', transition: 'left 0.1s linear', zIndex: 20 }}>
+            👤
+          </div>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 30 }}>
+            <h2 style={{ color: '#ef4444', fontSize: '32px', margin: '0 0 10px 0' }}>¡Cuidado con el fuego! 💥</h2>
+            <button onClick={reiniciar} style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: '#475569', color: 'white', fontWeight: 'bold', border: 'none', borderRadius: '12px', fontSize: '16px', cursor: 'pointer' }}>🔄 Jugar de Nuevo</button>
+          </div>
+        )}
+      </div>
+
+      {!gameOver && (
+        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '16px' }}>
+          <button onClick={moverIzquierda} style={{ flex: 1, padding: '24px', backgroundColor: '#475569', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', fontWeight: 'bold', cursor: 'pointer', touchAction: 'manipulation' }}>⬅️</button>
+          <button onClick={moverDerecha} style={{ flex: 1, padding: '24px', backgroundColor: '#475569', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', fontWeight: 'bold', cursor: 'pointer', touchAction: 'manipulation' }}>➡️</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1394,15 +1466,18 @@ function JuegoArmadura({ onGanar }) {
 function JuegoTemplo({ onGanar }) {
   const [nivel, setNivel] = useState(1);
   const [objetos, setObjetos] = useState([]);
+  const [nivelCompletado, setNivelCompletado] = useState(false);
   
   const OBJETOS_BUENOS = ['🕊️', '🍞', '📖', '🕯️', '🌸'];
-  const OBJETOS_MALOS = ['🕸️', '🗑️', '🕷️', '🪙', '泥']; // 泥 = barro/suciedad
+  const OBJETOS_MALOS = ['🕸️', '🗑️', '🕷️', '🪙', '💩']; // Reemplazamos barro con 💩 para que renderice bien
 
   useEffect(() => {
-    const cantidad = Math.min(8 + nivel * 2, 20);
+    const cantidad = Math.min(6 + nivel * 2, 20);
     let nuevos = [];
     for(let i=0; i<cantidad; i++) {
-      const esMalo = Math.random() > 0.4; // 60% de basura
+      let esMalo = Math.random() > 0.4; // 60% probabilidad
+      if (i === 0) esMalo = true; // Forzamos al menos 1 basura para que no se trabe el nivel
+
       nuevos.push({
         id: i,
         esMalo,
@@ -1413,21 +1488,27 @@ function JuegoTemplo({ onGanar }) {
       });
     }
     setObjetos(nuevos);
+    setNivelCompletado(false);
   }, [nivel]);
 
   const tocarObjeto = (obj) => {
-    if (obj.limpio) return;
+    if (obj.limpio || nivelCompletado) return;
 
     if (obj.esMalo) {
       SoundFX.pop();
       const nuevos = objetos.map(o => o.id === obj.id ? { ...o, limpio: true } : o);
       setObjetos(nuevos);
 
-      // Si ya no quedan malos
-      if (!nuevos.some(o => o.esMalo && !o.limpio)) {
+      // Si ya limpiamos TODOS los objetos malos
+      const quedanMalos = nuevos.some(o => o.esMalo && !o.limpio);
+      
+      if (!quedanMalos) {
+        setNivelCompletado(true);
         SoundFX.exito();
         onGanar(5);
-        setTimeout(() => setNivel(n => n + 1), 1500);
+        setTimeout(() => {
+          setNivel(n => n + 1);
+        }, 2000);
       }
     } else {
       SoundFX.error(); // Tocó algo bueno por error
@@ -1463,12 +1544,12 @@ function JuegoTemplo({ onGanar }) {
               padding: 0
             }}
           >
-            {o.emoji === '泥' ? '💩' : o.emoji}
+            {o.emoji}
           </button>
         ))}
 
-        {!objetos.some(o => o.esMalo && !o.limpio) && objetos.length > 0 && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '32px', fontWeight: 'black', color: '#a855f7', animation: 'bounce 1s infinite' }}>
+        {nivelCompletado && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '32px', fontWeight: 'black', color: '#a855f7', animation: 'bounce 1s infinite' }}>
             ¡TEMPLO LIMPIO! ✨
           </div>
         )}
