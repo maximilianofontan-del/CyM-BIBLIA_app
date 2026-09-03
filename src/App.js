@@ -9,6 +9,10 @@ import {
 } from 'lucide-react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { JuegosModule } from './JuegosModule';
+
+// Dentro de tu return / JSX donde quieras mostrarlo:
+<JuegosModule />
 import { 
   getAuth, 
   signInWithPopup, 
