@@ -63,7 +63,7 @@ class SoundFX {
 // ==========================================
 // CONTENEDOR PRINCIPAL Y MEMORIA DE ESTRELLAS
 // ==========================================
-export function JuegosModule() {
+export default function JuegosModule({ currentUser, db }) {
   const [juegoActivo, setJuegoActivo] = useState('MENU');
   const [estrellas, setEstrellas] = useState(0);
   const [musicaActivada, setMusicaActivada] = useState(false);
@@ -138,7 +138,7 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>⛵ Cruzando el Mar</span><span style={{ fontSize: '12px', color: '#fef08a', fontWeight: 'normal' }}>Esquivá obstáculos (3 vidas)</span></div>
           <span style={{ fontSize: '36px' }}>🌊</span>
         </button>
-        <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', alignItems: 'center', justify: 'space-between' }}>
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>📖 Leo con Jesús</span><span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 'normal' }}>Armá las palabras (Con Audio)</span></div>
           <span style={{ fontSize: '36px' }}>🔤</span>
         </button>
@@ -407,6 +407,24 @@ function JuegoAprenderLeer({ onGanar }) {
   const [mensaje, setMensaje] = useState("¡Ordená las letras!");
   const [estado, setEstado] = useState("jugando"); // jugando, correcto, error
 
+  const hablarLetra = (letra) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(letra);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.3;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const hablarPalabra = (texto) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.2;
+    window.speechSynthesis.speak(utterance);
+  };
+
   const iniciarNivel = (n) => {
     const palabra = PALABRAS[n].texto;
     // Mezclar letras y asignarles un ID único
@@ -421,18 +439,10 @@ function JuegoAprenderLeer({ onGanar }) {
 
   useEffect(() => { iniciarNivel(nivel); }, [nivel]);
 
-  const hablarPalabra = (texto) => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(texto);
-    utterance.lang = 'es-ES';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.2; // Voz un poco más aguda para niños
-    window.speechSynthesis.speak(utterance);
-  };
-
   const tocarLetra = (item) => {
     if (estado !== "jugando") return;
     SoundFX.pop();
+    hablarLetra(item.letra); // La app pronuncia la letra al tocarla
     setLetrasElegidas([...letrasElegidas, item]);
     setLetrasDisponibles(letrasDisponibles.filter(l => l.id !== item.id));
   };
@@ -522,5 +532,3 @@ function JuegoAprenderLeer({ onGanar }) {
     </div>
   );
 }
-
-export default JuegosModule;
