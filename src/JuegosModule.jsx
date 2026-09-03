@@ -103,6 +103,7 @@ export default function JuegosModule({ currentUser, db }) {
       {juegoActivo === 'JESUS' && <JuegoDondeEstaJesus onGanar={ganarEstrellas} />}
       {juegoActivo === 'BARCO' && <JuegoNavegarBarco onGanar={ganarEstrellas} />}
       {juegoActivo === 'LEER' && <JuegoAprenderLeer onGanar={ganarEstrellas} />}
+      {juegoActivo === 'LABERINTO' && <JuegoLaberinto onGanar={ganarEstrellas} />}
     </div>
   );
 }
@@ -125,8 +126,8 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <button onClick={() => onSeleccionar('PECES')} style={{ backgroundColor: '#0284c7', border: '4px solid #38bdf8', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0369a1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '40px' }}>
+        <button onClick={() => onSeleccionar('PECES')} style={{ backgroundColor: '#0284c7', border: '4px solid #38bdf8', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0369a1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'transform 0.1s' }}>
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐟 Atrapá el Pez</span><span style={{ fontSize: '12px', color: '#bae6fd', fontWeight: 'normal' }}>Niveles de velocidad</span></div>
           <span style={{ fontSize: '36px' }}>🎣</span>
         </button>
@@ -142,13 +143,17 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>📖 Leo con Jesús</span><span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 'normal' }}>Armá las palabras (Con Audio)</span></div>
           <span style={{ fontSize: '36px' }}>🔤</span>
         </button>
+        <button onClick={() => onSeleccionar('LABERINTO')} style={{ backgroundColor: '#10b981', border: '4px solid #34d399', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #059669', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🛤️ El Camino a Jesús</span><span style={{ fontSize: '12px', color: '#a7f3d0', fontWeight: 'normal' }}>Laberinto de la Salvación</span></div>
+          <span style={{ fontSize: '36px' }}>🐑</span>
+        </button>
       </div>
     </div>
   );
 }
 
 // ==========================================
-// JUEGO 1: ATRAPÁ EL PEZ (Con Niveles)
+// JUEGO 1: ATRAPÁ EL PEZ
 // ==========================================
 function JuegoPeces({ onGanar }) {
   const [pecera, setPecera] = useState(0);
@@ -377,7 +382,7 @@ function JuegoNavegarBarco({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 4: LEO CON JESÚS (Lectoescritura interactiva)
+// JUEGO 4: LEO CON JESÚS
 // ==========================================
 function JuegoAprenderLeer({ onGanar }) {
   const PALABRAS = [
@@ -395,7 +400,7 @@ function JuegoAprenderLeer({ onGanar }) {
   const [letrasDisponibles, setLetrasDisponibles] = useState([]);
   const [letrasElegidas, setLetrasElegidas] = useState([]);
   const [mensaje, setMensaje] = useState("¡Ordená las letras!");
-  const [estado, setEstado] = useState("jugando"); // jugando, correcto, error
+  const [estado, setEstado] = useState("jugando");
 
   const hablarLetra = (letra) => {
     window.speechSynthesis.cancel();
@@ -418,7 +423,6 @@ function JuegoAprenderLeer({ onGanar }) {
   const iniciarNivel = (n) => {
     const palabra = PALABRAS[n].texto;
     const mezcladas = palabra.split('').map((letra, index) => ({ id: index, letra })).sort(() => Math.random() - 0.5);
-    
     setLetrasDisponibles(mezcladas);
     setLetrasElegidas([]);
     setEstado("jugando");
@@ -444,7 +448,7 @@ function JuegoAprenderLeer({ onGanar }) {
   };
 
   useEffect(() => {
-    if (estado !== "jugando") return; // <- ESTE ES EL FRENO QUE EVITA EL BUCLE
+    if (estado !== "jugando") return;
 
     const palabraActual = PALABRAS[nivel].texto;
     if (letrasElegidas.length === palabraActual.length) {
@@ -514,6 +518,135 @@ function JuegoAprenderLeer({ onGanar }) {
             </button>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 5: EL CAMINO A JESÚS (Laberinto 2D)
+// ==========================================
+function JuegoLaberinto({ onGanar }) {
+  // 0 = camino libre, 1 = arbusto (pared), 2 = ovejita (inicio), 3 = Jesús (salida)
+  const LABERINTOS = [
+    // Nivel 1 (5x5) - Muy fácil
+    [
+      [2, 0, 0, 1, 1],
+      [1, 1, 0, 1, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 1, 0, 1],
+      [1, 1, 1, 0, 3]
+    ],
+    // Nivel 2 (6x6) - Medio
+    [
+      [2, 0, 1, 0, 0, 3],
+      [1, 0, 1, 0, 1, 1],
+      [1, 0, 0, 0, 1, 1],
+      [1, 1, 1, 0, 0, 0],
+      [1, 0, 0, 0, 1, 0],
+      [1, 0, 1, 1, 1, 1]
+    ],
+    // Nivel 3 (7x7) - Difícil
+    [
+      [1, 1, 1, 1, 1, 1, 3],
+      [2, 0, 0, 0, 1, 1, 0],
+      [1, 1, 1, 0, 0, 0, 0],
+      [1, 0, 0, 0, 1, 1, 1],
+      [1, 0, 1, 1, 1, 0, 0],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1, 1, 1]
+    ]
+  ];
+
+  const [nivel, setNivel] = useState(0);
+  const [posicion, setPosicion] = useState({ x: 0, y: 0 });
+  const [mensaje, setMensaje] = useState("Guiá a la ovejita hasta Jesús");
+  const [estado, setEstado] = useState("jugando");
+
+  const iniciarNivel = (n) => {
+    const lab = LABERINTOS[n];
+    let startX = 0, startY = 0;
+    lab.forEach((fila, y) => {
+      fila.forEach((celda, x) => {
+        if (celda === 2) { startX = x; startY = y; }
+      });
+    });
+    setPosicion({ x: startX, y: startY });
+    setEstado("jugando");
+    setMensaje(`Nivel ${n + 1}: Guiá a la ovejita`);
+  };
+
+  useEffect(() => { iniciarNivel(nivel); }, [nivel]);
+
+  const mover = (dx, dy) => {
+    if (estado !== "jugando") return;
+    const nx = posicion.x + dx;
+    const ny = posicion.y + dy;
+    const lab = LABERINTOS[nivel];
+
+    // Verifica que no se salga de los bordes del mapa
+    if (ny >= 0 && ny < lab.length && nx >= 0 && nx < lab[0].length) {
+      if (lab[ny][nx] !== 1) { // 1 = arbusto (pared)
+        SoundFX.pop();
+        setPosicion({ x: nx, y: ny });
+        
+        if (lab[ny][nx] === 3) { // 3 = Llegada
+          setEstado("ganado");
+          setMensaje("¡Encontraste a Jesús!");
+          SoundFX.exito();
+          onGanar(10);
+          
+          setTimeout(() => {
+            if (nivel + 1 < LABERINTOS.length) {
+              setNivel(n => n + 1);
+            } else {
+              setNivel(0); // Reinicia si gana el último
+            }
+          }, 2500);
+        }
+      } else {
+        SoundFX.error(); // Chocó con un arbusto
+      }
+    }
+  };
+
+  const laberintoActual = LABERINTOS[nivel];
+  const columnas = laberintoActual[0].length;
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <h2 style={{ fontSize: '24px', color: '#34d399', margin: '0 0 8px 0' }}>{mensaje}</h2>
+      
+      {/* CUADRÍCULA DEL LABERINTO */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columnas}, 1fr)`, gap: '4px', backgroundColor: '#064e3b', padding: '12px', borderRadius: '16px', border: '4px solid #10b981', margin: '0 auto', maxWidth: '350px' }}>
+        {laberintoActual.map((fila, y) => (
+          fila.map((celda, x) => {
+            const esJugador = posicion.x === x && posicion.y === y;
+            let contenido = '';
+            let bg = '#ecfccb'; // Color del caminito
+            
+            if (celda === 1) { bg = '#047857'; contenido = '🌳'; } // Arbustos
+            if (celda === 3 && !esJugador) { contenido = '✨🧔🏽‍♂️✨'; } // Meta
+            if (esJugador) { contenido = '🐑'; } // Ovejita
+            
+            return (
+              <div key={`${x}-${y}`} style={{ aspectRatio: '1/1', backgroundColor: bg, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: celda === 1 ? 'inset 0 0 10px rgba(0,0,0,0.3)' : 'none' }}>
+                {contenido}
+              </div>
+            );
+          })
+        ))}
+      </div>
+
+      {/* CONTROLES TIPO JOYSTICK (Cruceta) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 70px)', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
+        <div /> {/* Espacio vacío superior izquierdo */}
+        <button onClick={() => mover(0, -1)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬆️</button>
+        <div /> {/* Espacio vacío superior derecho */}
+        
+        <button onClick={() => mover(-1, 0)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬅️</button>
+        <button onClick={() => mover(0, 1)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬇️</button>
+        <button onClick={() => mover(1, 0)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>➡️</button>
       </div>
     </div>
   );
