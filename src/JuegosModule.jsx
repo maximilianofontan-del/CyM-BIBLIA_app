@@ -106,6 +106,11 @@ export default function JuegosModule({ currentUser, db }) {
       {juegoActivo === 'LABERINTO' && <JuegoLaberinto onGanar={ganarEstrellas} />}
       {juegoActivo === 'MEMORIA' && <JuegoMemoriaArca onGanar={ganarEstrellas} />}
       {juegoActivo === 'REBANO' && <JuegoRebano onGanar={ganarEstrellas} />}
+      {juegoActivo === 'ARPA' && <JuegoArpa onGanar={ganarEstrellas} />}
+      {juegoActivo === 'COSECHA' && <JuegoCosecha onGanar={ganarEstrellas} />}
+      {juegoActivo === 'PINCELADAS' && <JuegoPinceladas onGanar={ganarEstrellas} />}
+      {juegoActivo === 'ARMADURA' && <JuegoArmadura onGanar={ganarEstrellas} />}
+      {juegoActivo === 'TEMPLO' && <JuegoTemplo onGanar={ganarEstrellas} />}
     </div>
   );
 }
@@ -128,34 +133,54 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '40px' }}>
-        <button onClick={() => onSeleccionar('PECES')} style={{ backgroundColor: '#0284c7', border: '4px solid #38bdf8', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0369a1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'transform 0.1s' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐟 Atrapá el Pez</span><span style={{ fontSize: '12px', color: '#bae6fd', fontWeight: 'normal' }}>Niveles de velocidad</span></div>
-          <span style={{ fontSize: '36px' }}>🎣</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', paddingBottom: '40px' }}>
+        <button onClick={() => onSeleccionar('PECES')} style={{ backgroundColor: '#0284c7', border: '4px solid #38bdf8', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0369a1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🎣</span>
+          <span style={{ fontSize: '16px' }}>Atrapá el Pez</span>
         </button>
-        <button onClick={() => onSeleccionar('JESUS')} style={{ backgroundColor: '#16a34a', border: '4px solid #4ade80', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #15803d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>✨ ¿Dónde está Jesús?</span><span style={{ fontSize: '12px', color: '#bbf7d0', fontWeight: 'normal' }}>Búsqueda avanzada</span></div>
-          <span style={{ fontSize: '36px' }}>🔍</span>
+        <button onClick={() => onSeleccionar('JESUS')} style={{ backgroundColor: '#16a34a', border: '4px solid #4ade80', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #15803d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🔍</span>
+          <span style={{ fontSize: '16px' }}>¿Dónde está Jesús?</span>
         </button>
-        <button onClick={() => onSeleccionar('BARCO')} style={{ backgroundColor: '#d97706', border: '4px solid #fbbf24', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #b45309', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>⛵ Cruzando el Mar</span><span style={{ fontSize: '12px', color: '#fef08a', fontWeight: 'normal' }}>Esquivá obstáculos (3 vidas)</span></div>
-          <span style={{ fontSize: '36px' }}>🌊</span>
+        <button onClick={() => onSeleccionar('BARCO')} style={{ backgroundColor: '#d97706', border: '4px solid #fbbf24', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #b45309', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🌊</span>
+          <span style={{ fontSize: '16px' }}>Cruzando el Mar</span>
         </button>
-        <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>📖 Leo con Jesús</span><span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 'normal' }}>Armá las palabras (Con Audio)</span></div>
-          <span style={{ fontSize: '36px' }}>🔤</span>
+        <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🔤</span>
+          <span style={{ fontSize: '16px' }}>Leo con Jesús</span>
         </button>
-        <button onClick={() => onSeleccionar('LABERINTO')} style={{ backgroundColor: '#10b981', border: '4px solid #34d399', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #059669', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🛤️ El Camino a Jesús</span><span style={{ fontSize: '12px', color: '#a7f3d0', fontWeight: 'normal' }}>Laberinto de la Salvación</span></div>
-          <span style={{ fontSize: '36px' }}>🐑</span>
+        <button onClick={() => onSeleccionar('LABERINTO')} style={{ backgroundColor: '#10b981', border: '4px solid #34d399', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #059669', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🐑</span>
+          <span style={{ fontSize: '16px' }}>El Camino a Jesús</span>
         </button>
-        <button onClick={() => onSeleccionar('MEMORIA')} style={{ backgroundColor: '#ec4899', border: '4px solid #f472b6', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #be185d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐾 Parejas del Arca</span><span style={{ fontSize: '12px', color: '#fbcfe8', fontWeight: 'normal' }}>Memotest infinito de animales</span></div>
-          <span style={{ fontSize: '36px' }}>🦓</span>
+        <button onClick={() => onSeleccionar('MEMORIA')} style={{ backgroundColor: '#ec4899', border: '4px solid #f472b6', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #be185d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🦓</span>
+          <span style={{ fontSize: '16px' }}>Parejas del Arca</span>
         </button>
-        <button onClick={() => onSeleccionar('REBANO')} style={{ backgroundColor: '#f97316', border: '4px solid #fdba74', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #c2410c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐑 Rebaño Seguro</span><span style={{ fontSize: '12px', color: '#ffedd5', fontWeight: 'normal' }}>Tocá rápido a las ovejas</span></div>
-          <span style={{ fontSize: '36px' }}>🐺</span>
+        <button onClick={() => onSeleccionar('REBANO')} style={{ backgroundColor: '#f97316', border: '4px solid #fdba74', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #c2410c', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🐺</span>
+          <span style={{ fontSize: '16px' }}>Rebaño Seguro</span>
+        </button>
+        <button onClick={() => onSeleccionar('ARPA')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🪕</span>
+          <span style={{ fontSize: '16px' }}>El Arpa de David</span>
+        </button>
+        <button onClick={() => onSeleccionar('COSECHA')} style={{ backgroundColor: '#eab308', border: '4px solid #fde047', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #a16207', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🍎</span>
+          <span style={{ fontSize: '16px' }}>La Cosecha</span>
+        </button>
+        <button onClick={() => onSeleccionar('PINCELADAS')} style={{ backgroundColor: '#06b6d4', border: '4px solid #67e8f9', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #0e7490', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🎨</span>
+          <span style={{ fontSize: '16px' }}>Pinceladas</span>
+        </button>
+        <button onClick={() => onSeleccionar('ARMADURA')} style={{ backgroundColor: '#94a3b8', border: '4px solid #cbd5e1', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🛡️</span>
+          <span style={{ fontSize: '16px' }}>Armadura de Dios</span>
+        </button>
+        <button onClick={() => onSeleccionar('TEMPLO')} style={{ backgroundColor: '#a855f7', border: '4px solid #d8b4fe', borderRadius: '20px', padding: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #7e22ce', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '48px' }}>🧹</span>
+          <span style={{ fontSize: '16px' }}>Limpiando el Templo</span>
         </button>
       </div>
     </div>
@@ -172,7 +197,7 @@ function JuegoPeces({ onGanar }) {
   const [posicionPez, setPosicionPez] = useState({ x: 50, y: 50 });
   
   const meta = nivel * 5;
-  const velocidad = Math.max(2000 - (nivel * 300), 600); 
+  const velocidad = Math.max(2000 - (nivel * 200), 800); 
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -228,7 +253,7 @@ function JuegoDondeEstaJesus({ onGanar }) {
   const [mensaje, setMensaje] = useState('¡Encontrá a Jesús!');
 
   const generarMultitud = (nvl) => {
-    const cantidad = Math.min(6 + (nvl * 3), 25);
+    const cantidad = Math.min(6 + (nvl * 2), 25);
     const emojis = ['👤', '👩', '👨', '👵', '🧕', '👳‍♂️', '🧔', '🧔‍♂️', '🧔🏻‍♂️'];
     
     const nuevaMultitud = Array.from({ length: cantidad }).map(() => ({
@@ -237,7 +262,7 @@ function JuegoDondeEstaJesus({ onGanar }) {
     }));
     
     const posicionJesus = Math.floor(Math.random() * cantidad);
-    nuevaMultitud[posicionJesus] = { esJesus: true, emoji: nvl > 3 ? '🧔🏽‍♂️' : '✨🧔🏽‍♂️✨' };
+    nuevaMultitud[posicionJesus] = { esJesus: true, emoji: nvl > 5 ? '🧔🏽‍♂️' : '✨🧔🏽‍♂️✨' };
     setPersonas(nuevaMultitud);
   };
 
@@ -285,7 +310,7 @@ function JuegoNavegarBarco({ onGanar }) {
   const [distancia, setDistancia] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
-  const velocidadCaida = 10 + (nivel * 2);
+  const velocidadCaida = 8 + (nivel * 1.5);
   const frameRate = 100;
   
   const barcoRef = useRef(posicionBarco);
@@ -302,7 +327,7 @@ function JuegoNavegarBarco({ onGanar }) {
     const tipos = ['⚡', '☁️', '🪵', '🌪️'];
     const interval = setInterval(() => {
       setObstaculos(prev => [...prev, { id: Date.now(), x: Math.floor(Math.random() * 80) + 10, y: 0, tipo: tipos[Math.floor(Math.random() * tipos.length)] }]);
-    }, Math.max(1500 - (nivel * 200), 500));
+    }, Math.max(1800 - (nivel * 150), 800));
     return () => clearInterval(interval);
   }, [nivel, gameOver]);
 
@@ -402,7 +427,6 @@ function JuegoAprenderLeer({ onGanar }) {
   const [mensaje, setMensaje] = useState("¡Ordená las letras!");
   const [estado, setEstado] = useState("jugando");
 
-  // Lista de 100 palabras bíblicas/infantiles
   const PALABRAS_BASE = [
     { texto: "DIOS", emoji: "👑" }, { texto: "JESUS", emoji: "✨" }, { texto: "AMOR", emoji: "❤️" },
     { texto: "PAZ", emoji: "🕊️" }, { texto: "PAN", emoji: "🍞" }, { texto: "LUZ", emoji: "💡" },
@@ -813,8 +837,8 @@ function JuegoRebano({ onGanar }) {
   const [agujeros, setAgujeros] = useState(Array(9).fill(null));
   const [gameOver, setGameOver] = useState(false);
 
-  const meta = nivel * 10;
-  const velocidadVisible = Math.max(1200 - (nivel * 150), 500);
+  const meta = nivel * 8; // Más fácil para los chicos
+  const velocidadVisible = Math.max(1500 - (nivel * 100), 800); // Ligeramente más lento
 
   useEffect(() => {
     if (gameOver) return;
@@ -825,7 +849,7 @@ function JuegoRebano({ onGanar }) {
     const cicloJuego = () => {
       const nuevosAgujeros = Array(9).fill(null);
       const randomIndex = Math.floor(Math.random() * 9);
-      const esLobo = Math.random() > 0.75; 
+      const esLobo = Math.random() > 0.8; // Menos probabilidad de lobos
       nuevosAgujeros[randomIndex] = esLobo ? '🐺' : '🐑';
       setAgujeros(nuevosAgujeros);
 
@@ -833,7 +857,7 @@ function JuegoRebano({ onGanar }) {
         setAgujeros(Array(9).fill(null));
         timeoutOculto = setTimeout(() => {
           cicloJuego();
-        }, Math.random() * 400 + 300);
+        }, Math.random() * 600 + 400); // Más tiempo entre aparición
       }, velocidadVisible);
     };
 
@@ -861,6 +885,7 @@ function JuegoRebano({ onGanar }) {
         SoundFX.levelUp();
         setNivel(n => n + 1);
         onGanar(5);
+        setPuntaje(0);
       }
     } else if (animal === '🐺') {
       SoundFX.choque();
@@ -920,6 +945,531 @@ function JuegoRebano({ onGanar }) {
                 {animal}
               </button>
             ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 8: EL ARPA DE DAVID (Musical)
+// ==========================================
+function JuegoArpa({ onGanar }) {
+  const CUERDAS = [
+    { color: '#ef4444', freq: 261.63, tecla: 'Do' }, // Rojo
+    { color: '#f97316', freq: 293.66, tecla: 'Re' }, // Naranja
+    { color: '#eab308', freq: 329.63, tecla: 'Mi' }, // Amarillo
+    { color: '#22c55e', freq: 349.23, tecla: 'Fa' }, // Verde
+    { color: '#3b82f6', freq: 392.00, tecla: 'Sol' }, // Azul
+    { color: '#a855f7', freq: 440.00, tecla: 'La' }, // Violeta
+  ];
+
+  const [secuencia, setSecuencia] = useState([]);
+  const [pasoJugador, setPasoJugador] = useState(0);
+  const [nivel, setNivel] = useState(1);
+  const [mensaje, setMensaje] = useState("¡Tocá libre o seguí la luz!");
+  const [esperandoJugador, setEsperandoJugador] = useState(false);
+  const [cuerdaActiva, setCuerdaActiva] = useState(null);
+
+  const tocarCuerda = (index, esAutomatico = false) => {
+    setCuerdaActiva(index);
+    SoundFX.playTone(CUERDAS[index].freq, 'sine', 0.4, 0.2);
+    setTimeout(() => setCuerdaActiva(null), 300);
+
+    if (!esAutomatico && esperandoJugador) {
+      if (index === secuencia[pasoJugador]) {
+        if (pasoJugador + 1 === secuencia.length) {
+          setEsperandoJugador(false);
+          setMensaje("¡Muy bien!");
+          SoundFX.exito();
+          onGanar(5);
+          setTimeout(() => {
+            setNivel(n => n + 1);
+            iniciarSecuencia(nivel + 1);
+          }, 1500);
+        } else {
+          setPasoJugador(p => p + 1);
+        }
+      } else {
+        setEsperandoJugador(false);
+        setMensaje("¡Ups! Intentá de nuevo");
+        SoundFX.error();
+        setTimeout(() => iniciarSecuencia(nivel), 1500);
+      }
+    }
+  };
+
+  const iniciarSecuencia = (nvl) => {
+    setMensaje(`Nivel ${nvl}: Observá...`);
+    const nuevaSecuencia = [];
+    const longitud = Math.min(3 + Math.floor(nvl / 2), 8); // Crece despacito
+    
+    for (let i = 0; i < longitud; i++) {
+      nuevaSecuencia.push(Math.floor(Math.random() * CUERDAS.length));
+    }
+    
+    setSecuencia(nuevaSecuencia);
+    setPasoJugador(0);
+    setEsperandoJugador(false);
+
+    nuevaSecuencia.forEach((cuerdaIdx, i) => {
+      setTimeout(() => {
+        tocarCuerda(cuerdaIdx, true);
+        if (i === nuevaSecuencia.length - 1) {
+          setTimeout(() => {
+            setMensaje("¡Tu turno!");
+            setEsperandoJugador(true);
+          }, 500);
+        }
+      }, (i + 1) * 800);
+    });
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', color: '#a855f7' }}>Nivel {nivel}</h2>
+        <button onClick={() => iniciarSecuencia(nivel)} style={{ backgroundColor: '#a855f7', color: 'white', border: 'none', borderRadius: '12px', padding: '8px 16px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          ▶️ Jugar Secuencia
+        </button>
+      </div>
+
+      <div style={{ backgroundColor: '#4c1d95', borderRadius: '24px', padding: '30px 20px', border: '4px solid #7e22ce', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', position: 'relative' }}>
+        <p style={{ color: '#e9d5ff', fontWeight: 'bold', fontSize: '20px', marginBottom: '24px', minHeight: '30px' }}>
+          {mensaje}
+        </p>
+
+        {/* Marco del Arpa */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', height: '250px', borderTop: '10px solid #d97706', borderBottom: '10px solid #d97706', padding: '20px 0', borderRadius: '20px' }}>
+          {CUERDAS.map((c, i) => (
+            <div 
+              key={i} 
+              onClick={() => tocarCuerda(i)}
+              style={{
+                width: '30px',
+                height: '100%',
+                backgroundColor: cuerdaActiva === i ? 'white' : c.color,
+                borderRadius: '15px',
+                cursor: 'pointer',
+                boxShadow: cuerdaActiva === i ? `0 0 20px ${c.color}, inset 0 0 10px white` : `inset 0 0 10px rgba(0,0,0,0.3)`,
+                transition: 'background-color 0.1s, box-shadow 0.1s',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                paddingBottom: '10px'
+              }}
+            >
+              <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold', opacity: 0.7 }}>{c.tecla}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 9: LA COSECHA (Caída y Clasificación)
+// ==========================================
+function JuegoCosecha({ onGanar }) {
+  const [nivel, setNivel] = useState(1);
+  const [puntaje, setPuntaje] = useState(0);
+  const [frutas, setFrutas] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
+
+  const CANASTAS = [
+    { color: '#ef4444', emoji: '🍎', tipo: 'manzana' },
+    { color: '#22c55e', emoji: '🍐', tipo: 'pera' },
+    { color: '#a855f7', emoji: '🍇', tipo: 'uva' }
+  ];
+
+  const meta = nivel * 10;
+  const velocidadCaida = 2 + (nivel * 0.5); // Lento al principio
+
+  useEffect(() => {
+    if (gameOver) return;
+    
+    // Generador de frutas
+    const intervalGenerador = setInterval(() => {
+      const tipoRandom = CANASTAS[Math.floor(Math.random() * CANASTAS.length)];
+      setFrutas(prev => [...prev, { id: Date.now(), x: Math.floor(Math.random() * 80) + 10, y: 0, ...tipoRandom }]);
+    }, Math.max(2500 - (nivel * 200), 1000));
+
+    // Motor de gravedad
+    const intervalCaida = setInterval(() => {
+      setFrutas(prev => {
+        let nuevas = [];
+        let huboFalla = false;
+        for (let f of prev) {
+          const newY = f.y + velocidadCaida;
+          if (newY > 90) {
+            // Cayó al piso sin ser atrapada = Fin del juego para que no se frustren, le bajamos la penalidad a solo terminar
+            huboFalla = true;
+          } else {
+            nuevas.push({ ...f, y: newY });
+          }
+        }
+        if (huboFalla) {
+          SoundFX.error();
+          setGameOver(true);
+        }
+        return nuevas;
+      });
+    }, 50);
+
+    return () => { clearInterval(intervalGenerador); clearInterval(intervalCaida); };
+  }, [nivel, gameOver, velocidadCaida]);
+
+  const tocarCanasta = (tipoCanasta) => {
+    if (gameOver) return;
+    
+    // Buscar la fruta más baja de ese tipo
+    setFrutas(prev => {
+      const index = prev.findIndex(f => f.tipo === tipoCanasta && f.y > 50); // Solo se puede atrapar si está cerca de abajo
+      if (index !== -1) {
+        SoundFX.pop();
+        const nuevas = [...prev];
+        nuevas.splice(index, 1);
+        
+        setPuntaje(p => {
+          const nuevoP = p + 1;
+          if (nuevoP >= meta) {
+            SoundFX.levelUp();
+            setNivel(n => n + 1);
+            onGanar(5);
+            return 0; // Resetea puntaje para el prox nivel
+          }
+          return nuevoP;
+        });
+        return nuevas;
+      } else {
+        // Tocó la canasta equivocada
+        SoundFX.choque();
+        return prev;
+      }
+    });
+  };
+
+  const reiniciar = () => {
+    setNivel(1);
+    setPuntaje(0);
+    setFrutas([]);
+    setGameOver(false);
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '0 16px' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', color: '#eab308' }}>Nivel {nivel}</h2>
+        <span style={{ color: '#facc15', fontWeight: 'bold' }}>Cosecha: {puntaje} / {meta}</span>
+      </div>
+
+      <div style={{ position: 'relative', height: '400px', backgroundColor: '#ecfccb', borderRadius: '20px', border: '6px solid #84cc16', overflow: 'hidden' }}>
+        
+        {/* Nubes de fondo */}
+        <div style={{ position: 'absolute', top: '20px', left: '10%', fontSize: '40px', opacity: 0.5 }}>☁️</div>
+        <div style={{ position: 'absolute', top: '40px', right: '20%', fontSize: '50px', opacity: 0.5 }}>☁️</div>
+
+        {frutas.map(f => (
+          <div key={f.id} style={{ position: 'absolute', left: `${f.x}%`, top: `${f.y}%`, fontSize: '40px', transform: 'translateX(-50%)', zIndex: 10 }}>{f.emoji}</div>
+        ))}
+
+        {gameOver && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 30 }}>
+            <h2 style={{ color: '#ef4444', fontSize: '32px', margin: '0 0 10px 0' }}>¡Se cayó una fruta! 💥</h2>
+            <button onClick={reiniciar} style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: '#84cc16', color: 'white', fontWeight: 'bold', border: 'none', borderRadius: '12px', fontSize: '16px', cursor: 'pointer' }}>🔄 Intentar de Nuevo</button>
+          </div>
+        )}
+
+        {/* Zona de Canastas */}
+        <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', height: '100px', backgroundColor: '#d97706', display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', paddingBottom: '10px' }}>
+          {CANASTAS.map((c, i) => (
+            <button 
+              key={i} 
+              onClick={() => tocarCanasta(c.tipo)}
+              style={{ backgroundColor: c.color, border: '4px solid white', borderRadius: '15px 15px 5px 5px', width: '80px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px', cursor: 'pointer', boxShadow: '0 -4px 10px rgba(0,0,0,0.3)', touchAction: 'manipulation' }}
+            >
+              🛒
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 10: PINCELADAS DE LA CREACIÓN
+// ==========================================
+function JuegoPinceladas({ onGanar }) {
+  // Simplificado: Tocar partes de la pantalla para "pintarlas"
+  const [zonas, setZonas] = useState([
+    { id: 'cielo', pintado: false, color: '#38bdf8', emoji: '☁️', top: '10%', left: '50%', w: '80%', h: '30%' },
+    { id: 'sol', pintado: false, color: '#facc15', emoji: '☀️', top: '15%', left: '80%', w: '25%', h: '25%' },
+    { id: 'tierra', pintado: false, color: '#4ade80', emoji: '🌱', top: '70%', left: '50%', w: '100%', h: '40%' },
+    { id: 'mar', pintado: false, color: '#2563eb', emoji: '🌊', top: '50%', left: '30%', w: '40%', h: '20%' },
+    { id: 'animales', pintado: false, color: '#d97706', emoji: '🦁', top: '65%', left: '70%', w: '20%', h: '20%' }
+  ]);
+  const [colorActivo, setColorActivo] = useState(null);
+
+  const colores = ['#38bdf8', '#facc15', '#4ade80', '#2563eb', '#d97706'];
+
+  const pintarZona = (index) => {
+    if (!colorActivo) return;
+    
+    const nuevas = [...zonas];
+    // Si el color activo coincide con el color que necesita la zona
+    if (nuevas[index].color === colorActivo) {
+      SoundFX.pop();
+      nuevas[index].pintado = true;
+      setZonas(nuevas);
+
+      if (nuevas.every(z => z.pintado)) {
+        SoundFX.exito();
+        onGanar(10);
+        setTimeout(() => {
+          setZonas(zonas.map(z => ({...z, pintado: false}))); // Resetea
+          setColorActivo(null);
+        }, 3000);
+      }
+    } else {
+      SoundFX.error();
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <h2 style={{ fontSize: '24px', color: '#06b6d4', margin: '0 0 16px 0' }}>¡Pintá la Creación!</h2>
+      
+      <div style={{ position: 'relative', height: '350px', backgroundColor: 'white', borderRadius: '20px', border: '6px solid #67e8f9', overflow: 'hidden', marginBottom: '20px' }}>
+        {zonas.map((z, i) => (
+          <div 
+            key={z.id}
+            onClick={() => pintarZona(i)}
+            style={{
+              position: 'absolute',
+              top: z.top,
+              left: z.left,
+              width: z.w,
+              height: z.h,
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: z.pintado ? z.color : '#f1f5f9',
+              border: '2px dashed #cbd5e1',
+              borderRadius: z.id === 'sol' || z.id === 'animales' ? '50%' : '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '40px',
+              cursor: 'pointer',
+              transition: 'background-color 0.5s ease'
+            }}
+          >
+            {z.pintado ? z.emoji : '❓'}
+          </div>
+        ))}
+
+        {zonas.every(z => z.pintado) && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '40px', fontWeight: 'black', color: '#0891b2', animation: 'pulse 1s infinite' }}>
+            ¡HERMOSO! ✨
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+        {colores.map(c => (
+          <button 
+            key={c}
+            onClick={() => setColorActivo(c)}
+            style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              backgroundColor: c,
+              border: colorActivo === c ? '4px solid white' : 'none',
+              boxShadow: colorActivo === c ? '0 0 15px rgba(255,255,255,0.5)' : 'none',
+              cursor: 'pointer',
+              transform: colorActivo === c ? 'scale(1.2)' : 'scale(1)',
+              transition: 'all 0.2s'
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 11: LA ARMADURA DE DIOS
+// ==========================================
+function JuegoArmadura({ onGanar }) {
+  const PIEZAS = [
+    { id: 'casco', nombre: 'Casco de la Salvación', emoji: '🪖', equipada: false },
+    { id: 'escudo', nombre: 'Escudo de la Fe', emoji: '🛡️', equipada: false },
+    { id: 'espada', nombre: 'Espada del Espíritu', emoji: '🗡️', equipada: false },
+    { id: 'cinturon', nombre: 'Cinturón de la Verdad', emoji: '🥋', equipada: false },
+    { id: 'calzado', nombre: 'Calzado de la Paz', emoji: '🥾', equipada: false }
+  ];
+
+  const [piezas, setPiezas] = useState(PIEZAS);
+  const [piezaSeleccionada, setPiezaSeleccionada] = useState(null);
+
+  const equipar = (id) => {
+    if (!piezaSeleccionada || piezaSeleccionada !== id) {
+      SoundFX.error();
+      return;
+    }
+    
+    SoundFX.pop();
+    const nuevas = piezas.map(p => p.id === id ? { ...p, equipada: true } : p);
+    setPiezas(nuevas);
+    setPiezaSeleccionada(null);
+
+    if (nuevas.every(p => p.equipada)) {
+      SoundFX.exito();
+      onGanar(10);
+      setTimeout(() => {
+        setPiezas(PIEZAS); // Resetea
+      }, 3000);
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <h2 style={{ fontSize: '24px', color: '#cbd5e1', margin: '0 0 16px 0' }}>Vestite con la Armadura</h2>
+      
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+        
+        {/* Inventario */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {piezas.map(p => !p.equipada && (
+            <button 
+              key={p.id}
+              onClick={() => setPiezaSeleccionada(p.id)}
+              style={{
+                backgroundColor: piezaSeleccionada === p.id ? '#cbd5e1' : '#334155',
+                color: piezaSeleccionada === p.id ? 'black' : 'white',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '10px',
+                fontSize: '30px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {p.emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Personaje */}
+        <div style={{ flex: 2, backgroundColor: '#0f172a', borderRadius: '20px', padding: '20px', border: '4px solid #475569', position: 'relative', height: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+          <div onClick={() => equipar('casco')} style={{ width: '60px', height: '60px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='casco').equipada ? '🪖' : '👤'}</div>
+          
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div onClick={() => equipar('espada')} style={{ width: '50px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px' }}>{piezas.find(p=>p.id==='espada').equipada ? '🗡️' : ''}</div>
+            <div onClick={() => equipar('cinturon')} style={{ width: '80px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='cinturon').equipada ? '🥋' : '👕'}</div>
+            <div onClick={() => equipar('escudo')} style={{ width: '50px', height: '80px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px' }}>{piezas.find(p=>p.id==='escudo').equipada ? '🛡️' : ''}</div>
+          </div>
+
+          <div onClick={() => equipar('calzado')} style={{ width: '80px', height: '60px', border: '2px dashed #64748b', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>{piezas.find(p=>p.id==='calzado').equipada ? '🥾' : '🦶'}</div>
+
+          {piezas.every(p => p.equipada) && (
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '24px', fontWeight: 'black', color: '#4ade80', animation: 'pulse 1s infinite' }}>
+              ¡ESTÁS PROTEGIDO! ✨
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 12: LIMPIANDO EL TEMPLO
+// ==========================================
+function JuegoTemplo({ onGanar }) {
+  const [nivel, setNivel] = useState(1);
+  const [objetos, setObjetos] = useState([]);
+  
+  const OBJETOS_BUENOS = ['🕊️', '🍞', '📖', '🕯️', '🌸'];
+  const OBJETOS_MALOS = ['🕸️', '🗑️', '🕷️', '🪙', '泥']; // 泥 = barro/suciedad
+
+  useEffect(() => {
+    const cantidad = Math.min(8 + nivel * 2, 20);
+    let nuevos = [];
+    for(let i=0; i<cantidad; i++) {
+      const esMalo = Math.random() > 0.4; // 60% de basura
+      nuevos.push({
+        id: i,
+        esMalo,
+        emoji: esMalo ? OBJETOS_MALOS[Math.floor(Math.random() * OBJETOS_MALOS.length)] : OBJETOS_BUENOS[Math.floor(Math.random() * OBJETOS_BUENOS.length)],
+        x: Math.random() * 80 + 10,
+        y: Math.random() * 70 + 10,
+        limpio: false
+      });
+    }
+    setObjetos(nuevos);
+  }, [nivel]);
+
+  const tocarObjeto = (obj) => {
+    if (obj.limpio) return;
+
+    if (obj.esMalo) {
+      SoundFX.pop();
+      const nuevos = objetos.map(o => o.id === obj.id ? { ...o, limpio: true } : o);
+      setObjetos(nuevos);
+
+      // Si ya no quedan malos
+      if (!nuevos.some(o => o.esMalo && !o.limpio)) {
+        SoundFX.exito();
+        onGanar(5);
+        setTimeout(() => setNivel(n => n + 1), 1500);
+      }
+    } else {
+      SoundFX.error(); // Tocó algo bueno por error
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', color: '#d8b4fe' }}>Nivel {nivel}</h2>
+        <span style={{ color: '#facc15', fontWeight: 'bold' }}>Tocá la basura 🧹</span>
+      </div>
+
+      <div style={{ position: 'relative', height: '400px', backgroundColor: '#faf5ff', borderRadius: '20px', border: '6px solid #d8b4fe', overflow: 'hidden' }}>
+        
+        {/* Decoración del templo */}
+        <div style={{ position: 'absolute', top: 0, left: '20%', width: '40px', height: '100%', backgroundColor: '#f3e8ff' }} />
+        <div style={{ position: 'absolute', top: 0, right: '20%', width: '40px', height: '100%', backgroundColor: '#f3e8ff' }} />
+
+        {objetos.map(o => !o.limpio && (
+          <button 
+            key={o.id}
+            onClick={() => tocarObjeto(o)}
+            style={{
+              position: 'absolute',
+              left: `${o.x}%`,
+              top: `${o.y}%`,
+              fontSize: '40px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transform: 'translate(-50%, -50%)',
+              padding: 0
+            }}
+          >
+            {o.emoji === '泥' ? '💩' : o.emoji}
+          </button>
+        ))}
+
+        {!objetos.some(o => o.esMalo && !o.limpio) && objetos.length > 0 && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, fontSize: '32px', fontWeight: 'black', color: '#a855f7', animation: 'bounce 1s infinite' }}>
+            ¡TEMPLO LIMPIO! ✨
           </div>
         )}
       </div>
