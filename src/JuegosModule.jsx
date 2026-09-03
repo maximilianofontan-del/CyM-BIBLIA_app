@@ -392,25 +392,58 @@ function JuegoNavegarBarco({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 4: LEO CON JESÚS
+// JUEGO 4: LEO CON JESÚS (100 Palabras)
 // ==========================================
 function JuegoAprenderLeer({ onGanar }) {
-  const PALABRAS = [
-    { texto: "DIOS", emoji: "👑" },
-    { texto: "JESUS", emoji: "✨🧔🏽‍♂️✨" },
-    { texto: "AMOR", emoji: "❤️" },
-    { texto: "PAZ", emoji: "🕊️" },
-    { texto: "PAN", emoji: "🍞" },
-    { texto: "LUZ", emoji: "💡" },
-    { texto: "PEZ", emoji: "🐟" },
-    { texto: "ARCA", emoji: "🚢" }
-  ];
-
+  const [listaMezclada, setListaMezclada] = useState([]);
   const [nivel, setNivel] = useState(0);
   const [letrasDisponibles, setLetrasDisponibles] = useState([]);
   const [letrasElegidas, setLetrasElegidas] = useState([]);
   const [mensaje, setMensaje] = useState("¡Ordená las letras!");
   const [estado, setEstado] = useState("jugando");
+
+  // Lista de 100 palabras bíblicas/infantiles
+  const PALABRAS_BASE = [
+    { texto: "DIOS", emoji: "👑" }, { texto: "JESUS", emoji: "✨" }, { texto: "AMOR", emoji: "❤️" },
+    { texto: "PAZ", emoji: "🕊️" }, { texto: "PAN", emoji: "🍞" }, { texto: "LUZ", emoji: "💡" },
+    { texto: "PEZ", emoji: "🐟" }, { texto: "ARCA", emoji: "🚢" }, { texto: "NOE", emoji: "👴🏽" },
+    { texto: "MARIA", emoji: "🧕🏽" }, { texto: "LEON", emoji: "🦁" }, { texto: "OVEJA", emoji: "🐑" },
+    { texto: "CRUZ", emoji: "✝️" }, { texto: "REY", emoji: "🤴🏽" }, { texto: "AGUA", emoji: "💧" },
+    { texto: "CIELO", emoji: "☁️" }, { texto: "VIDA", emoji: "🌱" }, { texto: "FE", emoji: "🙏🏽" },
+    { texto: "VINO", emoji: "🍷" }, { texto: "FUEGO", emoji: "🔥" }, { texto: "MUNDO", emoji: "🌍" },
+    { texto: "ANGEL", emoji: "👼🏽" }, { texto: "ROCA", emoji: "🪨" }, { texto: "MAR", emoji: "🌊" },
+    { texto: "SOL", emoji: "☀️" }, { texto: "LUNA", emoji: "🌙" }, { texto: "ESTRELLA", emoji: "⭐" },
+    { texto: "NUBE", emoji: "⛅" }, { texto: "DIA", emoji: "🌅" }, { texto: "NOCHE", emoji: "🌃" },
+    { texto: "ARBOL", emoji: "🌳" }, { texto: "FLOR", emoji: "🌺" }, { texto: "FRUTO", emoji: "🍎" },
+    { texto: "SEMILLA", emoji: "🌰" }, { texto: "TRIGO", emoji: "🌾" }, { texto: "MIEL", emoji: "🍯" },
+    { texto: "LECHE", emoji: "🥛" }, { texto: "ORO", emoji: "🪙" }, { texto: "CORONA", emoji: "👑" },
+    { texto: "MANTO", emoji: "🧥" }, { texto: "BARCA", emoji: "⛵" }, { texto: "RED", emoji: "🥅" },
+    { texto: "RAMA", emoji: "🌿" }, { texto: "OLIVO", emoji: "🌿" }, { texto: "PALOMA", emoji: "🕊️" },
+    { texto: "CUERVO", emoji: "🐦‍⬛" }, { texto: "OSO", emoji: "🐻" }, { texto: "LOBO", emoji: "🐺" },
+    { texto: "ZORRO", emoji: "🦊" }, { texto: "CAMELLO", emoji: "🐫" }, { texto: "BURRO", emoji: "🫏" },
+    { texto: "CABALLO", emoji: "🐎" }, { texto: "VACA", emoji: "🐄" }, { texto: "TORO", emoji: "🐂" },
+    { texto: "CERDO", emoji: "🐖" }, { texto: "RANA", emoji: "🐸" }, { texto: "AVE", emoji: "🦅" },
+    { texto: "GALLO", emoji: "🐓" }, { texto: "PATO", emoji: "🦆" }, { texto: "NIÑO", emoji: "👦" },
+    { texto: "NIÑA", emoji: "👧" }, { texto: "PADRE", emoji: "👨" }, { texto: "MADRE", emoji: "👩" },
+    { texto: "BEBE", emoji: "👶" }, { texto: "HERMANO", emoji: "👦" }, { texto: "FAMILIA", emoji: "👨‍👩‍👧‍👦" },
+    { texto: "BESO", emoji: "💋" }, { texto: "ABRAZO", emoji: "🫂" }, { texto: "CANTO", emoji: "🎵" },
+    { texto: "CORO", emoji: "🎤" }, { texto: "ARPA", emoji: "🪕" }, { texto: "FLAUTA", emoji: "🪈" },
+    { texto: "FIESTA", emoji: "🥳" }, { texto: "RISA", emoji: "😂" }, { texto: "GOZO", emoji: "😁" },
+    { texto: "GRACIA", emoji: "🎁" }, { texto: "DON", emoji: "🎀" }, { texto: "PERDON", emoji: "🤝" },
+    { texto: "AMIGO", emoji: "🧑‍🤝‍🧑" }, { texto: "REINO", emoji: "🏰" }, { texto: "SANTO", emoji: "😇" },
+    { texto: "VERDAD", emoji: "🧭" }, { texto: "CAMINO", emoji: "🛤️" }, { texto: "TEMPLO", emoji: "🕍" },
+    { texto: "REZO", emoji: "🛐" }, { texto: "MANA", emoji: "🥖" }, { texto: "MILAGRO", emoji: "✨" },
+    { texto: "PASTOR", emoji: "🦯" }, { texto: "SAL", emoji: "🧂" }, { texto: "LIRIO", emoji: "🌸" },
+    { texto: "RIO", emoji: "🏞️" }, { texto: "PEDRO", emoji: "🎣" }, { texto: "PABLO", emoji: "📜" },
+    { texto: "MOISES", emoji: "🌊" }, { texto: "GOLIAT", emoji: "🛡️" }, { texto: "DAVID", emoji: "🪨" },
+    { texto: "JOSE", emoji: "🪚" }, { texto: "BIBLIA", emoji: "📖" }, { texto: "PROFETAS", emoji: "🗣️" },
+    { texto: "SALMOS", emoji: "🎼" }
+  ];
+
+  useEffect(() => {
+    const mezcladas = [...PALABRAS_BASE].sort(() => Math.random() - 0.5);
+    setListaMezclada(mezcladas);
+  }, []);
 
   const hablarLetra = (letra) => {
     window.speechSynthesis.cancel();
@@ -431,7 +464,8 @@ function JuegoAprenderLeer({ onGanar }) {
   };
 
   const iniciarNivel = (n) => {
-    const palabra = PALABRAS[n].texto;
+    if (listaMezclada.length === 0) return;
+    const palabra = listaMezclada[n].texto;
     const mezcladas = palabra.split('').map((letra, index) => ({ id: index, letra })).sort(() => Math.random() - 0.5);
     setLetrasDisponibles(mezcladas);
     setLetrasElegidas([]);
@@ -440,7 +474,9 @@ function JuegoAprenderLeer({ onGanar }) {
     hablarPalabra(palabra);
   };
 
-  useEffect(() => { iniciarNivel(nivel); }, [nivel]);
+  useEffect(() => { 
+    if (listaMezclada.length > 0) iniciarNivel(nivel); 
+  }, [nivel, listaMezclada]);
 
   const tocarLetra = (item) => {
     if (estado !== "jugando") return;
@@ -458,9 +494,9 @@ function JuegoAprenderLeer({ onGanar }) {
   };
 
   useEffect(() => {
-    if (estado !== "jugando") return;
+    if (estado !== "jugando" || listaMezclada.length === 0) return;
 
-    const palabraActual = PALABRAS[nivel].texto;
+    const palabraActual = listaMezclada[nivel].texto;
     if (letrasElegidas.length === palabraActual.length) {
       const palabraArmada = letrasElegidas.map(l => l.letra).join('');
       
@@ -472,9 +508,10 @@ function JuegoAprenderLeer({ onGanar }) {
         onGanar(10);
         
         setTimeout(() => {
-          if (nivel + 1 < PALABRAS.length) {
+          if (nivel + 1 < listaMezclada.length) {
             setNivel(n => n + 1);
           } else {
+            setListaMezclada([...PALABRAS_BASE].sort(() => Math.random() - 0.5));
             setNivel(0);
           }
         }, 2500);
@@ -488,9 +525,11 @@ function JuegoAprenderLeer({ onGanar }) {
         }, 1500);
       }
     }
-  }, [letrasElegidas, nivel, onGanar, estado]);
+  }, [letrasElegidas, nivel, onGanar, estado, listaMezclada]);
 
-  const palabraObj = PALABRAS[nivel];
+  if (listaMezclada.length === 0) return null;
+
+  const palabraObj = listaMezclada[nivel];
 
   return (
     <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
