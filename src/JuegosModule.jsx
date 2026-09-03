@@ -102,6 +102,7 @@ export function JuegosModule() {
       {juegoActivo === 'PECES' && <JuegoPeces onGanar={ganarEstrellas} />}
       {juegoActivo === 'JESUS' && <JuegoDondeEstaJesus onGanar={ganarEstrellas} />}
       {juegoActivo === 'BARCO' && <JuegoNavegarBarco onGanar={ganarEstrellas} />}
+      {juegoActivo === 'LEER' && <JuegoAprenderLeer onGanar={ganarEstrellas} />}
     </div>
   );
 }
@@ -136,6 +137,10 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         <button onClick={() => onSeleccionar('BARCO')} style={{ backgroundColor: '#d97706', border: '4px solid #fbbf24', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #b45309', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>⛵ Cruzando el Mar</span><span style={{ fontSize: '12px', color: '#fef08a', fontWeight: 'normal' }}>Esquivá obstáculos (3 vidas)</span></div>
           <span style={{ fontSize: '36px' }}>🌊</span>
+        </button>
+        <button onClick={() => onSeleccionar('LEER')} style={{ backgroundColor: '#8b5cf6', border: '4px solid #c084fc', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #6d28d9', display: 'flex', alignItems: 'center', justify: 'space-between' }}>
+          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>📖 Leo con Jesús</span><span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 'normal' }}>Armá las palabras (Con Audio)</span></div>
+          <span style={{ fontSize: '36px' }}>🔤</span>
         </button>
       </div>
     </div>
@@ -377,6 +382,143 @@ function JuegoNavegarBarco({ onGanar }) {
           <button onClick={moverDerecha} style={{ flex: 1, padding: '24px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #1d4ed8', touchAction: 'manipulation' }}>➡️</button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 4: LEO CON JESÚS (Lectoescritura interactiva)
+// ==========================================
+function JuegoAprenderLeer({ onGanar }) {
+  const PALABRAS = [
+    { texto: "DIOS", emoji: "👑" },
+    { texto: "JESUS", emoji: "✨🧔🏽‍♂️✨" },
+    { texto: "AMOR", emoji: "❤️" },
+    { texto: "PAZ", emoji: "🕊️" },
+    { texto: "PAN", emoji: "🍞" },
+    { texto: "LUZ", emoji: "💡" },
+    { texto: "PEZ", emoji: "🐟" },
+    { texto: "ARCA", emoji: "🚢" }
+  ];
+
+  const [nivel, setNivel] = useState(0);
+  const [letrasDisponibles, setLetrasDisponibles] = useState([]);
+  const [letrasElegidas, setLetrasElegidas] = useState([]);
+  const [mensaje, setMensaje] = useState("¡Ordená las letras!");
+  const [estado, setEstado] = useState("jugando"); // jugando, correcto, error
+
+  const iniciarNivel = (n) => {
+    const palabra = PALABRAS[n].texto;
+    // Mezclar letras y asignarles un ID único
+    const mezcladas = palabra.split('').map((letra, index) => ({ id: index, letra })).sort(() => Math.random() - 0.5);
+    
+    setLetrasDisponibles(mezcladas);
+    setLetrasElegidas([]);
+    setEstado("jugando");
+    setMensaje("¡Ordená las letras!");
+    hablarPalabra(palabra);
+  };
+
+  useEffect(() => { iniciarNivel(nivel); }, [nivel]);
+
+  const hablarPalabra = (texto) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.2; // Voz un poco más aguda para niños
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const tocarLetra = (item) => {
+    if (estado !== "jugando") return;
+    SoundFX.pop();
+    setLetrasElegidas([...letrasElegidas, item]);
+    setLetrasDisponibles(letrasDisponibles.filter(l => l.id !== item.id));
+  };
+
+  const devolverLetra = (item) => {
+    if (estado !== "jugando") return;
+    SoundFX.pop();
+    setLetrasDisponibles([...letrasDisponibles, item]);
+    setLetrasElegidas(letrasElegidas.filter(l => l.id !== item.id));
+  };
+
+  useEffect(() => {
+    const palabraActual = PALABRAS[nivel].texto;
+    if (letrasElegidas.length === palabraActual.length) {
+      const palabraArmada = letrasElegidas.map(l => l.letra).join('');
+      
+      if (palabraArmada === palabraActual) {
+        setEstado("correcto");
+        setMensaje("¡Excelente!");
+        SoundFX.exito();
+        hablarPalabra("¡Excelente! " + palabraActual);
+        onGanar(10);
+        
+        setTimeout(() => {
+          if (nivel + 1 < PALABRAS.length) {
+            setNivel(n => n + 1);
+          } else {
+            setNivel(0); // Reinicia el ciclo si las termina todas
+          }
+        }, 2500);
+      } else {
+        setEstado("error");
+        setMensaje("Casi... ¡Intentá de nuevo!");
+        SoundFX.error();
+        
+        setTimeout(() => {
+          iniciarNivel(nivel);
+        }, 1500);
+      }
+    }
+  }, [letrasElegidas, nivel, onGanar]);
+
+  const palabraObj = PALABRAS[nivel];
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', color: '#c084fc' }}>Nivel {nivel + 1}</h2>
+        <button onClick={() => hablarPalabra(palabraObj.texto)} style={{ backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '12px', padding: '8px 16px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          🔊 Escuchar
+        </button>
+      </div>
+
+      <div style={{ backgroundColor: '#2e1065', borderRadius: '24px', padding: '24px', border: '4px solid #8b5cf6', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+        
+        {/* IMAGEN / EMOJI */}
+        <div style={{ fontSize: '80px', marginBottom: '16px', animation: estado === 'correcto' ? 'bounce 1s' : 'none' }}>
+          {palabraObj.emoji}
+        </div>
+        
+        <p style={{ color: estado === 'correcto' ? '#4ade80' : estado === 'error' ? '#ef4444' : '#e9d5ff', fontWeight: 'bold', fontSize: '20px', height: '30px' }}>
+          {mensaje}
+        </p>
+
+        {/* ZONA DE ARMADO (Slots) */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', minHeight: '80px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          {Array.from({ length: palabraObj.texto.length }).map((_, i) => {
+            const letraColocada = letrasElegidas[i];
+            return (
+              <div key={i} onClick={() => letraColocada && devolverLetra(letraColocada)} style={{ width: '60px', height: '70px', backgroundColor: letraColocada ? '#c084fc' : '#1e1b4b', border: `3px dashed ${letraColocada ? '#e9d5ff' : '#4c1d95'}`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 'black', color: 'white', cursor: letraColocada ? 'pointer' : 'default', boxShadow: letraColocada ? '0 4px 0 #7e22ce' : 'none', transform: letraColocada ? 'scale(1.05)' : 'scale(1)' }}>
+                {letraColocada ? letraColocada.letra : ''}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* LETRAS DISPONIBLES (Desordenadas) */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', minHeight: '80px' }}>
+          {letrasDisponibles.map((item) => (
+            <button key={item.id} onClick={() => tocarLetra(item)} style={{ width: '60px', height: '70px', backgroundColor: '#fcd34d', border: 'none', borderRadius: '12px', fontSize: '32px', fontWeight: 'black', color: '#713f12', cursor: 'pointer', boxShadow: '0 6px 0 #b45309', transition: 'transform 0.1s' }}>
+              {item.letra}
+            </button>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }
