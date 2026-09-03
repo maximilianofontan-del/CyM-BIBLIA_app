@@ -417,7 +417,7 @@ function JuegoNavegarBarco({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 4: LEO CON JESÚS (100 Palabras)
+// JUEGO 4: LEO CON JESÚS
 // ==========================================
 function JuegoAprenderLeer({ onGanar }) {
   const [listaMezclada, setListaMezclada] = useState([]);
@@ -597,7 +597,7 @@ function JuegoAprenderLeer({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 5: EL CAMINO A JESÚS (Laberinto 2D)
+// JUEGO 5: EL CAMINO A JESÚS
 // ==========================================
 function JuegoLaberinto({ onGanar }) {
   const LABERINTOS = [
@@ -719,7 +719,7 @@ function JuegoLaberinto({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 6: MEMOTEST DEL ARCA DE NOÉ (Infinito)
+// JUEGO 6: MEMOTEST DEL ARCA DE NOÉ
 // ==========================================
 function JuegoMemoriaArca({ onGanar }) {
   const ANIMALES_DISPONIBLES = ['🦁', '🐘', '🦒', '🐒', '🦓', '🐄', '🐖', '🐑', '🐪', '🦏', '🐇', '🦘'];
@@ -837,8 +837,8 @@ function JuegoRebano({ onGanar }) {
   const [agujeros, setAgujeros] = useState(Array(9).fill(null));
   const [gameOver, setGameOver] = useState(false);
 
-  const meta = nivel * 8; // Más fácil para los chicos
-  const velocidadVisible = Math.max(1500 - (nivel * 100), 800); // Ligeramente más lento
+  const meta = nivel * 8; 
+  const velocidadVisible = Math.max(1500 - (nivel * 100), 800); 
 
   useEffect(() => {
     if (gameOver) return;
@@ -849,7 +849,7 @@ function JuegoRebano({ onGanar }) {
     const cicloJuego = () => {
       const nuevosAgujeros = Array(9).fill(null);
       const randomIndex = Math.floor(Math.random() * 9);
-      const esLobo = Math.random() > 0.8; // Menos probabilidad de lobos
+      const esLobo = Math.random() > 0.8; 
       nuevosAgujeros[randomIndex] = esLobo ? '🐺' : '🐑';
       setAgujeros(nuevosAgujeros);
 
@@ -857,7 +857,7 @@ function JuegoRebano({ onGanar }) {
         setAgujeros(Array(9).fill(null));
         timeoutOculto = setTimeout(() => {
           cicloJuego();
-        }, Math.random() * 600 + 400); // Más tiempo entre aparición
+        }, Math.random() * 600 + 400); 
       }, velocidadVisible);
     };
 
@@ -957,12 +957,13 @@ function JuegoRebano({ onGanar }) {
 // ==========================================
 function JuegoArpa({ onGanar }) {
   const CUERDAS = [
-    { color: '#ef4444', freq: 261.63, tecla: 'Do' }, // Rojo
-    { color: '#f97316', freq: 293.66, tecla: 'Re' }, // Naranja
-    { color: '#eab308', freq: 329.63, tecla: 'Mi' }, // Amarillo
-    { color: '#22c55e', freq: 349.23, tecla: 'Fa' }, // Verde
-    { color: '#3b82f6', freq: 392.00, tecla: 'Sol' }, // Azul
-    { color: '#a855f7', freq: 440.00, tecla: 'La' }, // Violeta
+    { color: '#ef4444', freq: 261.63, tecla: 'Do' },
+    { color: '#f97316', freq: 293.66, tecla: 'Re' },
+    { color: '#eab308', freq: 329.63, tecla: 'Mi' },
+    { color: '#22c55e', freq: 349.23, tecla: 'Fa' },
+    { color: '#3b82f6', freq: 392.00, tecla: 'Sol' },
+    { color: '#a855f7', freq: 440.00, tecla: 'La' },
+    { color: '#ec4899', freq: 493.88, tecla: 'Si' },
   ];
 
   const [secuencia, setSecuencia] = useState([]);
@@ -1003,7 +1004,7 @@ function JuegoArpa({ onGanar }) {
   const iniciarSecuencia = (nvl) => {
     setMensaje(`Nivel ${nvl}: Observá...`);
     const nuevaSecuencia = [];
-    const longitud = Math.min(3 + Math.floor(nvl / 2), 8); // Crece despacito
+    const longitud = Math.min(3 + Math.floor(nvl / 2), 8); 
     
     for (let i = 0; i < longitud; i++) {
       nuevaSecuencia.push(Math.floor(Math.random() * CUERDAS.length));
@@ -1040,8 +1041,7 @@ function JuegoArpa({ onGanar }) {
           {mensaje}
         </p>
 
-        {/* Marco del Arpa */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', height: '250px', borderTop: '10px solid #d97706', borderBottom: '10px solid #d97706', padding: '20px 0', borderRadius: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', height: '250px', borderTop: '10px solid #d97706', borderBottom: '10px solid #d97706', padding: '20px 0', borderRadius: '20px' }}>
           {CUERDAS.map((c, i) => (
             <div 
               key={i} 
@@ -1070,7 +1070,7 @@ function JuegoArpa({ onGanar }) {
 }
 
 // ==========================================
-// JUEGO 9: LA COSECHA (Caída y Clasificación)
+// JUEGO 9: LA COSECHA
 // ==========================================
 function JuegoCosecha({ onGanar }) {
   const [nivel, setNivel] = useState(1);
@@ -1085,18 +1085,16 @@ function JuegoCosecha({ onGanar }) {
   ];
 
   const meta = nivel * 10;
-  const velocidadCaida = 2 + (nivel * 0.5); // Lento al principio
+  const velocidadCaida = 1.5 + (nivel * 0.2); // Más lento
 
   useEffect(() => {
     if (gameOver) return;
     
-    // Generador de frutas
     const intervalGenerador = setInterval(() => {
       const tipoRandom = CANASTAS[Math.floor(Math.random() * CANASTAS.length)];
       setFrutas(prev => [...prev, { id: Date.now(), x: Math.floor(Math.random() * 80) + 10, y: 0, ...tipoRandom }]);
-    }, Math.max(2500 - (nivel * 200), 1000));
+    }, Math.max(3500 - (nivel * 200), 1500));
 
-    // Motor de gravedad
     const intervalCaida = setInterval(() => {
       setFrutas(prev => {
         let nuevas = [];
@@ -1104,7 +1102,6 @@ function JuegoCosecha({ onGanar }) {
         for (let f of prev) {
           const newY = f.y + velocidadCaida;
           if (newY > 90) {
-            // Cayó al piso sin ser atrapada = Fin del juego para que no se frustren, le bajamos la penalidad a solo terminar
             huboFalla = true;
           } else {
             nuevas.push({ ...f, y: newY });
@@ -1116,7 +1113,7 @@ function JuegoCosecha({ onGanar }) {
         }
         return nuevas;
       });
-    }, 50);
+    }, 100);
 
     return () => { clearInterval(intervalGenerador); clearInterval(intervalCaida); };
   }, [nivel, gameOver, velocidadCaida]);
@@ -1124,9 +1121,8 @@ function JuegoCosecha({ onGanar }) {
   const tocarCanasta = (tipoCanasta) => {
     if (gameOver) return;
     
-    // Buscar la fruta más baja de ese tipo
     setFrutas(prev => {
-      const index = prev.findIndex(f => f.tipo === tipoCanasta && f.y > 50); // Solo se puede atrapar si está cerca de abajo
+      const index = prev.findIndex(f => f.tipo === tipoCanasta && f.y > 50); 
       if (index !== -1) {
         SoundFX.pop();
         const nuevas = [...prev];
@@ -1138,13 +1134,12 @@ function JuegoCosecha({ onGanar }) {
             SoundFX.levelUp();
             setNivel(n => n + 1);
             onGanar(5);
-            return 0; // Resetea puntaje para el prox nivel
+            return 0; 
           }
           return nuevoP;
         });
         return nuevas;
       } else {
-        // Tocó la canasta equivocada
         SoundFX.choque();
         return prev;
       }
@@ -1167,7 +1162,6 @@ function JuegoCosecha({ onGanar }) {
 
       <div style={{ position: 'relative', height: '400px', backgroundColor: '#ecfccb', borderRadius: '20px', border: '6px solid #84cc16', overflow: 'hidden' }}>
         
-        {/* Nubes de fondo */}
         <div style={{ position: 'absolute', top: '20px', left: '10%', fontSize: '40px', opacity: 0.5 }}>☁️</div>
         <div style={{ position: 'absolute', top: '40px', right: '20%', fontSize: '50px', opacity: 0.5 }}>☁️</div>
 
@@ -1182,7 +1176,6 @@ function JuegoCosecha({ onGanar }) {
           </div>
         )}
 
-        {/* Zona de Canastas */}
         <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', height: '100px', backgroundColor: '#d97706', display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', paddingBottom: '10px' }}>
           {CANASTAS.map((c, i) => (
             <button 
@@ -1207,16 +1200,11 @@ function JuegoPinceladas({ onGanar }) {
   const [colorActivo, setColorActivo] = useState('#facc15');
   const [ganado, setGanado] = useState(false);
 
-  // Paleta de colores para que los chicos elijan
   const COLORES = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#3b82f6', '#a855f7', '#ec4899', '#ffffff', '#000000', '#8b4513'];
 
-  // Estado que guarda los colores de TODAS las zonas de los 3 dibujos
   const [zonas, setZonas] = useState({
-    // Leon
     melena: '#ffffff', cara: '#ffffff', orejaIzq: '#ffffff', orejaDer: '#ffffff', nariz: '#ffffff',
-    // Arbol
     tronco: '#ffffff', hojasIzq: '#ffffff', hojasDer: '#ffffff', hojasCentro: '#ffffff', fruto1: '#ffffff', fruto2: '#ffffff', fruto3: '#ffffff',
-    // Ballena
     agua: '#ffffff', cuerpo: '#ffffff', aleta: '#ffffff', chorro: '#ffffff'
   });
 
@@ -1232,11 +1220,9 @@ function JuegoPinceladas({ onGanar }) {
     setTimeout(() => {
       setNivel(n => n + 1);
       setGanado(false);
-      // Opcional: limpiar los colores si querés que arranquen de 0 en la próxima vuelta
     }, 3000);
   };
 
-  // Dependiendo del nivel (rotando entre 3 dibujos), renderizamos un SVG distinto
   const figuraId = nivel % 3;
 
   return (
@@ -1330,8 +1316,8 @@ function JuegoArmadura({ onGanar }) {
   const [gameOver, setGameOver] = useState(false);
 
   const PIEZAS_FALTANTES = ['🪖', '🛡️', '🗡️', '🥋', '🥾'];
-  const velocidadCaida = 6 + nivel; // Va cayendo más rápido
-  const frameRate = 50;
+  const velocidadCaida = 2 + (nivel * 0.5); // Mucho más lento para infantiles
+  const frameRate = 100;
 
   const personajeRef = useRef(posicionPersonaje);
   const vidasRef = useRef(vidas);
@@ -1347,16 +1333,14 @@ function JuegoArmadura({ onGanar }) {
   useEffect(() => {
     if (gameOver) return;
     const intervalGen = setInterval(() => {
-      // 30% chance de fuego, 70% chance de armadura
       const esFuego = Math.random() < 0.3;
-      // Solo tira piezas que no haya atrapado todavía
       const piezasNecesarias = PIEZAS_FALTANTES.filter(p => !equipadasRef.current.includes(p));
       
-      if (piezasNecesarias.length === 0) return; // Ya agarró todo
+      if (piezasNecesarias.length === 0) return; 
       
       const objeto = esFuego ? '🔥' : piezasNecesarias[Math.floor(Math.random() * piezasNecesarias.length)];
       setCaidas(prev => [...prev, { id: Date.now(), x: Math.floor(Math.random() * 80) + 10, y: 0, tipo: objeto }]);
-    }, Math.max(2000 - (nivel * 200), 800));
+    }, Math.max(3500 - (nivel * 200), 1500));
 
     return () => clearInterval(intervalGen);
   }, [nivel, gameOver]);
@@ -1371,7 +1355,7 @@ function JuegoArmadura({ onGanar }) {
           
           if (newY > 80 && newY < 100) {
             const distanciaX = Math.abs(obj.x - personajeRef.current);
-            if (distanciaX < 15) { // Lo atrapó
+            if (distanciaX < 15) { 
               if (obj.tipo === '🔥') {
                 SoundFX.choque();
                 const vidasRestantes = vidasRef.current - 1;
@@ -1385,15 +1369,15 @@ function JuegoArmadura({ onGanar }) {
                   if (nuevasEquipadas.length === 5) {
                     SoundFX.levelUp();
                     setNivel(n => n + 1);
-                    setEquipadas([]); // Resetea para el próximo nivel
+                    setEquipadas([]); 
                     setCaidas([]);
                     onGanar(15);
                   }
                 } else {
-                  SoundFX.pop(); // Ya la tenía
+                  SoundFX.pop(); 
                 }
               }
-              continue; // Destruye el objeto
+              continue; 
             }
           }
           if (newY < 110) nuevas.push({ ...obj, y: newY });
@@ -1423,7 +1407,6 @@ function JuegoArmadura({ onGanar }) {
         <div style={{ color: '#94a3b8', fontWeight: 'bold', fontSize: '18px' }}>Nivel {nivel}</div>
       </div>
 
-      {/* Barra de progreso de armadura */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '16px' }}>
         {PIEZAS_FALTANTES.map(p => (
           <div key={p} style={{ width: '40px', height: '40px', backgroundColor: equipadas.includes(p) ? '#4ade80' : '#334155', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', transition: 'background-color 0.3s' }}>
@@ -1469,22 +1452,21 @@ function JuegoTemplo({ onGanar }) {
   const [nivelCompletado, setNivelCompletado] = useState(false);
   
   const OBJETOS_BUENOS = ['🕊️', '🍞', '📖', '🕯️', '🌸'];
-  const OBJETOS_MALOS = ['🕸️', '🗑️', '🕷️', '🪙', '💩']; // Reemplazamos barro con 💩 para que renderice bien
+  const OBJETOS_MALOS = ['🕸️', '🗑️', '🕷️', '🪙', '💩']; 
 
   useEffect(() => {
     const cantidad = Math.min(6 + nivel * 2, 20);
     let nuevos = [];
     for(let i=0; i<cantidad; i++) {
-      let esMalo = Math.random() > 0.4; // 60% probabilidad
-      if (i === 0) esMalo = true; // Forzamos al menos 1 basura para que no se trabe el nivel
+      let esMalo = Math.random() > 0.4; 
+      if (i === 0) esMalo = true; // Asegura que siempre haya basura
 
       nuevos.push({
         id: i,
         esMalo,
         emoji: esMalo ? OBJETOS_MALOS[Math.floor(Math.random() * OBJETOS_MALOS.length)] : OBJETOS_BUENOS[Math.floor(Math.random() * OBJETOS_BUENOS.length)],
         x: Math.random() * 80 + 10,
-        y: Math.random() * 70 + 10,
-        limpio: false
+        y: Math.random() * 70 + 10
       });
     }
     setObjetos(nuevos);
@@ -1492,17 +1474,16 @@ function JuegoTemplo({ onGanar }) {
   }, [nivel]);
 
   const tocarObjeto = (obj) => {
-    if (obj.limpio || nivelCompletado) return;
+    if (nivelCompletado) return;
 
     if (obj.esMalo) {
       SoundFX.pop();
-      const nuevos = objetos.map(o => o.id === obj.id ? { ...o, limpio: true } : o);
+      // En lugar de marcar como limpio, lo sacamos del arreglo para que desaparezca
+      const nuevos = objetos.filter(o => o.id !== obj.id);
       setObjetos(nuevos);
 
-      // Si ya limpiamos TODOS los objetos malos
-      const quedanMalos = nuevos.some(o => o.esMalo && !o.limpio);
-      
-      if (!quedanMalos) {
+      // Si ya no quedan malos en el arreglo nuevo
+      if (!nuevos.some(o => o.esMalo)) {
         setNivelCompletado(true);
         SoundFX.exito();
         onGanar(5);
@@ -1511,7 +1492,7 @@ function JuegoTemplo({ onGanar }) {
         }, 2000);
       }
     } else {
-      SoundFX.error(); // Tocó algo bueno por error
+      SoundFX.error(); 
     }
   };
 
@@ -1524,11 +1505,10 @@ function JuegoTemplo({ onGanar }) {
 
       <div style={{ position: 'relative', height: '400px', backgroundColor: '#faf5ff', borderRadius: '20px', border: '6px solid #d8b4fe', overflow: 'hidden' }}>
         
-        {/* Decoración del templo */}
         <div style={{ position: 'absolute', top: 0, left: '20%', width: '40px', height: '100%', backgroundColor: '#f3e8ff' }} />
         <div style={{ position: 'absolute', top: 0, right: '20%', width: '40px', height: '100%', backgroundColor: '#f3e8ff' }} />
 
-        {objetos.map(o => !o.limpio && (
+        {objetos.map(o => (
           <button 
             key={o.id}
             onClick={() => tocarObjeto(o)}
