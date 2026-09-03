@@ -28,7 +28,7 @@ import ModuloClub from './ModuloClub';
 import ModuloDuelo from './ModuloDuelo';
 import ModuloClanes from './ModuloClanes';
 import ModuloTienda from './ModuloTienda';
-import { JuegosModule } from './JuegosModule';
+import  JuegosModule  from './JuegosModule';
 
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
