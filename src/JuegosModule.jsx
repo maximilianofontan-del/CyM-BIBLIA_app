@@ -104,6 +104,7 @@ export default function JuegosModule({ currentUser, db }) {
       {juegoActivo === 'BARCO' && <JuegoNavegarBarco onGanar={ganarEstrellas} />}
       {juegoActivo === 'LEER' && <JuegoAprenderLeer onGanar={ganarEstrellas} />}
       {juegoActivo === 'LABERINTO' && <JuegoLaberinto onGanar={ganarEstrellas} />}
+      {juegoActivo === 'MEMORIA' && <JuegoMemoriaArca onGanar={ganarEstrellas} />}
     </div>
   );
 }
@@ -146,6 +147,10 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         <button onClick={() => onSeleccionar('LABERINTO')} style={{ backgroundColor: '#10b981', border: '4px solid #34d399', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #059669', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🛤️ El Camino a Jesús</span><span style={{ fontSize: '12px', color: '#a7f3d0', fontWeight: 'normal' }}>Laberinto de la Salvación</span></div>
           <span style={{ fontSize: '36px' }}>🐑</span>
+        </button>
+        <button onClick={() => onSeleccionar('MEMORIA')} style={{ backgroundColor: '#ec4899', border: '4px solid #f472b6', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #be185d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐾 Parejas del Arca</span><span style={{ fontSize: '12px', color: '#fbcfe8', fontWeight: 'normal' }}>Memotest infinito de animales</span></div>
+          <span style={{ fontSize: '36px' }}>🦓</span>
         </button>
       </div>
     </div>
@@ -527,9 +532,7 @@ function JuegoAprenderLeer({ onGanar }) {
 // JUEGO 5: EL CAMINO A JESÚS (Laberinto 2D)
 // ==========================================
 function JuegoLaberinto({ onGanar }) {
-  // 0 = camino libre, 1 = arbusto (pared), 2 = ovejita (inicio), 3 = Jesús (salida)
   const LABERINTOS = [
-    // Nivel 1 (5x5) - Muy fácil
     [
       [2, 0, 0, 1, 1],
       [1, 1, 0, 1, 1],
@@ -537,7 +540,6 @@ function JuegoLaberinto({ onGanar }) {
       [1, 0, 1, 0, 1],
       [1, 1, 1, 0, 3]
     ],
-    // Nivel 2 (6x6) - Medio
     [
       [2, 0, 1, 0, 0, 3],
       [1, 0, 1, 0, 1, 1],
@@ -546,7 +548,6 @@ function JuegoLaberinto({ onGanar }) {
       [1, 0, 0, 0, 1, 0],
       [1, 0, 1, 1, 1, 1]
     ],
-    // Nivel 3 (7x7) - Difícil
     [
       [1, 1, 1, 1, 1, 1, 3],
       [2, 0, 0, 0, 1, 1, 0],
@@ -584,13 +585,12 @@ function JuegoLaberinto({ onGanar }) {
     const ny = posicion.y + dy;
     const lab = LABERINTOS[nivel];
 
-    // Verifica que no se salga de los bordes del mapa
     if (ny >= 0 && ny < lab.length && nx >= 0 && nx < lab[0].length) {
-      if (lab[ny][nx] !== 1) { // 1 = arbusto (pared)
+      if (lab[ny][nx] !== 1) { 
         SoundFX.pop();
         setPosicion({ x: nx, y: ny });
         
-        if (lab[ny][nx] === 3) { // 3 = Llegada
+        if (lab[ny][nx] === 3) {
           setEstado("ganado");
           setMensaje("¡Encontraste a Jesús!");
           SoundFX.exito();
@@ -600,12 +600,12 @@ function JuegoLaberinto({ onGanar }) {
             if (nivel + 1 < LABERINTOS.length) {
               setNivel(n => n + 1);
             } else {
-              setNivel(0); // Reinicia si gana el último
+              setNivel(0);
             }
           }, 2500);
         }
       } else {
-        SoundFX.error(); // Chocó con un arbusto
+        SoundFX.error(); 
       }
     }
   };
@@ -617,17 +617,16 @@ function JuegoLaberinto({ onGanar }) {
     <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
       <h2 style={{ fontSize: '24px', color: '#34d399', margin: '0 0 8px 0' }}>{mensaje}</h2>
       
-      {/* CUADRÍCULA DEL LABERINTO */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columnas}, 1fr)`, gap: '4px', backgroundColor: '#064e3b', padding: '12px', borderRadius: '16px', border: '4px solid #10b981', margin: '0 auto', maxWidth: '350px' }}>
         {laberintoActual.map((fila, y) => (
           fila.map((celda, x) => {
             const esJugador = posicion.x === x && posicion.y === y;
             let contenido = '';
-            let bg = '#ecfccb'; // Color del caminito
+            let bg = '#ecfccb';
             
-            if (celda === 1) { bg = '#047857'; contenido = '🌳'; } // Arbustos
-            if (celda === 3 && !esJugador) { contenido = '✨🧔🏽‍♂️✨'; } // Meta
-            if (esJugador) { contenido = '🐑'; } // Ovejita
+            if (celda === 1) { bg = '#047857'; contenido = '🌳'; } 
+            if (celda === 3 && !esJugador) { contenido = '✨🧔🏽‍♂️✨'; } 
+            if (esJugador) { contenido = '🐑'; } 
             
             return (
               <div key={`${x}-${y}`} style={{ aspectRatio: '1/1', backgroundColor: bg, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: celda === 1 ? 'inset 0 0 10px rgba(0,0,0,0.3)' : 'none' }}>
@@ -638,15 +637,127 @@ function JuegoLaberinto({ onGanar }) {
         ))}
       </div>
 
-      {/* CONTROLES TIPO JOYSTICK (Cruceta) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 70px)', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
-        <div /> {/* Espacio vacío superior izquierdo */}
+        <div />
         <button onClick={() => mover(0, -1)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬆️</button>
-        <div /> {/* Espacio vacío superior derecho */}
+        <div />
         
         <button onClick={() => mover(-1, 0)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬅️</button>
         <button onClick={() => mover(0, 1)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>⬇️</button>
         <button onClick={() => mover(1, 0)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '16px', fontSize: '32px', height: '70px', cursor: 'pointer', boxShadow: '0 6px 0 #059669', touchAction: 'manipulation' }}>➡️</button>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 6: MEMOTEST DEL ARCA DE NOÉ (Infinito)
+// ==========================================
+function JuegoMemoriaArca({ onGanar }) {
+  const ANIMALES_DISPONIBLES = ['🦁', '🐘', '🦒', '🐒', '🦓', '🐄', '🐖', '🐑', '🐪', '🦏', '🐇', '🦘'];
+  
+  const [nivel, setNivel] = useState(1);
+  const [cartas, setCartas] = useState([]);
+  const [seleccionadas, setSeleccionadas] = useState([]);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [paresEncontrados, setParesEncontrados] = useState(0);
+
+  const iniciarNivel = (nivelActual) => {
+    // Escala la dificultad: Nivel 1 = 3 pares, Nivel 2 = 4 pares, etc. Máximo 10 pares.
+    const cantidadPares = Math.min(2 + nivelActual, 10);
+    const animalesElegidos = [...ANIMALES_DISPONIBLES].sort(() => Math.random() - 0.5).slice(0, cantidadPares);
+    
+    const mazo = [...animalesElegidos, ...animalesElegidos]
+      .sort(() => Math.random() - 0.5)
+      .map((emoji, index) => ({ id: index, emoji, volteada: false, emparejada: false }));
+    
+    setCartas(mazo);
+    setSeleccionadas([]);
+    setParesEncontrados(0);
+    setBloqueado(false);
+  };
+
+  useEffect(() => { iniciarNivel(nivel); }, [nivel]);
+
+  const tocarCarta = (index) => {
+    if (bloqueado || cartas[index].volteada || cartas[index].emparejada) return;
+    SoundFX.pop();
+
+    const nuevasCartas = [...cartas];
+    nuevasCartas[index].volteada = true;
+    setCartas(nuevasCartas);
+
+    const nuevasSeleccionadas = [...seleccionadas, index];
+    setSeleccionadas(nuevasSeleccionadas);
+
+    if (nuevasSeleccionadas.length === 2) {
+      setBloqueado(true);
+      const [idx1, idx2] = nuevasSeleccionadas;
+
+      if (nuevasCartas[idx1].emoji === nuevasCartas[idx2].emoji) {
+        // Encontró el par correcto
+        SoundFX.exito();
+        nuevasCartas[idx1].emparejada = true;
+        nuevasCartas[idx2].emparejada = true;
+        setCartas(nuevasCartas);
+        setSeleccionadas([]);
+        setBloqueado(false);
+
+        const nuevosPares = paresEncontrados + 1;
+        setParesEncontrados(nuevosPares);
+
+        if (nuevosPares === nuevasCartas.length / 2) {
+          SoundFX.levelUp();
+          onGanar(10);
+          setTimeout(() => setNivel(n => n + 1), 2000);
+        }
+      } else {
+        // Se equivocó
+        SoundFX.error();
+        setTimeout(() => {
+          nuevasCartas[idx1].volteada = false;
+          nuevasCartas[idx2].volteada = false;
+          setCartas(nuevasCartas);
+          setSeleccionadas([]);
+          setBloqueado(false);
+        }, 1000);
+      }
+    }
+  };
+
+  const columnas = cartas.length > 12 ? 4 : cartas.length > 8 ? 4 : 3;
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', color: '#f472b6' }}>Nivel {nivel}</h2>
+        <span style={{ color: '#facc15', fontWeight: 'bold' }}>Pares: {paresEncontrados} / {cartas.length / 2}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columnas}, 1fr)`, gap: '12px', backgroundColor: '#831843', padding: '16px', borderRadius: '20px', border: '4px solid #be185d' }}>
+        {cartas.map((carta, index) => (
+          <button 
+            key={carta.id} 
+            onClick={() => tocarCarta(index)} 
+            style={{ 
+              aspectRatio: '1/1', 
+              backgroundColor: carta.volteada || carta.emparejada ? '#fbcfe8' : '#ec4899', 
+              border: `4px solid ${carta.volteada || carta.emparejada ? '#f472b6' : '#be185d'}`, 
+              borderRadius: '16px', 
+              fontSize: '40px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: carta.volteada || carta.emparejada ? 'default' : 'pointer',
+              transform: carta.volteada || carta.emparejada ? 'rotateY(0deg)' : 'rotateY(0deg)',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+              opacity: carta.emparejada ? 0.6 : 1
+            }}
+          >
+            {carta.volteada || carta.emparejada ? carta.emoji : '🚪'}
+          </button>
+        ))}
       </div>
     </div>
   );
