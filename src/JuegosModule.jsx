@@ -105,6 +105,7 @@ export default function JuegosModule({ currentUser, db }) {
       {juegoActivo === 'LEER' && <JuegoAprenderLeer onGanar={ganarEstrellas} />}
       {juegoActivo === 'LABERINTO' && <JuegoLaberinto onGanar={ganarEstrellas} />}
       {juegoActivo === 'MEMORIA' && <JuegoMemoriaArca onGanar={ganarEstrellas} />}
+      {juegoActivo === 'REBANO' && <JuegoRebano onGanar={ganarEstrellas} />}
     </div>
   );
 }
@@ -151,6 +152,10 @@ function MenuJuegos({ onSeleccionar, estrellas }) {
         <button onClick={() => onSeleccionar('MEMORIA')} style={{ backgroundColor: '#ec4899', border: '4px solid #f472b6', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #be185d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐾 Parejas del Arca</span><span style={{ fontSize: '12px', color: '#fbcfe8', fontWeight: 'normal' }}>Memotest infinito de animales</span></div>
           <span style={{ fontSize: '36px' }}>🦓</span>
+        </button>
+        <button onClick={() => onSeleccionar('REBANO')} style={{ backgroundColor: '#f97316', border: '4px solid #fdba74', borderRadius: '20px', padding: '20px', color: 'white', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 6px 0 #c2410c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ textAlign: 'left' }}><span style={{ display: 'block' }}>🐑 Rebaño Seguro</span><span style={{ fontSize: '12px', color: '#ffedd5', fontWeight: 'normal' }}>Tocá rápido a las ovejas</span></div>
+          <span style={{ fontSize: '36px' }}>🐺</span>
         </button>
       </div>
     </div>
@@ -663,7 +668,6 @@ function JuegoMemoriaArca({ onGanar }) {
   const [paresEncontrados, setParesEncontrados] = useState(0);
 
   const iniciarNivel = (nivelActual) => {
-    // Escala la dificultad: Nivel 1 = 3 pares, Nivel 2 = 4 pares, etc. Máximo 10 pares.
     const cantidadPares = Math.min(2 + nivelActual, 10);
     const animalesElegidos = [...ANIMALES_DISPONIBLES].sort(() => Math.random() - 0.5).slice(0, cantidadPares);
     
@@ -695,7 +699,6 @@ function JuegoMemoriaArca({ onGanar }) {
       const [idx1, idx2] = nuevasSeleccionadas;
 
       if (nuevasCartas[idx1].emoji === nuevasCartas[idx2].emoji) {
-        // Encontró el par correcto
         SoundFX.exito();
         nuevasCartas[idx1].emparejada = true;
         nuevasCartas[idx2].emparejada = true;
@@ -712,7 +715,6 @@ function JuegoMemoriaArca({ onGanar }) {
           setTimeout(() => setNivel(n => n + 1), 2000);
         }
       } else {
-        // Se equivocó
         SoundFX.error();
         setTimeout(() => {
           nuevasCartas[idx1].volteada = false;
@@ -749,7 +751,6 @@ function JuegoMemoriaArca({ onGanar }) {
               alignItems: 'center', 
               justifyContent: 'center', 
               cursor: carta.volteada || carta.emparejada ? 'default' : 'pointer',
-              transform: carta.volteada || carta.emparejada ? 'rotateY(0deg)' : 'rotateY(0deg)',
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
               opacity: carta.emparejada ? 0.6 : 1
@@ -758,6 +759,130 @@ function JuegoMemoriaArca({ onGanar }) {
             {carta.volteada || carta.emparejada ? carta.emoji : '🚪'}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// JUEGO 7: REBAÑO SEGURO (Whack-a-Mole)
+// ==========================================
+function JuegoRebano({ onGanar }) {
+  const [puntaje, setPuntaje] = useState(0);
+  const [nivel, setNivel] = useState(1);
+  const [vidas, setVidas] = useState(3);
+  const [agujeros, setAgujeros] = useState(Array(9).fill(null));
+  const [gameOver, setGameOver] = useState(false);
+
+  const meta = nivel * 10;
+  const velocidadVisible = Math.max(1200 - (nivel * 150), 500);
+
+  useEffect(() => {
+    if (gameOver) return;
+    
+    let timeoutVisible;
+    let timeoutOculto;
+
+    const cicloJuego = () => {
+      const nuevosAgujeros = Array(9).fill(null);
+      const randomIndex = Math.floor(Math.random() * 9);
+      const esLobo = Math.random() > 0.75; 
+      nuevosAgujeros[randomIndex] = esLobo ? '🐺' : '🐑';
+      setAgujeros(nuevosAgujeros);
+
+      timeoutVisible = setTimeout(() => {
+        setAgujeros(Array(9).fill(null));
+        timeoutOculto = setTimeout(() => {
+          cicloJuego();
+        }, Math.random() * 400 + 300);
+      }, velocidadVisible);
+    };
+
+    timeoutOculto = setTimeout(cicloJuego, 1000);
+
+    return () => {
+      clearTimeout(timeoutVisible);
+      clearTimeout(timeoutOculto);
+    };
+  }, [velocidadVisible, gameOver]);
+
+  const tocarAgujero = (index) => {
+    if (gameOver || agujeros[index] === null || agujeros[index] === '💨') return;
+    
+    const animal = agujeros[index];
+    const nuevosAgujeros = [...agujeros];
+    nuevosAgujeros[index] = '💨'; 
+    setAgujeros(nuevosAgujeros);
+
+    if (animal === '🐑') {
+      SoundFX.pop();
+      const nuevoPuntaje = puntaje + 1;
+      setPuntaje(nuevoPuntaje);
+      if (nuevoPuntaje >= meta) {
+        SoundFX.levelUp();
+        setNivel(n => n + 1);
+        onGanar(5);
+      }
+    } else if (animal === '🐺') {
+      SoundFX.choque();
+      setVidas(v => {
+        if (v - 1 <= 0) setGameOver(true);
+        return v - 1;
+      });
+    }
+  };
+
+  const reiniciar = () => {
+    setVidas(3);
+    setNivel(1);
+    setPuntaje(0);
+    setAgujeros(Array(9).fill(null));
+    setGameOver(false);
+  };
+
+  return (
+    <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', padding: '0 16px' }}>
+        <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '20px' }}>
+          {Array.from({ length: 3 }).map((_, i) => <span key={i} style={{ opacity: i < vidas ? 1 : 0.3 }}>❤️</span>)}
+        </div>
+        <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '18px' }}>
+          Nivel {nivel} | Faltan {meta - puntaje} 🐑
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: '#14532d', padding: '20px', borderRadius: '24px', border: '6px solid #22c55e', position: 'relative' }}>
+        {gameOver ? (
+          <div style={{ padding: '60px 0' }}>
+            <h2 style={{ color: '#ef4444', fontSize: '36px', margin: '0 0 16px 0' }}>¡El lobo atacó! 🐺</h2>
+            <button onClick={reiniciar} style={{ padding: '16px 32px', backgroundColor: '#22c55e', color: 'white', fontWeight: 'bold', border: 'none', borderRadius: '16px', fontSize: '20px', cursor: 'pointer', boxShadow: '0 6px 0 #166534' }}>🔄 Jugar de Nuevo</button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            {agujeros.map((animal, i) => (
+              <button 
+                key={i} 
+                onClick={() => tocarAgujero(i)}
+                style={{ 
+                  aspectRatio: '1/1', 
+                  backgroundColor: '#166534', 
+                  border: 'none', 
+                  borderRadius: '50%', 
+                  boxShadow: 'inset 0 10px 20px rgba(0,0,0,0.5)',
+                  fontSize: '60px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: animal ? 'pointer' : 'default',
+                  transform: animal && animal !== '💨' ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}
+              >
+                {animal}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
