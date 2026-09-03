@@ -28,7 +28,7 @@ import ModuloClub from './ModuloClub';
 import ModuloDuelo from './ModuloDuelo';
 import ModuloClanes from './ModuloClanes';
 import ModuloTienda from './ModuloTienda';
-import  JuegosModule  from './JuegosModule';
+import JuegosModule from './JuegosModule';
 
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
@@ -169,10 +169,24 @@ function ModuloAdmin() {
     }
   };
 
-  const usuariosFiltrados = listaUsuarios.filter(u => 
-    (u.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const usuariosFiltrados = listaUsuarios
+    .filter(u => 
+      (u.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aOnline = esOnline(a.ultimaConexion);
+      const bOnline = esOnline(b.ultimaConexion);
+      
+      // Los online van arriba
+      if (aOnline && !bOnline) return -1;
+      if (!aOnline && bOnline) return 1;
+      
+      // Si ambos están igual (los dos online o los dos offline), ordena por el más reciente
+      const fechaA = a.ultimaConexion ? new Date(a.ultimaConexion).getTime() : 0;
+      const fechaB = b.ultimaConexion ? new Date(b.ultimaConexion).getTime() : 0;
+      return fechaB - fechaA;
+    });
 
   return (
     <div className="space-y-6">
@@ -248,9 +262,16 @@ function ModuloAdmin() {
                   <tr key={u.id} className="hover:bg-white/5">
                     <td className="p-3 font-bold">
                       {online ? <span className="text-emerald-400 font-black">🟢 Online</span> : <span className="text-slate-500">🔴 Off</span>}
-                      <span className="block text-[10px] font-normal text-amber-400 uppercase mt-0.5">
+                      <span className="block text-[10px] font-normal text-amber-400 uppercase mt-1 mb-1">
                         📍 {u.ubicacionActual || 'Home'}
                       </span>
+                      {u.ultimaConexion ? (
+                        <span className="block text-[10px] font-normal text-slate-400" style={{ textTransform: 'none' }}>
+                          ⏱️ {new Date(u.ultimaConexion).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} hs
+                        </span>
+                      ) : (
+                        <span className="block text-[10px] font-normal text-slate-500">Sin registro</span>
+                      )}
                     </td>
                     <td className="p-3 font-bold text-white">
                       {u.nombre || u.email} 
