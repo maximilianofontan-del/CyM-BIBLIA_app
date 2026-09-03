@@ -1733,7 +1733,7 @@ function AppMain() {
 
         {/* TRIVIA Y CLUB Y JUEGOS KIDS */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
-        {vistaActual === 'juegos' && <JuegosModule />}
+        {vistaActual === 'juegos' && <JuegosModule currentUser={currentUser} db={db} />}
         
         {vistaActual === 'club' && (
           <ModuloClub 
