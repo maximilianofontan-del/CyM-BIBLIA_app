@@ -7,7 +7,7 @@ import {
   Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check,
   Swords, ShoppingCart, Trophy, Globe
 } from 'lucide-react';
-
+import ModuloAdolescentes from './ModuloAdolescentes';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
