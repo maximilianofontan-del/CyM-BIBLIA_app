@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // ==========================================
-// MOTOR DE AUDIO (Estilo Arcade/Gamer)
+// MOTOR DE AUDIO (Estilo Arcade/Hardcore)
 // ==========================================
 class AudioEngine {
   static ctx = null;
@@ -25,14 +25,15 @@ class AudioEngine {
       osc.stop(ctx.currentTime + duration);
     } catch (e) {}
   }
-  static click() { this.play(300, 'square', 0.05, 0.05); }
-  static hit() { this.play(150, 'sawtooth', 0.2, 0.1); }
-  static win() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => this.play(f, 'square', 0.1, 0.1), i * 100)); }
-  static lose() { this.play(100, 'sawtooth', 0.5, 0.2); }
+  static click() { this.play(800, 'square', 0.05, 0.05); }
+  static hit() { this.play(100, 'sawtooth', 0.3, 0.2); } // Golpe/Daño grave
+  static laser() { this.play(1200, 'sine', 0.1, 0.05); setTimeout(() => this.play(800, 'sine', 0.1, 0.05), 50); }
+  static win() { [880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => this.play(f, 'square', 0.1, 0.1), i * 80)); }
+  static lose() { this.play(50, 'sawtooth', 0.8, 0.3); } // Game Over brutal
 }
 
 // ==========================================
-// CONTENEDOR PRINCIPAL
+// CONTENEDOR PRINCIPAL - ESTÉTICA CYBERPUNK
 // ==========================================
 export default function ModuloAdolescentes({ currentUser, onVolver }) {
   const [juegoActivo, setJuegoActivo] = useState('MENU');
@@ -42,454 +43,532 @@ export default function ModuloAdolescentes({ currentUser, onVolver }) {
   const cambiarJuego = (juego) => { AudioEngine.click(); setJuegoActivo(juego); };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#09090b', color: '#e4e4e7', padding: '20px', fontFamily: '"Courier New", Courier, monospace', userSelect: 'none' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '16px', marginBottom: '24px' }}>
-        <button onClick={juegoActivo === 'MENU' ? onVolver : () => cambiarJuego('MENU')} style={{ backgroundColor: '#18181b', color: '#a1a1aa', border: '1px solid #3f3f46', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-          {juegoActivo === 'MENU' ? '⬅ Volver a ASAPH' : '⬅ Menú Principal'}
+    <div style={{ minHeight: '100vh', backgroundColor: '#000000', color: '#e4e4e7', padding: '20px', fontFamily: '"Courier New", Courier, monospace', userSelect: 'none', backgroundImage: 'radial-gradient(circle at center, #111 0%, #000 100%)' }}>
+      
+      {/* HEADER TÁCTICO */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #3f3f46', paddingBottom: '16px', marginBottom: '24px' }}>
+        <button onClick={juegoActivo === 'MENU' ? onVolver : () => cambiarJuego('MENU')} style={{ backgroundColor: '#18181b', color: '#f4f4f5', border: '1px solid #52525b', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: '900', textTransform: 'uppercase', boxShadow: '0 0 10px rgba(255,255,255,0.1)' }}>
+          {juegoActivo === 'MENU' ? '<< SALIR' : '<< ABORTAR MISIÓN'}
         </button>
-        <div style={{ backgroundColor: '#18181b', padding: '8px 16px', borderRadius: '8px', border: '1px solid #3f3f46', color: '#10b981', fontWeight: 'bold', letterSpacing: '2px' }}>
-          XP: {xp}
+        <div style={{ backgroundColor: '#052e16', padding: '10px 20px', borderRadius: '4px', border: '1px solid #10b981', color: '#34d399', fontWeight: '900', letterSpacing: '3px', boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)' }}>
+          RANGO: {xp} XP
         </div>
       </div>
 
-      {juegoActivo === 'MENU' && <MenuTeens onSeleccionar={cambiarJuego} xp={xp} />}
-      {juegoActivo === 'BABILONIA' && <EscapeBabilonia onGanar={ganarXP} />}
-      {juegoActivo === 'NEHEMIAS' && <MuroNehemias onGanar={ganarXP} />}
-      {juegoActivo === 'REY' && <DecisionesRey onGanar={ganarXP} />}
-      {juegoActivo === 'CODICE' && <CodiceSagrado onGanar={ganarXP} />}
-      {juegoActivo === 'HONDA' && <HondaDavid onGanar={ganarXP} />}
+      {juegoActivo === 'MENU' && <MenuTeens onSeleccionar={cambiarJuego} />}
+      {juegoActivo === 'FUEGO' && <SalmosDeFuego onGanar={ganarXP} />}
+      {juegoActivo === 'DEFENSA' && <DefensaTemplo onGanar={ganarXP} />}
+      {juegoActivo === 'EXODO' && <ExodoHardcore onGanar={ganarXP} />}
+      {juegoActivo === 'ARENA' && <ArenaCyM onGanar={ganarXP} />}
     </div>
   );
 }
 
 // ==========================================
-// MENÚ ADOLESCENTES
+// MENÚ PRINCIPAL NEÓN
 // ==========================================
-function MenuTeens({ onSeleccionar, xp }) {
+function MenuTeens({ onSeleccionar }) {
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-      <h1 style={{ fontSize: '32px', color: '#f4f4f5', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px' }}>Desafíos CyM</h1>
-      <p style={{ color: '#71717a', marginBottom: '40px' }}>Estrategia, lógica y misterio.</p>
+    <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+      <h1 style={{ fontSize: '48px', color: '#fff', letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '8px', textShadow: '0 0 20px #ef4444' }}>ZONA DE ALTO RIESGO</h1>
+      <p style={{ color: '#a1a1aa', marginBottom: '50px', letterSpacing: '2px' }}>PREPARATE PARA TRANSPIRAR.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-        <GameCard id="BABILONIA" title="Escape de Babilonia" desc="Resolvé acertijos lógicos para escapar." icon="🗝️" color="#8b5cf6" onClick={() => onSeleccionar('BABILONIA')} />
-        <GameCard id="NEHEMIAS" title="El Muro de Nehemías" desc="Gestión de recursos en tiempo real." icon="🧱" color="#f59e0b" onClick={() => onSeleccionar('NEHEMIAS')} />
-        <GameCard id="REY" title="Decisiones del Rey" desc="Mantené el equilibrio de tu reino." icon="⚖️" color="#ef4444" onClick={() => onSeleccionar('REY')} />
-        <GameCard id="CODICE" title="Códice Sagrado" desc="Descifrá la palabra oculta en 6 intentos." icon="📜" color="#10b981" onClick={() => onSeleccionar('CODICE')} />
-        <GameCard id="HONDA" title="La Honda de David" desc="Cálculo y precisión contra gigantes." icon="🎯" color="#3b82f6" onClick={() => onSeleccionar('HONDA')} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+        <GameCard id="FUEGO" title="Salmos de Fuego" desc="Reflejos extremos al ritmo de la música." color="#f97316" onClick={() => onSeleccionar('FUEGO')} />
+        <GameCard id="DEFENSA" title="Defensa del Templo" desc="Tipeo hiper-veloz para frenar hordas." color="#3b82f6" onClick={() => onSeleccionar('DEFENSA')} />
+        <GameCard id="EXODO" title="Éxodo: Modo Hardcore" desc="Sobreviví 40 días en el desierto. Permadeath." color="#ef4444" onClick={() => onSeleccionar('EXODO')} />
+        <GameCard id="ARENA" title="Arena CyM (1v1)" desc="Trivia a muerte. 5 segundos por respuesta." color="#a855f7" onClick={() => onSeleccionar('ARENA')} />
       </div>
     </div>
   );
 }
 
-function GameCard({ title, desc, icon, color, onClick }) {
+function GameCard({ title, desc, color, onClick }) {
   return (
-    <button onClick={onClick} style={{ backgroundColor: '#18181b', border: `2px solid #27272a`, borderRadius: '16px', padding: '24px', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '12px' }}
-      onMouseOver={(e) => { e.currentTarget.style.borderColor = color; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-      onMouseOut={(e) => { e.currentTarget.style.borderColor = '#27272a'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-      <div style={{ fontSize: '32px' }}>{icon}</div>
-      <h3 style={{ color: color, margin: 0, fontSize: '18px', textTransform: 'uppercase' }}>{title}</h3>
-      <p style={{ color: '#a1a1aa', margin: 0, fontSize: '12px' }}>{desc}</p>
+    <button onClick={onClick} style={{ backgroundColor: '#09090b', border: `2px solid #27272a`, borderRadius: '8px', padding: '30px', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative', overflow: 'hidden' }}
+      onMouseOver={(e) => { e.currentTarget.style.borderColor = color; e.currentTarget.style.boxShadow = `0 0 20px ${color}40`; e.currentTarget.style.transform = 'scale(1.02)'; }}
+      onMouseOut={(e) => { e.currentTarget.style.borderColor = '#27272a'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'scale(1)'; }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '4px', height: '100%', backgroundColor: color }} />
+      <h3 style={{ color: '#fff', margin: 0, fontSize: '24px', textTransform: 'uppercase', letterSpacing: '2px' }}>{title}</h3>
+      <p style={{ color: color, margin: 0, fontSize: '14px', fontWeight: 'bold' }}>{desc}</p>
     </button>
   );
 }
 
 // ==========================================
-// 1. ESCAPE DE BABILONIA (Escape Room Lógico)
+// 1. SALMOS DE FUEGO (Guitar Hero / Piano Tiles)
 // ==========================================
-function EscapeBabilonia({ onGanar }) {
-  const NIVELES = [
-    { pista: "Acertijo: Multiplicá el número de plagas de Egipto por los días que Jonás estuvo en el pez.", respuesta: "30" },
-    { pista: "Código: El número de tribus de Israel unido al número de apóstoles originales.", respuesta: "1212" },
-    { pista: "Palabra: Soy un gigante filisteo, pero una simple piedra me derribó. ¿Quién soy?", respuesta: "GOLIAT" },
-    { pista: "Acertijo: ¿Cuántos libros tiene el Nuevo Testamento? (Ingresá el número)", respuesta: "27" },
-    { pista: "Palabra: Fui vendido por mis hermanos, pero terminé gobernando Egipto.", respuesta: "JOSE" }
-  ];
+function SalmosDeFuego({ onGanar }) {
+  const [notas, setNotas] = useState([]);
+  const [score, setScore] = useState(0);
+  const [vidas, setVidas] = useState(3);
+  const [estado, setEstado] = useState('jugando'); // jugando, gameover
+  
+  // Velocidad de caída inicial
+  const velocidadBase = 5; 
+  const currentSpeed = useRef(velocidadBase);
 
-  const [nivel, setNivel] = useState(0);
-  const [input, setInput] = useState('');
-  const [error, setError] = useState(false);
-  const [terminado, setTerminado] = useState(false);
+  // Referencias para el loop rápido
+  const notasRef = useRef(notas);
+  const estadoRef = useRef(estado);
 
-  const verificar = (e) => {
-    e.preventDefault();
-    if (input.trim().toUpperCase() === NIVELES[nivel].respuesta) {
-      AudioEngine.win();
-      onGanar(50);
-      if (nivel + 1 < NIVELES.length) {
-        setNivel(nivel + 1);
-        setInput('');
-        setError(false);
-      } else {
-        setTerminado(true);
-      }
-    } else {
-      AudioEngine.lose();
-      setError(true);
-      setTimeout(() => setError(false), 1000);
-    }
-  };
+  useEffect(() => { notasRef.current = notas; }, [notas]);
+  useEffect(() => { estadoRef.current = estado; }, [estado]);
 
-  if (terminado) return <div style={{textAlign: 'center', padding: '50px', color: '#a855f7'}}><h2>¡Escapaste de Babilonia!</h2></div>;
-
-  return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
-      <h2 style={{ color: '#8b5cf6', letterSpacing: '2px' }}>PUERTA {nivel + 1}</h2>
-      <div style={{ backgroundColor: '#18181b', padding: '30px', borderRadius: '16px', border: '1px solid #3f3f46', marginTop: '20px' }}>
-        <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '30px', color: '#d4d4d8' }}>"{NIVELES[nivel].pista}"</p>
-        <form onSubmit={verificar}>
-          <input 
-            type="text" 
-            value={input} 
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribí tu respuesta..."
-            style={{ width: '100%', padding: '16px', backgroundColor: '#09090b', border: `2px solid ${error ? '#ef4444' : '#8b5cf6'}`, borderRadius: '8px', color: 'white', fontSize: '16px', textAlign: 'center', marginBottom: '20px', outline: 'none' }}
-          />
-          <button type="submit" style={{ width: '100%', padding: '16px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '2px' }}>
-            Intentar Abrir Candado
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// 2. EL MURO DE NEHEMÍAS (Gestión Estratégica)
-// ==========================================
-function MuroNehemias({ onGanar }) {
-  const TOTAL_TRABAJADORES = 15;
-  const [muro, setMuro] = useState(0); // 0 a 100%
-  const [piedra, setPiedra] = useState(0);
-  const [amenaza, setAmenaza] = useState(0);
-  const [asignacion, setAsignacion] = useState({ mineros: 5, constructores: 5, guardias: 5 });
-  const [estado, setEstado] = useState('jugando'); // jugando, ganado, perdido
-
+  // Generador de notas (aumenta la frecuencia con el score)
   useEffect(() => {
     if (estado !== 'jugando') return;
-    const interval = setInterval(() => {
-      // 1. Recolectar
-      setPiedra(p => p + (asignacion.mineros * 2));
-      
-      // 2. Construir (si hay piedra)
-      setPiedra(p => {
-        if (p >= asignacion.constructores) {
-          setMuro(m => {
-            const nuevo = m + (asignacion.constructores * 0.5);
-            if (nuevo >= 100) { setEstado('ganado'); onGanar(100); AudioEngine.win(); return 100; }
-            return nuevo;
-          });
-          return p - asignacion.constructores;
-        }
-        return p;
-      });
+    const intervalGen = setInterval(() => {
+      if (estadoRef.current !== 'jugando') return;
+      const carril = Math.floor(Math.random() * 4);
+      setNotas(prev => [...prev, { id: Date.now(), carril, y: 0 }]);
+    }, Math.max(800 - (score * 10), 300)); // Cada vez aparecen más rápido
 
-      // 3. Amenaza enemiga
-      setAmenaza(a => {
-        const nuevaAmenaza = a + Math.floor(Math.random() * 5);
-        // Combate
-        if (nuevaAmenaza > asignacion.guardias * 5) {
-          // Daño al muro
+    return () => clearInterval(intervalGen);
+  }, [estado, score]);
+
+  // Motor de caída a 60fps
+  useEffect(() => {
+    if (estado !== 'jugando') return;
+    const intervalMove = setInterval(() => {
+      setNotas(prev => {
+        let nuevas = [];
+        let fallo = false;
+
+        // Aumentar velocidad global según el score
+        currentSpeed.current = velocidadBase + (score * 0.1);
+
+        for (let n of prev) {
+          const newY = n.y + currentSpeed.current;
+          if (newY > 100) {
+            // Nota perdida = Daño
+            fallo = true;
+          } else {
+            nuevas.push({ ...n, y: newY });
+          }
+        }
+
+        if (fallo) {
           AudioEngine.hit();
-          setMuro(m => {
-            const dañado = m - 5;
-            if (dañado <= -20) { setEstado('perdido'); AudioEngine.lose(); }
-            return dañado;
+          setVidas(v => {
+            const nuevasVidas = v - 1;
+            if (nuevasVidas <= 0) { setEstado('gameover'); AudioEngine.lose(); }
+            return nuevasVidas;
           });
-          return 0; // Se resetea la amenaza tras el ataque
         }
-        return nuevaAmenaza;
-      });
-
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [asignacion, estado, onGanar]);
-
-  const asignar = (rol, cantidad) => {
-    const libres = TOTAL_TRABAJADORES - (asignacion.mineros + asignacion.constructores + asignacion.guardias);
-    if (cantidad > 0 && libres === 0) return;
-    if (asignacion[rol] + cantidad < 0) return;
-    AudioEngine.click();
-    setAsignacion(prev => ({ ...prev, [rol]: prev[rol] + cantidad }));
-  };
-
-  const libres = TOTAL_TRABAJADORES - (asignacion.mineros + asignacion.constructores + asignacion.guardias);
-
-  if (estado === 'ganado') return <div style={{textAlign: 'center', padding: '50px', color: '#10b981'}}><h2>¡Muro reconstruido con éxito!</h2></div>;
-  if (estado === 'perdido') return <div style={{textAlign: 'center', padding: '50px', color: '#ef4444'}}><h2>Los enemigos destruyeron la obra.</h2><button onClick={()=>window.location.reload()}>Reintentar</button></div>;
-
-  return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <span style={{ color: '#f59e0b' }}>Piedra: {piedra}</span>
-        <span style={{ color: '#ef4444' }}>Amenaza Enemiga: {amenaza}%</span>
-      </div>
-
-      <div style={{ backgroundColor: '#27272a', height: '30px', borderRadius: '15px', overflow: 'hidden', marginBottom: '30px', border: '2px solid #3f3f46' }}>
-        <div style={{ width: `${Math.max(0, muro)}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.5s' }} />
-      </div>
-      <p style={{ textAlign: 'center', marginTop: '-20px', marginBottom: '30px' }}>Progreso del Muro: {Math.floor(muro)}%</p>
-
-      <div style={{ textAlign: 'center', marginBottom: '20px', color: '#a1a1aa' }}>Trabajadores Libres: <strong style={{color: 'white'}}>{libres}</strong> / {TOTAL_TRABAJADORES}</div>
-
-      <div style={{ display: 'grid', gap: '16px' }}>
-        <Asignador titulo="⛏️ Mineros (Dan Piedra)" cantidad={asignacion.mineros} onCambiar={(n) => asignar('mineros', n)} color="#3b82f6" />
-        <Asignador titulo="🧱 Constructores (Suben Muro)" cantidad={asignacion.constructores} onCambiar={(n) => asignar('constructores', n)} color="#f59e0b" />
-        <Asignador titulo="⚔️ Guardias (Frenan Amenaza)" cantidad={asignacion.guardias} onCambiar={(n) => asignar('guardias', n)} color="#ef4444" />
-      </div>
-    </div>
-  );
-}
-
-function Asignador({ titulo, cantidad, onCambiar, color }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#18181b', padding: '16px', borderRadius: '12px', borderLeft: `4px solid ${color}` }}>
-      <span style={{ fontWeight: 'bold' }}>{titulo}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <button onClick={() => onCambiar(-1)} style={{ width: '40px', height: '40px', backgroundColor: '#27272a', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '20px' }}>-</button>
-        <span style={{ fontSize: '20px', width: '30px', textAlign: 'center' }}>{cantidad}</span>
-        <button onClick={() => onCambiar(1)} style={{ width: '40px', height: '40px', backgroundColor: '#27272a', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '20px' }}>+</button>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// 3. DECISIONES DEL REY (Cartas Dilema)
-// ==========================================
-function DecisionesRey({ onGanar }) {
-  const [stats, setStats] = useState({ fe: 50, sabiduria: 50, pueblo: 50 });
-  const [turnos, setTurnos] = useState(0);
-  const [estado, setEstado] = useState('jugando');
-
-  const CARTAS = [
-    { txt: "Un rey vecino te ofrece oro a cambio de poner ídolos en tu templo.", 
-      izq: { txt: "Aceptar Oro", ef: {fe:-20, sab:-10, pueblo:+10} }, 
-      der: { txt: "Rechazar Ídolos", ef: {fe:+20, sab:+10, pueblo:-10} } },
-    { txt: "Hay una sequía. El pueblo pide que bajes los impuestos.", 
-      izq: { txt: "Mantenerlos", ef: {fe:0, sab:-10, pueblo:-20} }, 
-      der: { txt: "Bajarlos", ef: {fe:+10, sab:+10, pueblo:+20} } },
-    { txt: "Tus consejeros sugieren atacar una aldea pacífica para robar su trigo.", 
-      izq: { txt: "Atacar", ef: {fe:-30, sab:-20, pueblo:+10} }, 
-      der: { txt: "Buscar Paz", ef: {fe:+10, sab:+20, pueblo:-10} } },
-    { txt: "Encontraron un viejo pergamino de la Ley olvidado en el templo.", 
-      izq: { txt: "Leerlo al pueblo", ef: {fe:+30, sab:+10, pueblo:-10} }, 
-      der: { txt: "Ignorarlo", ef: {fe:-30, sab:-20, pueblo:0} } },
-  ];
-
-  const [cartaActual, setCartaActual] = useState(CARTAS[0]);
-
-  const elegir = (opcion) => {
-    AudioEngine.click();
-    const nuevosStats = {
-      fe: stats.fe + opcion.ef.fe,
-      sabiduria: stats.sabiduria + opcion.ef.sab,
-      pueblo: stats.pueblo + opcion.ef.pueblo
-    };
-
-    if (nuevosStats.fe <= 0 || nuevosStats.sabiduria <= 0 || nuevosStats.pueblo <= 0) {
-      setEstado('perdido');
-      AudioEngine.lose();
-      return;
-    }
-
-    setStats(nuevosStats);
-    setTurnos(t => t + 1);
-    onGanar(5);
-    setCartaActual(CARTAS[Math.floor(Math.random() * CARTAS.length)]);
-  };
-
-  if (estado === 'perdido') return <div style={{textAlign: 'center', color: '#ef4444', padding: '50px'}}><h2>Perdiste el trono tras {turnos} decisiones.</h2><button onClick={()=>{setStats({fe:50, sabiduria:50, pueblo:50}); setTurnos(0); setEstado('jugando');}}>Reintentar</button></div>;
-
-  return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '30px' }}>
-        <StatBar icon="🙏" valor={stats.fe} color="#8b5cf6" label="Fe" />
-        <StatBar icon="🦉" valor={stats.sabiduria} color="#3b82f6" label="Sabiduría" />
-        <StatBar icon="🧑‍🤝‍🧑" valor={stats.pueblo} color="#f59e0b" label="Pueblo" />
-      </div>
-
-      <div style={{ backgroundColor: '#18181b', padding: '40px 20px', borderRadius: '24px', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ef4444', marginBottom: '30px' }}>
-        <h3 style={{ fontSize: '20px', lineHeight: '1.5' }}>{cartaActual.txt}</h3>
-      </div>
-
-      <div style={{ display: 'flex', gap: '16px' }}>
-        <button onClick={() => elegir(cartaActual.izq)} style={{ flex: 1, padding: '20px', backgroundColor: '#27272a', color: 'white', border: 'none', borderRadius: '16px', cursor: 'pointer' }}>{cartaActual.izq.txt}</button>
-        <button onClick={() => elegir(cartaActual.der)} style={{ flex: 1, padding: '20px', backgroundColor: '#27272a', color: 'white', border: 'none', borderRadius: '16px', cursor: 'pointer' }}>{cartaActual.der.txt}</button>
-      </div>
-    </div>
-  );
-}
-
-function StatBar({ icon, valor, color, label }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '30%' }}>
-      <span>{icon} {label}</span>
-      <div style={{ width: '100%', height: '10px', backgroundColor: '#27272a', borderRadius: '5px', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, valor))}%`, backgroundColor: color, transition: 'width 0.3s' }} />
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// 4. CÓDICE SAGRADO (Wordle Clone 5 letras)
-// ==========================================
-function CodiceSagrado({ onGanar }) {
-  const PALABRAS = ["DAVID", "PEDRO", "JESUS", "SALMO", "TRIGO", "CIELO", "ALTAR", "CRUZ", "PABLO", "NUBES"];
-  const [objetivo, setObjetivo] = useState("");
-  const [intentos, setIntentos] = useState([]);
-  const [intentoActual, setIntentoActual] = useState("");
-  const [estado, setEstado] = useState('jugando'); // jugando, ganado, perdido
-
-  useEffect(() => {
-    setObjetivo(PALABRAS[Math.floor(Math.random() * PALABRAS.length)]);
-  }, []);
-
-  const adivinar = (e) => {
-    e.preventDefault();
-    if (intentoActual.length !== 5 || estado !== 'jugando') return;
-    
-    const nuevoIntento = intentoActual.toUpperCase();
-    const nuevosIntentos = [...intentos, nuevoIntento];
-    setIntentos(nuevosIntentos);
-    setIntentoActual("");
-
-    if (nuevoIntento === objetivo) {
-      AudioEngine.win();
-      setEstado('ganado');
-      onGanar(50);
-    } else if (nuevosIntentos.length >= 6) {
-      AudioEngine.lose();
-      setEstado('perdido');
-    } else {
-      AudioEngine.click();
-    }
-  };
-
-  const getColor = (letra, index, intentoStr) => {
-    if (objetivo[index] === letra) return '#10b981'; // Correcto
-    if (objetivo.includes(letra)) return '#f59e0b'; // Casi
-    return '#3f3f46'; // Incorrecto
-  };
-
-  return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
-      <h2 style={{ color: '#10b981', letterSpacing: '2px', marginBottom: '20px' }}>DESCIFRÁ EL CÓDICE (5 Letras)</h2>
-      
-      <div style={{ display: 'grid', gridTemplateRows: 'repeat(6, 1fr)', gap: '10px', marginBottom: '30px' }}>
-        {Array.from({ length: 6 }).map((_, filaIdx) => {
-          const intentoStr = intentos[filaIdx] || (filaIdx === intentos.length ? intentoActual : "");
-          return (
-            <div key={filaIdx} style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-              {Array.from({ length: 5 }).map((_, colIdx) => {
-                const letra = intentoStr[colIdx] || "";
-                const isPasado = filaIdx < intentos.length;
-                const colorBg = isPasado ? getColor(letra, colIdx, intentoStr) : '#18181b';
-                return (
-                  <div key={colIdx} style={{ height: '60px', backgroundColor: colorBg, border: isPasado ? 'none' : '2px solid #3f3f46', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-                    {letra}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-
-      {estado === 'jugando' ? (
-        <form onSubmit={adivinar}>
-          <input type="text" maxLength={5} value={intentoActual} onChange={(e)=>setIntentoActual(e.target.value.toUpperCase())} placeholder="Escribí 5 letras..." style={{ padding: '16px', width: 'calc(100% - 100px)', backgroundColor: '#18181b', color: 'white', border: '2px solid #10b981', borderRadius: '8px', textTransform: 'uppercase', textAlign: 'center', outline: 'none' }} />
-          <button type="submit" style={{ padding: '16px 20px', marginLeft: '10px', backgroundColor: '#10b981', color: '#09090b', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>OK</button>
-        </form>
-      ) : (
-        <div>
-          <h3 style={{ color: estado === 'ganado' ? '#10b981' : '#ef4444' }}>{estado === 'ganado' ? '¡Descifrado!' : `La palabra era ${objetivo}`}</h3>
-          <button onClick={()=>{setIntentos([]); setEstado('jugando'); setObjetivo(PALABRAS[Math.floor(Math.random() * PALABRAS.length)]);}} style={{ padding: '10px 20px', marginTop: '10px' }}>Jugar de nuevo</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ==========================================
-// 5. LA HONDA DE DAVID (Física/Precisión)
-// ==========================================
-function HondaDavid({ onGanar }) {
-  const [punteria, setPunteria] = useState(0); // 0 a 100 oscilando
-  const [direccion, setDireccion] = useState(1); // 1 = sube, -1 = baja
-  const [gigante, setGigante] = useState(Math.floor(Math.random() * 60) + 20); // Posición estática aleatoria
-  const [estado, setEstado] = useState('apuntando'); // apuntando, disparo, resultado
-  const [resultado, setResultado] = useState(null);
-
-  useEffect(() => {
-    if (estado !== 'apuntando') return;
-    const interval = setInterval(() => {
-      setPunteria(p => {
-        let nuevo = p + (direccion * 3);
-        if (nuevo >= 100) { setDireccion(-1); return 100; }
-        if (nuevo <= 0) { setDireccion(1); return 0; }
-        return nuevo;
+        return nuevas;
       });
     }, 30);
-    return () => clearInterval(interval);
-  }, [estado, direccion]);
+    return () => clearInterval(intervalMove);
+  }, [estado, score]);
 
-  const disparar = () => {
-    if (estado !== 'apuntando') return;
-    setEstado('disparo');
-    AudioEngine.hit();
-    
-    setTimeout(() => {
-      const diferencia = Math.abs(punteria - gigante);
-      if (diferencia < 10) {
-        setResultado('hit');
-        AudioEngine.win();
-        onGanar(20);
-      } else {
-        setResultado('miss');
-        AudioEngine.lose();
+  // Controles por teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (estadoRef.current !== 'jugando') return;
+      const keyMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
+      const carrilPresionado = keyMap[e.key.toLowerCase()];
+      
+      if (carrilPresionado !== undefined) {
+        presionarCarril(carrilPresionado);
       }
-      setEstado('resultado');
-    }, 500);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const presionarCarril = (carrilIndex) => {
+    // Buscar la nota más baja en ese carril que esté en la zona de hit (y > 75)
+    setNotas(prev => {
+      const targetIndex = prev.findIndex(n => n.carril === carrilIndex && n.y > 75);
+      if (targetIndex !== -1) {
+        // Hit!
+        AudioEngine.laser();
+        const nuevas = [...prev];
+        nuevas.splice(targetIndex, 1);
+        setScore(s => {
+          const nuevoScore = s + 1;
+          if (nuevoScore % 10 === 0) onGanar(10); // Da XP cada 10 hits
+          return nuevoScore;
+        });
+        return nuevas;
+      }
+      return prev; // Miss total
+    });
   };
 
   const reiniciar = () => {
-    setGigante(Math.floor(Math.random() * 60) + 20);
-    setEstado('apuntando');
-    setResultado(null);
+    setNotas([]);
+    setScore(0);
+    setVidas(3);
+    currentSpeed.current = velocidadBase;
+    setEstado('jugando');
   };
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-      <h2 style={{ color: '#3b82f6', letterSpacing: '2px', marginBottom: '40px' }}>LA HONDA DE DAVID</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', color: '#f97316', fontWeight: '900', fontSize: '24px', textShadow: '0 0 10px #f97316' }}>
+        <span>HITS: {score}</span>
+        <span>VIDAS: {Array(vidas).fill('▮').join('')}</span>
+      </div>
 
-      {/* ZONA DE JUEGO (Visor) */}
-      <div style={{ position: 'relative', height: '150px', backgroundColor: '#18181b', borderRadius: '20px', border: '2px solid #3f3f46', marginBottom: '40px' }}>
+      <div style={{ position: 'relative', height: '400px', backgroundColor: '#09090b', border: '2px solid #3f3f46', overflow: 'hidden', display: 'flex' }}>
         
-        {/* El Gigante (Objetivo) */}
-        <div style={{ position: 'absolute', left: `${gigante}%`, top: '50%', transform: 'translate(-50%, -50%)', fontSize: '40px', transition: 'all 0.3s', opacity: resultado === 'hit' ? 0 : 1 }}>
-          👹
-        </div>
+        {/* Línea de Hit */}
+        <div style={{ position: 'absolute', bottom: '15%', left: 0, width: '100%', height: '5px', backgroundColor: '#f97316', boxShadow: '0 0 15px #f97316', zIndex: 10 }} />
 
-        {/* La Piedra (Mira) */}
-        <div style={{ position: 'absolute', left: `${punteria}%`, bottom: estado==='apuntando' ? '-10px' : '50%', transform: 'translateX(-50%)', fontSize: '30px', transition: estado==='apuntando' ? 'none' : 'all 0.5s ease-out' }}>
-          🪨
+        {/* 4 Carriles */}
+        {[0, 1, 2, 3].map(c => (
+          <div key={c} style={{ flex: 1, borderRight: c<3 ? '1px solid #27272a' : 'none', position: 'relative' }}>
+            <div style={{ position: 'absolute', bottom: '5%', left: '50%', transform: 'translateX(-50%)', color: '#52525b', fontWeight: 'bold' }}>{['A','S','K','L'][c]}</div>
+          </div>
+        ))}
+
+        {/* Renderizado de Notas */}
+        {notas.map(n => (
+          <div key={n.id} style={{
+            position: 'absolute',
+            top: `${n.y}%`,
+            left: `${(n.carril * 25) + 12.5}%`,
+            transform: 'translate(-50%, -50%)',
+            width: '40px',
+            height: '20px',
+            backgroundColor: n.y > 75 ? '#fff' : '#f97316',
+            boxShadow: n.y > 75 ? '0 0 20px #fff' : '0 0 15px #f97316',
+            zIndex: 5
+          }} />
+        ))}
+
+        {estado === 'gameover' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h2 style={{ color: '#ef4444', fontSize: '40px', textShadow: '0 0 20px #ef4444', letterSpacing: '5px', margin: 0 }}>SISTEMA CAÍDO</h2>
+            <p style={{ color: '#fff', fontSize: '20px', marginTop: '10px' }}>HITS TOTALES: {score}</p>
+            <button onClick={reiniciar} style={{ marginTop: '30px', backgroundColor: '#f97316', color: '#000', border: 'none', padding: '15px 30px', fontWeight: '900', fontSize: '18px', cursor: 'pointer' }}>REINICIAR</button>
+          </div>
+        )}
+      </div>
+
+      <p style={{ color: '#71717a', marginTop: '20px', fontSize: '12px' }}>* Usá las teclas A, S, K, L en tu teclado para disparar.</p>
+    </div>
+  );
+}
+
+// ==========================================
+// 2. DEFENSA DEL TEMPLO (Tipeo Veloz)
+// ==========================================
+function DefensaTemplo({ onGanar }) {
+  const DICCIONARIO = ["SABIDURIA", "PENTECOSTES", "JERUSALEN", "SACRIFICIO", "REDENCION", "PROFECIA", "APOCALIPSIS", "TESTAMENTO", "SANTUARIO", "TABERNACULO"];
+  
+  const [enemigos, setEnemigos] = useState([]);
+  const [input, setInput] = useState('');
+  const [score, setScore] = useState(0);
+  const [estado, setEstado] = useState('jugando');
+
+  const velocidadBase = 0.2;
+  const currentSpeed = useRef(velocidadBase);
+
+  // Generar Enemigos
+  useEffect(() => {
+    if (estado !== 'jugando') return;
+    const interval = setInterval(() => {
+      const palabra = DICCIONARIO[Math.floor(Math.random() * DICCIONARIO.length)];
+      setEnemigos(prev => [...prev, { id: Date.now(), palabra, y: 0 }]);
+    }, Math.max(3000 - (score * 50), 1000));
+    return () => clearInterval(interval);
+  }, [estado, score]);
+
+  // Mover Enemigos
+  useEffect(() => {
+    if (estado !== 'jugando') return;
+    const interval = setInterval(() => {
+      currentSpeed.current = velocidadBase + (score * 0.02);
+      
+      setEnemigos(prev => {
+        let perdio = false;
+        const nuevos = prev.map(e => {
+          const newY = e.y + currentSpeed.current;
+          if (newY > 90) perdio = true; // Llegó al centro
+          return { ...e, y: newY };
+        });
+
+        if (perdio) {
+          AudioEngine.lose();
+          setEstado('gameover');
+        }
+        return nuevos;
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [estado, score]);
+
+  // Manejar Tipeo
+  const handleTipeo = (e) => {
+    const texto = e.target.value.toUpperCase();
+    setInput(texto);
+
+    // ¿Coincide con algún enemigo entero?
+    setEnemigos(prev => {
+      const matchIndex = prev.findIndex(en => en.palabra === texto);
+      if (matchIndex !== -1) {
+        AudioEngine.laser();
+        const nuevas = [...prev];
+        nuevas.splice(matchIndex, 1);
+        setScore(s => {
+          const ns = s + 1;
+          onGanar(5);
+          return ns;
+        });
+        setInput(''); // Limpia al destruir
+        return nuevas;
+      }
+      return prev;
+    });
+  };
+
+  return (
+    <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+      <h2 style={{ color: '#3b82f6', letterSpacing: '4px', textShadow: '0 0 10px #3b82f6', marginBottom: '20px' }}>DEFENSA DEL TEMPLO</h2>
+      
+      <div style={{ position: 'relative', height: '400px', backgroundColor: '#09090b', border: '2px solid #3f3f46', overflow: 'hidden' }}>
+        
+        {/* Núcleo a defender */}
+        <div style={{ position: 'absolute', bottom: '-20px', left: '50%', transform: 'translateX(-50%)', width: '100px', height: '100px', backgroundColor: '#3b82f6', borderRadius: '50%', filter: 'blur(20px)', opacity: 0.5 }} />
+
+        {/* Enemigos bajando */}
+        {enemigos.map(e => {
+          // Highlight de las letras que ya tipeó correctamente (si coincide el inicio)
+          const coincideInicio = e.palabra.startsWith(input) && input.length > 0;
+
+          return (
+            <div key={e.id} style={{ position: 'absolute', top: `${e.y}%`, left: '50%', transform: 'translateX(-50%)', backgroundColor: '#18181b', border: '1px solid #ef4444', padding: '5px 10px', color: '#fff', fontWeight: 'bold', letterSpacing: '2px', boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
+              {coincideInicio ? (
+                <>
+                  <span style={{ color: '#3b82f6' }}>{input}</span>
+                  <span>{e.palabra.slice(input.length)}</span>
+                </>
+              ) : (
+                e.palabra
+              )}
+            </div>
+          );
+        })}
+
+        {estado === 'gameover' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h2 style={{ color: '#ef4444', fontSize: '30px', margin: 0 }}>TEMPLO DESTRUIDO</h2>
+            <p style={{ color: '#fff' }}>HORDAS ELIMINADAS: {score}</p>
+            <button onClick={()=>{setEnemigos([]); setScore(0); setInput(''); setEstado('jugando');}} style={{ marginTop: '20px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '10px 20px', cursor: 'pointer', fontWeight: 'bold' }}>REINTENTAR</button>
+          </div>
+        )}
+      </div>
+
+      <input 
+        type="text" 
+        value={input} 
+        onChange={handleTipeo} 
+        disabled={estado !== 'jugando'}
+        autoFocus
+        placeholder="TIPEAR PARA DESTRUIR..."
+        style={{ width: '100%', padding: '20px', marginTop: '20px', backgroundColor: '#18181b', border: '2px solid #3b82f6', color: '#fff', fontSize: '24px', textAlign: 'center', outline: 'none', letterSpacing: '4px' }}
+      />
+    </div>
+  );
+}
+
+// ==========================================
+// 3. ÉXODO: MODO HARDCORE (Roguelike / Supervivencia)
+// ==========================================
+function ExodoHardcore({ onGanar }) {
+  const [dia, setDia] = useState(1);
+  const [stats, setStats] = useState({ agua: 100, mana: 100, moral: 100 });
+  const [evento, setEvento] = useState(null);
+  const [estado, setEstado] = useState('jugando'); // jugando, muerto, victoria
+
+  const EVENTOS = [
+    { txt: "Tormenta de Arena masiva. ¿Qué protegés?", 
+      opA: { txt: "Proteger Agua", ef: {agua:0, mana:-30, moral:-10} },
+      opB: { txt: "Proteger Tiendas (Moral)", ef: {agua:-20, mana:-20, moral:0} } },
+    { txt: "Encuentran un oasis pequeño pero dudoso.", 
+      opA: { txt: "Beber (Riesgo de enfermedad)", ef: {agua:+30, mana:0, moral:-20} },
+      opB: { txt: "Ignorar y seguir", ef: {agua:-20, mana:0, moral:+10} } },
+    { txt: "El pueblo se queja de comer solo Maná.", 
+      opA: { txt: "Ignorarlos (Cae moral)", ef: {agua:-10, mana:0, moral:-30} },
+      opB: { txt: "Dar ración doble", ef: {agua:0, mana:-40, moral:+20} } }
+  ];
+
+  useEffect(() => {
+    generarEvento();
+  }, []);
+
+  const generarEvento = () => {
+    setEvento(EVENTOS[Math.floor(Math.random() * EVENTOS.length)]);
+  };
+
+  const elegir = (opcion) => {
+    AudioEngine.click();
+    
+    // Consumo diario fijo
+    const consumoDiario = { agua: -10, mana: -10, moral: -5 };
+
+    const nuevosStats = {
+      agua: stats.agua + opcion.ef.agua + consumoDiario.agua,
+      mana: stats.mana + opcion.ef.mana + consumoDiario.mana,
+      moral: stats.moral + opcion.ef.moral + consumoDiario.moral
+    };
+
+    if (nuevosStats.agua <= 0 || nuevosStats.mana <= 0 || nuevosStats.moral <= 0) {
+      setEstado('muerto');
+      AudioEngine.lose();
+      return;
+    }
+
+    if (dia + 1 > 40) {
+      setEstado('victoria');
+      AudioEngine.win();
+      onGanar(500); // Premio gigante por ganar el hardcore
+      return;
+    }
+
+    setStats(nuevosStats);
+    setDia(d => d + 1);
+    generarEvento();
+  };
+
+  if (estado === 'muerto') return <div style={{textAlign: 'center', padding: '50px', color: '#ef4444'}}><h2>EL PUEBLO PERECIÓ EN EL DÍA {dia}</h2><button onClick={()=>{setStats({agua:100, mana:100, moral:100}); setDia(1); setEstado('jugando'); generarEvento();}}>Iniciar nueva expedición</button></div>;
+  if (estado === 'victoria') return <div style={{textAlign: 'center', padding: '50px', color: '#10b981'}}><h2>¡LLEGARON A LA TIERRA PROMETIDA!</h2></div>;
+
+  return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+      <h2 style={{ color: '#ef4444', letterSpacing: '4px', textShadow: '0 0 10px #ef4444', marginBottom: '10px' }}>ÉXODO: SUPERVIVENCIA</h2>
+      <p style={{ color: '#a1a1aa', marginBottom: '30px' }}>DÍA {dia} / 40</p>
+
+      {/* Stats UI */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '30px' }}>
+        <div style={{ backgroundColor: '#18181b', border: '1px solid #3b82f6', padding: '15px', color: '#3b82f6', fontWeight: 'bold' }}>AGUA<br/>{stats.agua}</div>
+        <div style={{ backgroundColor: '#18181b', border: '1px solid #facc15', padding: '15px', color: '#facc15', fontWeight: 'bold' }}>MANÁ<br/>{stats.mana}</div>
+        <div style={{ backgroundColor: '#18181b', border: '1px solid #a855f7', padding: '15px', color: '#a855f7', fontWeight: 'bold' }}>MORAL<br/>{stats.moral}</div>
+      </div>
+
+      {/* Terminal de Evento */}
+      {evento && (
+        <div style={{ backgroundColor: '#000', border: '2px dashed #ef4444', padding: '30px', marginBottom: '20px', minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#fff', fontSize: '18px', letterSpacing: '1px' }}>{evento.txt}</p>
+        </div>
+      )}
+
+      {/* Decisiones */}
+      {evento && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={() => elegir(evento.opA)} style={{ backgroundColor: '#18181b', color: '#fff', border: '1px solid #52525b', padding: '20px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '2px', transition: 'border-color 0.2s' }} onMouseOver={e=>e.currentTarget.style.borderColor='#ef4444'} onMouseOut={e=>e.currentTarget.style.borderColor='#52525b'}>{evento.opA.txt}</button>
+          <button onClick={() => elegir(evento.opB)} style={{ backgroundColor: '#18181b', color: '#fff', border: '1px solid #52525b', padding: '20px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '2px', transition: 'border-color 0.2s' }} onMouseOver={e=>e.currentTarget.style.borderColor='#ef4444'} onMouseOut={e=>e.currentTarget.style.borderColor='#52525b'}>{evento.opB.txt}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 4. ARENA CyM (Trivia 1v1 con Tiempo Letal)
+// ==========================================
+function ArenaCyM({ onGanar }) {
+  const PREGUNTAS = [
+    { q: "¿Quién escribió la mayor parte de los Salmos?", a: "DAVID", b: "SALOMON", ans: "a" },
+    { q: "¿En qué isla fue exiliado Juan?", a: "CHIPRE", b: "PATMOS", ans: "b" },
+    { q: "¿Quién era el padre de Juan el Bautista?", a: "ZACARIAS", b: "ZEBEDEO", ans: "a" },
+    { q: "¿Qué ciudad destruyó Dios con fuego y azufre?", a: "NINIVE", b: "SODOMA", ans: "b" }
+  ];
+
+  const [preguntaActiva, setPreguntaActiva] = useState(PREGUNTAS[0]);
+  const [vidaJugador, setVidaJugador] = useState(100);
+  const [vidaRival, setVidaRival] = useState(100);
+  const [tiempo, setTiempo] = useState(5); // 5 SEGUNDOS LETALES
+  const [estado, setEstado] = useState('jugando');
+
+  useEffect(() => {
+    if (estado !== 'jugando') return;
+    const interval = setInterval(() => {
+      setTiempo(t => {
+        if (t - 1 <= 0) {
+          // Se acabó el tiempo = Castigo al jugador
+          AudioEngine.hit();
+          setVidaJugador(v => {
+            if (v - 20 <= 0) setEstado('perdido');
+            return v - 20;
+          });
+          siguientePregunta();
+          return 5;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [estado]);
+
+  const siguientePregunta = () => {
+    setPreguntaActiva(PREGUNTAS[Math.floor(Math.random() * PREGUNTAS.length)]);
+    setTiempo(5);
+  };
+
+  const responder = (opcion) => {
+    if (estado !== 'jugando') return;
+
+    if (opcion === preguntaActiva.ans) {
+      AudioEngine.laser();
+      // Daño al rival basado en qué tan rápido respondió
+      const dano = tiempo * 5; 
+      setVidaRival(v => {
+        const nv = v - dano;
+        if (nv <= 0) { setEstado('ganado'); AudioEngine.win(); onGanar(100); }
+        return nv;
+      });
+    } else {
+      AudioEngine.hit();
+      // Castigo por error
+      setVidaJugador(v => {
+        const nv = v - 20;
+        if (nv <= 0) { setEstado('perdido'); AudioEngine.lose(); }
+        return nv;
+      });
+    }
+    siguientePregunta();
+  };
+
+  if (estado === 'ganado') return <div style={{textAlign: 'center', padding: '50px', color: '#a855f7'}}><h2>¡RIVAL DESTRUIDO!</h2></div>;
+  if (estado === 'perdido') return <div style={{textAlign: 'center', padding: '50px', color: '#ef4444'}}><h2>CAÍSTE EN LA ARENA.</h2><button onClick={()=>{setVidaJugador(100);setVidaRival(100);setEstado('jugando');setTiempo(5);}}>Reintentar</button></div>;
+
+  return (
+    <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      {/* BARRAS DE VIDA (Estilo Pelea) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center' }}>
+        <div style={{ width: '40%' }}>
+          <div style={{ color: '#10b981', fontWeight: '900', marginBottom: '5px' }}>VOS ({vidaJugador}%)</div>
+          <div style={{ height: '20px', backgroundColor: '#18181b', border: '2px solid #10b981', transform: 'skewX(-15deg)' }}>
+            <div style={{ height: '100%', width: `${Math.max(0, vidaJugador)}%`, backgroundColor: '#10b981', transition: 'width 0.2s' }} />
+          </div>
+        </div>
+        <div style={{ fontSize: '40px', fontWeight: '900', color: '#ef4444', textShadow: '0 0 20px #ef4444' }}>VS</div>
+        <div style={{ width: '40%', textAlign: 'right' }}>
+          <div style={{ color: '#ef4444', fontWeight: '900', marginBottom: '5px' }}>IA RIVAL ({vidaRival}%)</div>
+          <div style={{ height: '20px', backgroundColor: '#18181b', border: '2px solid #ef4444', transform: 'skewX(-15deg)', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ height: '100%', width: `${Math.max(0, vidaRival)}%`, backgroundColor: '#ef4444', transition: 'width 0.2s' }} />
+          </div>
         </div>
       </div>
 
-      {estado === 'apuntando' && (
-        <button onClick={disparar} style={{ padding: '20px 40px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '16px', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', boxShadow: '0 6px 0 #1d4ed8' }}>
-          ¡SOLTAR PIEDRA!
-        </button>
-      )}
+      {/* RELOJ LETAL */}
+      <div style={{ textAlign: 'center', fontSize: '60px', fontWeight: '900', color: tiempo <= 2 ? '#ef4444' : '#fff', marginBottom: '20px', textShadow: tiempo <= 2 ? '0 0 20px #ef4444' : 'none' }}>
+        00:0{tiempo}
+      </div>
 
-      {estado === 'resultado' && (
-        <div className="animate-in zoom-in">
-          <h3 style={{ color: resultado === 'hit' ? '#10b981' : '#ef4444', fontSize: '28px' }}>{resultado === 'hit' ? '¡BLANCO PERFECTO!' : '¡Fallaste!'}</h3>
-          <button onClick={reiniciar} style={{ padding: '12px 24px', marginTop: '20px', backgroundColor: '#3f3f46', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Siguiente Intento</button>
-        </div>
-      )}
+      {/* PREGUNTA Y RESPUESTAS */}
+      <div style={{ backgroundColor: '#18181b', padding: '40px', border: '2px solid #a855f7', textAlign: 'center', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '24px', margin: 0 }}>{preguntaActiva.q}</h3>
+      </div>
+
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <button onClick={() => responder('a')} style={{ flex: 1, backgroundColor: '#09090b', color: '#a855f7', border: '2px solid #a855f7', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.backgroundColor='#a855f7'} onMouseOut={e=>e.currentTarget.style.backgroundColor='#09090b'}>{preguntaActiva.a}</button>
+        <button onClick={() => responder('b')} style={{ flex: 1, backgroundColor: '#09090b', color: '#a855f7', border: '2px solid #a855f7', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.backgroundColor='#a855f7'} onMouseOut={e=>e.currentTarget.style.backgroundColor='#09090b'}>{preguntaActiva.b}</button>
+      </div>
     </div>
   );
 }
