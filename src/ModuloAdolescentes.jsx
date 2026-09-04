@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // ==========================================
-// MOTOR DE AUDIO (Estilo Arcade/Hardcore)
+// MOTOR DE AUDIO (Arcade)
 // ==========================================
 class AudioEngine {
   static ctx = null;
@@ -25,70 +25,62 @@ class AudioEngine {
       osc.stop(ctx.currentTime + duration);
     } catch (e) {}
   }
-  static click() { this.play(800, 'square', 0.05, 0.05); }
-  static hit() { this.play(100, 'sawtooth', 0.3, 0.2); } // Golpe/Daño grave
-  static laser() { this.play(1200, 'sine', 0.1, 0.05); setTimeout(() => this.play(800, 'sine', 0.1, 0.05), 50); }
-  static win() { [880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => this.play(f, 'square', 0.1, 0.1), i * 80)); }
-  static lose() { this.play(50, 'sawtooth', 0.8, 0.3); } // Game Over brutal
+  static jump() { this.play(400, 'sine', 0.1, 0.1); setTimeout(() => this.play(600, 'sine', 0.1, 0.1), 100); }
+  static shoot() { this.play(800, 'square', 0.05, 0.05); }
+  static hit() { this.play(150, 'sawtooth', 0.2, 0.1); }
+  static explosion() { this.play(100, 'sawtooth', 0.4, 0.2); setTimeout(() => this.play(50, 'sawtooth', 0.4, 0.2), 100); }
+  static win() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => this.play(f, 'square', 0.1, 0.1), i * 100)); }
 }
 
 // ==========================================
-// CONTENEDOR PRINCIPAL - ESTÉTICA CYBERPUNK
+// CONTENEDOR PRINCIPAL
 // ==========================================
 export default function ModuloAdolescentes({ currentUser, onVolver }) {
   const [juegoActivo, setJuegoActivo] = useState('MENU');
   const [xp, setXp] = useState(0);
 
   const ganarXP = (cantidad) => setXp(prev => prev + cantidad);
-  const cambiarJuego = (juego) => { AudioEngine.click(); setJuegoActivo(juego); };
+  const cambiarJuego = (juego) => { setJuegoActivo(juego); };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#000000', color: '#e4e4e7', padding: '20px', fontFamily: '"Courier New", Courier, monospace', userSelect: 'none', backgroundImage: 'radial-gradient(circle at center, #111 0%, #000 100%)' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#09090b', color: '#e4e4e7', padding: '20px', fontFamily: '"Courier New", Courier, monospace', userSelect: 'none', backgroundImage: 'radial-gradient(circle at top, #18181b 0%, #000 100%)' }}>
       
-      {/* HEADER TÁCTICO */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #3f3f46', paddingBottom: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '16px', marginBottom: '24px' }}>
         <button onClick={juegoActivo === 'MENU' ? onVolver : () => cambiarJuego('MENU')} style={{ backgroundColor: '#18181b', color: '#f4f4f5', border: '1px solid #52525b', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: '900', textTransform: 'uppercase', boxShadow: '0 0 10px rgba(255,255,255,0.1)' }}>
           {juegoActivo === 'MENU' ? '<< SALIR' : '<< ABORTAR MISIÓN'}
         </button>
         <div style={{ backgroundColor: '#052e16', padding: '10px 20px', borderRadius: '4px', border: '1px solid #10b981', color: '#34d399', fontWeight: '900', letterSpacing: '3px', boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)' }}>
-          RANGO: {xp} XP
+          XP: {xp}
         </div>
       </div>
 
       {juegoActivo === 'MENU' && <MenuTeens onSeleccionar={cambiarJuego} />}
-      {juegoActivo === 'FUEGO' && <SalmosDeFuego onGanar={ganarXP} />}
-      {juegoActivo === 'DEFENSA' && <DefensaTemplo onGanar={ganarXP} />}
-      {juegoActivo === 'EXODO' && <ExodoHardcore onGanar={ganarXP} />}
-      {juegoActivo === 'ARENA' && <ArenaCyM onGanar={ganarXP} />}
+      {juegoActivo === 'RUNNER' && <ElPeregrino onGanar={ganarXP} />}
+      {juegoActivo === 'SHOOTER' && <ElCentinela onGanar={ganarXP} />}
     </div>
   );
 }
 
-// ==========================================
-// MENÚ PRINCIPAL NEÓN
-// ==========================================
 function MenuTeens({ onSeleccionar }) {
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
-      <h1 style={{ fontSize: '48px', color: '#fff', letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '8px', textShadow: '0 0 20px #ef4444' }}>ZONA DE ALTO RIESGO</h1>
-      <p style={{ color: '#a1a1aa', marginBottom: '50px', letterSpacing: '2px' }}>PREPARATE PARA TRANSPIRAR.</p>
+    <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+      <h1 style={{ fontSize: '48px', color: '#fff', letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '8px', textShadow: '0 0 20px #3b82f6' }}>ZONA ARCADE</h1>
+      <p style={{ color: '#a1a1aa', marginBottom: '50px', letterSpacing: '2px' }}>ACCIÓN, SALTOS Y DISPAROS.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-        <GameCard id="FUEGO" title="Salmos de Fuego" desc="Reflejos extremos al ritmo de la música." color="#f97316" onClick={() => onSeleccionar('FUEGO')} />
-        <GameCard id="DEFENSA" title="Defensa del Templo" desc="Tipeo hiper-veloz para frenar hordas." color="#3b82f6" onClick={() => onSeleccionar('DEFENSA')} />
-        <GameCard id="EXODO" title="Éxodo: Modo Hardcore" desc="Sobreviví 40 días en el desierto. Permadeath." color="#ef4444" onClick={() => onSeleccionar('EXODO')} />
-        <GameCard id="ARENA" title="Arena CyM (1v1)" desc="Trivia a muerte. 5 segundos por respuesta." color="#a855f7" onClick={() => onSeleccionar('ARENA')} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', justifyContent: 'center' }}>
+        <GameCard id="RUNNER" title="El Peregrino" desc="Corré, saltá pozos y esquivá obstáculos de energía." icon="🏃‍♂️" color="#10b981" onClick={() => onSeleccionar('RUNNER')} />
+        <GameCard id="SHOOTER" title="El Centinela" desc="Dispará rayos de luz para frenar a las sombras." icon="🚀" color="#ef4444" onClick={() => onSeleccionar('SHOOTER')} />
       </div>
     </div>
   );
 }
 
-function GameCard({ title, desc, color, onClick }) {
+function GameCard({ title, desc, icon, color, onClick }) {
   return (
-    <button onClick={onClick} style={{ backgroundColor: '#09090b', border: `2px solid #27272a`, borderRadius: '8px', padding: '30px', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative', overflow: 'hidden' }}
-      onMouseOver={(e) => { e.currentTarget.style.borderColor = color; e.currentTarget.style.boxShadow = `0 0 20px ${color}40`; e.currentTarget.style.transform = 'scale(1.02)'; }}
+    <button onClick={onClick} style={{ backgroundColor: '#09090b', border: `2px solid #27272a`, borderRadius: '12px', padding: '40px 20px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}
+      onMouseOver={(e) => { e.currentTarget.style.borderColor = color; e.currentTarget.style.boxShadow = `0 0 30px ${color}40`; e.currentTarget.style.transform = 'scale(1.05)'; }}
       onMouseOut={(e) => { e.currentTarget.style.borderColor = '#27272a'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'scale(1)'; }}>
-      <div style={{ position: 'absolute', top: 0, right: 0, width: '4px', height: '100%', backgroundColor: color }} />
+      <div style={{ fontSize: '60px', filter: `drop-shadow(0 0 10px ${color})` }}>{icon}</div>
       <h3 style={{ color: '#fff', margin: 0, fontSize: '24px', textTransform: 'uppercase', letterSpacing: '2px' }}>{title}</h3>
       <p style={{ color: color, margin: 0, fontSize: '14px', fontWeight: 'bold' }}>{desc}</p>
     </button>
@@ -96,478 +88,367 @@ function GameCard({ title, desc, color, onClick }) {
 }
 
 // ==========================================
-// 1. SALMOS DE FUEGO (Guitar Hero / Piano Tiles)
+// 1. EL PEREGRINO (Endless Runner / Saltos)
 // ==========================================
-function SalmosDeFuego({ onGanar }) {
-  const [notas, setNotas] = useState([]);
+function ElPeregrino({ onGanar }) {
+  const [estado, setEstado] = useState('inicio'); // inicio, jugando, gameover
   const [score, setScore] = useState(0);
-  const [vidas, setVidas] = useState(3);
-  const [estado, setEstado] = useState('jugando'); // jugando, gameover
+
+  // Físicas
+  const charY = useRef(0);
+  const velY = useRef(0);
+  const gravedad = -1.2;
+  const isJumping = useRef(false);
   
-  // Velocidad de caída inicial
-  const velocidadBase = 5; 
-  const currentSpeed = useRef(velocidadBase);
+  const obstaculos = useRef([]);
+  const frameRef = useRef();
+  
+  // Elementos DOM para renderizado rápido sin re-render de React
+  const charRefDOM = useRef(null);
+  const obsContainerRef = useRef(null);
 
-  // Referencias para el loop rápido
-  const notasRef = useRef(notas);
-  const estadoRef = useRef(estado);
+  const velocidadJuego = useRef(1);
 
-  useEffect(() => { notasRef.current = notas; }, [notas]);
-  useEffect(() => { estadoRef.current = estado; }, [estado]);
-
-  // Generador de notas (aumenta la frecuencia con el score)
-  useEffect(() => {
+  const saltar = () => {
     if (estado !== 'jugando') return;
-    const intervalGen = setInterval(() => {
-      if (estadoRef.current !== 'jugando') return;
-      const carril = Math.floor(Math.random() * 4);
-      setNotas(prev => [...prev, { id: Date.now(), carril, y: 0 }]);
-    }, Math.max(800 - (score * 10), 300)); // Cada vez aparecen más rápido
-
-    return () => clearInterval(intervalGen);
-  }, [estado, score]);
-
-  // Motor de caída a 60fps
-  useEffect(() => {
-    if (estado !== 'jugando') return;
-    const intervalMove = setInterval(() => {
-      setNotas(prev => {
-        let nuevas = [];
-        let fallo = false;
-
-        // Aumentar velocidad global según el score
-        currentSpeed.current = velocidadBase + (score * 0.1);
-
-        for (let n of prev) {
-          const newY = n.y + currentSpeed.current;
-          if (newY > 100) {
-            // Nota perdida = Daño
-            fallo = true;
-          } else {
-            nuevas.push({ ...n, y: newY });
-          }
-        }
-
-        if (fallo) {
-          AudioEngine.hit();
-          setVidas(v => {
-            const nuevasVidas = v - 1;
-            if (nuevasVidas <= 0) { setEstado('gameover'); AudioEngine.lose(); }
-            return nuevasVidas;
-          });
-        }
-        return nuevas;
-      });
-    }, 30);
-    return () => clearInterval(intervalMove);
-  }, [estado, score]);
-
-  // Controles por teclado
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (estadoRef.current !== 'jugando') return;
-      const keyMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
-      const carrilPresionado = keyMap[e.key.toLowerCase()];
-      
-      if (carrilPresionado !== undefined) {
-        presionarCarril(carrilPresionado);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const presionarCarril = (carrilIndex) => {
-    // Buscar la nota más baja en ese carril que esté en la zona de hit (y > 75)
-    setNotas(prev => {
-      const targetIndex = prev.findIndex(n => n.carril === carrilIndex && n.y > 75);
-      if (targetIndex !== -1) {
-        // Hit!
-        AudioEngine.laser();
-        const nuevas = [...prev];
-        nuevas.splice(targetIndex, 1);
-        setScore(s => {
-          const nuevoScore = s + 1;
-          if (nuevoScore % 10 === 0) onGanar(10); // Da XP cada 10 hits
-          return nuevoScore;
-        });
-        return nuevas;
-      }
-      return prev; // Miss total
-    });
+    if (!isJumping.current) {
+      velY.current = 18; // Fuerza de salto
+      isJumping.current = true;
+      AudioEngine.jump();
+    }
   };
 
-  const reiniciar = () => {
-    setNotas([]);
-    setScore(0);
-    setVidas(3);
-    currentSpeed.current = velocidadBase;
+  const iniciarJuego = () => {
     setEstado('jugando');
+    setScore(0);
+    charY.current = 0;
+    velY.current = 0;
+    isJumping.current = false;
+    obstaculos.current = [];
+    velocidadJuego.current = 1.2; // Velocidad inicial
+    loop();
   };
 
-  return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', color: '#f97316', fontWeight: '900', fontSize: '24px', textShadow: '0 0 10px #f97316' }}>
-        <span>HITS: {score}</span>
-        <span>VIDAS: {Array(vidas).fill('▮').join('')}</span>
-      </div>
+  const gameover = () => {
+    cancelAnimationFrame(frameRef.current);
+    setEstado('gameover');
+    AudioEngine.explosion();
+  };
 
-      <div style={{ position: 'relative', height: '400px', backgroundColor: '#09090b', border: '2px solid #3f3f46', overflow: 'hidden', display: 'flex' }}>
-        
-        {/* Línea de Hit */}
-        <div style={{ position: 'absolute', bottom: '15%', left: 0, width: '100%', height: '5px', backgroundColor: '#f97316', boxShadow: '0 0 15px #f97316', zIndex: 10 }} />
-
-        {/* 4 Carriles */}
-        {[0, 1, 2, 3].map(c => (
-          <div key={c} style={{ flex: 1, borderRight: c<3 ? '1px solid #27272a' : 'none', position: 'relative' }}>
-            <div style={{ position: 'absolute', bottom: '5%', left: '50%', transform: 'translateX(-50%)', color: '#52525b', fontWeight: 'bold' }}>{['A','S','K','L'][c]}</div>
-          </div>
-        ))}
-
-        {/* Renderizado de Notas */}
-        {notas.map(n => (
-          <div key={n.id} style={{
-            position: 'absolute',
-            top: `${n.y}%`,
-            left: `${(n.carril * 25) + 12.5}%`,
-            transform: 'translate(-50%, -50%)',
-            width: '40px',
-            height: '20px',
-            backgroundColor: n.y > 75 ? '#fff' : '#f97316',
-            boxShadow: n.y > 75 ? '0 0 20px #fff' : '0 0 15px #f97316',
-            zIndex: 5
-          }} />
-        ))}
-
-        {estado === 'gameover' && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <h2 style={{ color: '#ef4444', fontSize: '40px', textShadow: '0 0 20px #ef4444', letterSpacing: '5px', margin: 0 }}>SISTEMA CAÍDO</h2>
-            <p style={{ color: '#fff', fontSize: '20px', marginTop: '10px' }}>HITS TOTALES: {score}</p>
-            <button onClick={reiniciar} style={{ marginTop: '30px', backgroundColor: '#f97316', color: '#000', border: 'none', padding: '15px 30px', fontWeight: '900', fontSize: '18px', cursor: 'pointer' }}>REINICIAR</button>
-          </div>
-        )}
-      </div>
-
-      <p style={{ color: '#71717a', marginTop: '20px', fontSize: '12px' }}>* Usá las teclas A, S, K, L en tu teclado para disparar.</p>
-    </div>
-  );
-}
-
-// ==========================================
-// 2. DEFENSA DEL TEMPLO (Tipeo Veloz)
-// ==========================================
-function DefensaTemplo({ onGanar }) {
-  const DICCIONARIO = ["SABIDURIA", "PENTECOSTES", "JERUSALEN", "SACRIFICIO", "REDENCION", "PROFECIA", "APOCALIPSIS", "TESTAMENTO", "SANTUARIO", "TABERNACULO"];
-  
-  const [enemigos, setEnemigos] = useState([]);
-  const [input, setInput] = useState('');
-  const [score, setScore] = useState(0);
-  const [estado, setEstado] = useState('jugando');
-
-  const velocidadBase = 0.2;
-  const currentSpeed = useRef(velocidadBase);
-
-  // Generar Enemigos
-  useEffect(() => {
+  const loop = () => {
     if (estado !== 'jugando') return;
-    const interval = setInterval(() => {
-      const palabra = DICCIONARIO[Math.floor(Math.random() * DICCIONARIO.length)];
-      setEnemigos(prev => [...prev, { id: Date.now(), palabra, y: 0 }]);
-    }, Math.max(3000 - (score * 50), 1000));
-    return () => clearInterval(interval);
-  }, [estado, score]);
 
-  // Mover Enemigos
-  useEffect(() => {
-    if (estado !== 'jugando') return;
-    const interval = setInterval(() => {
-      currentSpeed.current = velocidadBase + (score * 0.02);
-      
-      setEnemigos(prev => {
-        let perdio = false;
-        const nuevos = prev.map(e => {
-          const newY = e.y + currentSpeed.current;
-          if (newY > 90) perdio = true; // Llegó al centro
-          return { ...e, y: newY };
-        });
-
-        if (perdio) {
-          AudioEngine.lose();
-          setEstado('gameover');
-        }
-        return nuevos;
-      });
-    }, 50);
-    return () => clearInterval(interval);
-  }, [estado, score]);
-
-  // Manejar Tipeo
-  const handleTipeo = (e) => {
-    const texto = e.target.value.toUpperCase();
-    setInput(texto);
-
-    // ¿Coincide con algún enemigo entero?
-    setEnemigos(prev => {
-      const matchIndex = prev.findIndex(en => en.palabra === texto);
-      if (matchIndex !== -1) {
-        AudioEngine.laser();
-        const nuevas = [...prev];
-        nuevas.splice(matchIndex, 1);
-        setScore(s => {
-          const ns = s + 1;
-          onGanar(5);
-          return ns;
-        });
-        setInput(''); // Limpia al destruir
-        return nuevas;
+    // 1. Gravedad y Salto
+    if (isJumping.current) {
+      charY.current += velY.current;
+      velY.current += gravedad;
+      if (charY.current <= 0) {
+        charY.current = 0;
+        isJumping.current = false;
+        velY.current = 0;
       }
-      return prev;
-    });
-  };
-
-  return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-      <h2 style={{ color: '#3b82f6', letterSpacing: '4px', textShadow: '0 0 10px #3b82f6', marginBottom: '20px' }}>DEFENSA DEL TEMPLO</h2>
-      
-      <div style={{ position: 'relative', height: '400px', backgroundColor: '#09090b', border: '2px solid #3f3f46', overflow: 'hidden' }}>
-        
-        {/* Núcleo a defender */}
-        <div style={{ position: 'absolute', bottom: '-20px', left: '50%', transform: 'translateX(-50%)', width: '100px', height: '100px', backgroundColor: '#3b82f6', borderRadius: '50%', filter: 'blur(20px)', opacity: 0.5 }} />
-
-        {/* Enemigos bajando */}
-        {enemigos.map(e => {
-          // Highlight de las letras que ya tipeó correctamente (si coincide el inicio)
-          const coincideInicio = e.palabra.startsWith(input) && input.length > 0;
-
-          return (
-            <div key={e.id} style={{ position: 'absolute', top: `${e.y}%`, left: '50%', transform: 'translateX(-50%)', backgroundColor: '#18181b', border: '1px solid #ef4444', padding: '5px 10px', color: '#fff', fontWeight: 'bold', letterSpacing: '2px', boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
-              {coincideInicio ? (
-                <>
-                  <span style={{ color: '#3b82f6' }}>{input}</span>
-                  <span>{e.palabra.slice(input.length)}</span>
-                </>
-              ) : (
-                e.palabra
-              )}
-            </div>
-          );
-        })}
-
-        {estado === 'gameover' && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <h2 style={{ color: '#ef4444', fontSize: '30px', margin: 0 }}>TEMPLO DESTRUIDO</h2>
-            <p style={{ color: '#fff' }}>HORDAS ELIMINADAS: {score}</p>
-            <button onClick={()=>{setEnemigos([]); setScore(0); setInput(''); setEstado('jugando');}} style={{ marginTop: '20px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '10px 20px', cursor: 'pointer', fontWeight: 'bold' }}>REINTENTAR</button>
-          </div>
-        )}
-      </div>
-
-      <input 
-        type="text" 
-        value={input} 
-        onChange={handleTipeo} 
-        disabled={estado !== 'jugando'}
-        autoFocus
-        placeholder="TIPEAR PARA DESTRUIR..."
-        style={{ width: '100%', padding: '20px', marginTop: '20px', backgroundColor: '#18181b', border: '2px solid #3b82f6', color: '#fff', fontSize: '24px', textAlign: 'center', outline: 'none', letterSpacing: '4px' }}
-      />
-    </div>
-  );
-}
-
-// ==========================================
-// 3. ÉXODO: MODO HARDCORE (Roguelike / Supervivencia)
-// ==========================================
-function ExodoHardcore({ onGanar }) {
-  const [dia, setDia] = useState(1);
-  const [stats, setStats] = useState({ agua: 100, mana: 100, moral: 100 });
-  const [evento, setEvento] = useState(null);
-  const [estado, setEstado] = useState('jugando'); // jugando, muerto, victoria
-
-  const EVENTOS = [
-    { txt: "Tormenta de Arena masiva. ¿Qué protegés?", 
-      opA: { txt: "Proteger Agua", ef: {agua:0, mana:-30, moral:-10} },
-      opB: { txt: "Proteger Tiendas (Moral)", ef: {agua:-20, mana:-20, moral:0} } },
-    { txt: "Encuentran un oasis pequeño pero dudoso.", 
-      opA: { txt: "Beber (Riesgo de enfermedad)", ef: {agua:+30, mana:0, moral:-20} },
-      opB: { txt: "Ignorar y seguir", ef: {agua:-20, mana:0, moral:+10} } },
-    { txt: "El pueblo se queja de comer solo Maná.", 
-      opA: { txt: "Ignorarlos (Cae moral)", ef: {agua:-10, mana:0, moral:-30} },
-      opB: { txt: "Dar ración doble", ef: {agua:0, mana:-40, moral:+20} } }
-  ];
-
-  useEffect(() => {
-    generarEvento();
-  }, []);
-
-  const generarEvento = () => {
-    setEvento(EVENTOS[Math.floor(Math.random() * EVENTOS.length)]);
-  };
-
-  const elegir = (opcion) => {
-    AudioEngine.click();
-    
-    // Consumo diario fijo
-    const consumoDiario = { agua: -10, mana: -10, moral: -5 };
-
-    const nuevosStats = {
-      agua: stats.agua + opcion.ef.agua + consumoDiario.agua,
-      mana: stats.mana + opcion.ef.mana + consumoDiario.mana,
-      moral: stats.moral + opcion.ef.moral + consumoDiario.moral
-    };
-
-    if (nuevosStats.agua <= 0 || nuevosStats.mana <= 0 || nuevosStats.moral <= 0) {
-      setEstado('muerto');
-      AudioEngine.lose();
-      return;
     }
 
-    if (dia + 1 > 40) {
-      setEstado('victoria');
-      AudioEngine.win();
-      onGanar(500); // Premio gigante por ganar el hardcore
-      return;
+    // 2. Generar Obstáculos
+    if (Math.random() < 0.02 * velocidadJuego.current && (obstaculos.current.length === 0 || obstaculos.current[obstaculos.current.length-1].x < 60)) {
+      const tipo = Math.random() > 0.5 ? 'pincho' : 'pozo';
+      obstaculos.current.push({ x: 100, tipo, id: Date.now() });
     }
 
-    setStats(nuevosStats);
-    setDia(d => d + 1);
-    generarEvento();
-  };
+    // 3. Mover Obstáculos y Colisiones
+    let hit = false;
+    for (let i = 0; i < obstaculos.current.length; i++) {
+      let obs = obstaculos.current[i];
+      obs.x -= velocidadJuego.current; // Mover a la izquierda
 
-  if (estado === 'muerto') return <div style={{textAlign: 'center', padding: '50px', color: '#ef4444'}}><h2>EL PUEBLO PERECIÓ EN EL DÍA {dia}</h2><button onClick={()=>{setStats({agua:100, mana:100, moral:100}); setDia(1); setEstado('jugando'); generarEvento();}}>Iniciar nueva expedición</button></div>;
-  if (estado === 'victoria') return <div style={{textAlign: 'center', padding: '50px', color: '#10b981'}}><h2>¡LLEGARON A LA TIERRA PROMETIDA!</h2></div>;
-
-  return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
-      <h2 style={{ color: '#ef4444', letterSpacing: '4px', textShadow: '0 0 10px #ef4444', marginBottom: '10px' }}>ÉXODO: SUPERVIVENCIA</h2>
-      <p style={{ color: '#a1a1aa', marginBottom: '30px' }}>DÍA {dia} / 40</p>
-
-      {/* Stats UI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '30px' }}>
-        <div style={{ backgroundColor: '#18181b', border: '1px solid #3b82f6', padding: '15px', color: '#3b82f6', fontWeight: 'bold' }}>AGUA<br/>{stats.agua}</div>
-        <div style={{ backgroundColor: '#18181b', border: '1px solid #facc15', padding: '15px', color: '#facc15', fontWeight: 'bold' }}>MANÁ<br/>{stats.mana}</div>
-        <div style={{ backgroundColor: '#18181b', border: '1px solid #a855f7', padding: '15px', color: '#a855f7', fontWeight: 'bold' }}>MORAL<br/>{stats.moral}</div>
-      </div>
-
-      {/* Terminal de Evento */}
-      {evento && (
-        <div style={{ backgroundColor: '#000', border: '2px dashed #ef4444', padding: '30px', marginBottom: '20px', minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#fff', fontSize: '18px', letterSpacing: '1px' }}>{evento.txt}</p>
-        </div>
-      )}
-
-      {/* Decisiones */}
-      {evento && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button onClick={() => elegir(evento.opA)} style={{ backgroundColor: '#18181b', color: '#fff', border: '1px solid #52525b', padding: '20px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '2px', transition: 'border-color 0.2s' }} onMouseOver={e=>e.currentTarget.style.borderColor='#ef4444'} onMouseOut={e=>e.currentTarget.style.borderColor='#52525b'}>{evento.opA.txt}</button>
-          <button onClick={() => elegir(evento.opB)} style={{ backgroundColor: '#18181b', color: '#fff', border: '1px solid #52525b', padding: '20px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '2px', transition: 'border-color 0.2s' }} onMouseOver={e=>e.currentTarget.style.borderColor='#ef4444'} onMouseOut={e=>e.currentTarget.style.borderColor='#52525b'}>{evento.opB.txt}</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ==========================================
-// 4. ARENA CyM (Trivia 1v1 con Tiempo Letal)
-// ==========================================
-function ArenaCyM({ onGanar }) {
-  const PREGUNTAS = [
-    { q: "¿Quién escribió la mayor parte de los Salmos?", a: "DAVID", b: "SALOMON", ans: "a" },
-    { q: "¿En qué isla fue exiliado Juan?", a: "CHIPRE", b: "PATMOS", ans: "b" },
-    { q: "¿Quién era el padre de Juan el Bautista?", a: "ZACARIAS", b: "ZEBEDEO", ans: "a" },
-    { q: "¿Qué ciudad destruyó Dios con fuego y azufre?", a: "NINIVE", b: "SODOMA", ans: "b" }
-  ];
-
-  const [preguntaActiva, setPreguntaActiva] = useState(PREGUNTAS[0]);
-  const [vidaJugador, setVidaJugador] = useState(100);
-  const [vidaRival, setVidaRival] = useState(100);
-  const [tiempo, setTiempo] = useState(5); // 5 SEGUNDOS LETALES
-  const [estado, setEstado] = useState('jugando');
-
-  useEffect(() => {
-    if (estado !== 'jugando') return;
-    const interval = setInterval(() => {
-      setTiempo(t => {
-        if (t - 1 <= 0) {
-          // Se acabó el tiempo = Castigo al jugador
-          AudioEngine.hit();
-          setVidaJugador(v => {
-            if (v - 20 <= 0) setEstado('perdido');
-            return v - 20;
-          });
-          siguientePregunta();
-          return 5;
+      // Colisión (Personaje fijo en x=10, ancho=10)
+      if (obs.x > 5 && obs.x < 15) {
+        if (obs.tipo === 'pincho' && charY.current < 20) {
+          hit = true; // Tocó el pincho
         }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+        if (obs.tipo === 'pozo' && charY.current === 0) {
+          hit = true; // Cayó al pozo
+        }
+      }
+    }
+
+    if (hit) {
+      gameover();
+      return;
+    }
+
+    // Limpiar obstáculos que ya pasaron
+    obstaculos.current = obstaculos.current.filter(o => o.x > -10);
+
+    // Subir score y velocidad
+    setScore(s => {
+      const newScore = s + 1;
+      if (newScore % 500 === 0) {
+        velocidadJuego.current += 0.2;
+        onGanar(10);
+      }
+      return newScore;
+    });
+
+    // 4. Renderizado Manual (Mejora drástica de FPS)
+    if (charRefDOM.current) {
+      charRefDOM.current.style.bottom = `${charY.current}%`;
+    }
+    
+    if (obsContainerRef.current) {
+      obsContainerRef.current.innerHTML = obstaculos.current.map(obs => {
+        if (obs.tipo === 'pincho') {
+          return `<div style="position:absolute; left:${obs.x}%; bottom:0; width:30px; height:40px; background-color:#ef4444; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); box-shadow: 0 0 20px #ef4444;"></div>`;
+        } else {
+          // Pozo (espacio negro en el piso neón)
+          return `<div style="position:absolute; left:${obs.x}%; bottom:-10px; width:60px; height:20px; background-color:#09090b; border-left: 2px solid #10b981; border-right: 2px solid #10b981;"></div>`;
+        }
+      }).join('');
+    }
+
+    frameRef.current = requestAnimationFrame(loop);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') saltar(); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); cancelAnimationFrame(frameRef.current); };
   }, [estado]);
 
-  const siguientePregunta = () => {
-    setPreguntaActiva(PREGUNTAS[Math.floor(Math.random() * PREGUNTAS.length)]);
-    setTiempo(5);
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }} onClick={saltar}>
+      <h2 style={{ color: '#10b981', letterSpacing: '4px', textShadow: '0 0 10px #10b981', marginBottom: '20px' }}>EL PEREGRINO</h2>
+      
+      <div style={{ position: 'relative', height: '400px', backgroundColor: '#000', border: '2px solid #27272a', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 0 30px rgba(16,185,129,0.1)' }}>
+        
+        {/* Fondo Parallax animado por CSS */}
+        <div style={{ position: 'absolute', top: '10%', left: 0, width: '200%', height: '100%', backgroundImage: 'linear-gradient(90deg, transparent 50%, rgba(16,185,129,0.05) 50%)', backgroundSize: '100px 100%', animation: estado === 'jugando' ? 'scrollBg 2s linear infinite' : 'none', zIndex: 1 }} />
+        <style>{`@keyframes scrollBg { from { transform: translateX(0); } to { transform: translateX(-100px); } }`}</style>
+
+        {/* Piso de Energía */}
+        <div style={{ position: 'absolute', bottom: '0', left: 0, width: '100%', height: '10px', backgroundColor: '#10b981', boxShadow: '0 0 20px #10b981', zIndex: 5 }} />
+
+        {/* Personaje */}
+        <div ref={charRefDOM} style={{ position: 'absolute', left: '10%', bottom: '0%', width: '40px', height: '50px', zIndex: 10, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', transition: 'bottom 0.05s linear' }}>
+           <span style={{ fontSize: '40px', filter: 'drop-shadow(0 0 10px #34d399)' }}>🏃🏽‍♂️</span>
+        </div>
+
+        {/* Contenedor de Obstáculos */}
+        <div ref={obsContainerRef} style={{ position: 'absolute', inset: 0, zIndex: 6 }} />
+
+        {/* HUD Score */}
+        <div style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', fontSize: '24px', fontWeight: '900', zIndex: 20 }}>
+          DISTANCIA: {Math.floor(score / 10)}m
+        </div>
+
+        {/* Pantallas de Inicio y Fin */}
+        {estado === 'inicio' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '20px' }}>Tocá la pantalla o Espacio para saltar.</h3>
+            <button onClick={(e) => { e.stopPropagation(); iniciarJuego(); }} style={{ padding: '15px 40px', backgroundColor: '#10b981', color: '#000', fontSize: '20px', fontWeight: 'black', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 0 20px #10b981' }}>INICIAR CARRERA</button>
+          </div>
+        )}
+
+        {estado === 'gameover' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(239,68,68,0.3)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+            <h2 style={{ color: '#ef4444', fontSize: '50px', margin: 0, textShadow: '0 0 20px #ef4444' }}>CAÍSTE</h2>
+            <p style={{ color: '#fff', fontSize: '20px' }}>Llegaste a {Math.floor(score / 10)} metros.</p>
+            <button onClick={(e) => { e.stopPropagation(); iniciarJuego(); }} style={{ padding: '15px 40px', marginTop: '20px', backgroundColor: '#ef4444', color: '#fff', fontSize: '20px', fontWeight: 'black', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 0 20px #ef4444' }}>REINTENTAR</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 2. EL CENTINELA (Shooter / Space Invaders)
+// ==========================================
+function ElCentinela({ onGanar }) {
+  const [estado, setEstado] = useState('inicio'); // inicio, jugando, gameover
+  const [score, setScore] = useState(0);
+
+  // Posiciones
+  const playerX = useRef(50);
+  const bullets = useRef([]);
+  const enemies = useRef([]);
+  const frameRef = useRef();
+
+  // Controles Suaves
+  const keys = useRef({ ArrowLeft: false, ArrowRight: false, a: false, d: false });
+  const isShooting = useRef(false);
+
+  // DOM Refs
+  const playerRefDOM = useRef(null);
+  const objectsRefDOM = useRef(null);
+
+  const iniciarJuego = () => {
+    setEstado('jugando');
+    setScore(0);
+    playerX.current = 50;
+    bullets.current = [];
+    enemies.current = [];
+    loop();
   };
 
-  const responder = (opcion) => {
+  const disparar = () => {
+    if (estado !== 'jugando' || isShooting.current) return;
+    isShooting.current = true;
+    AudioEngine.shoot();
+    bullets.current.push({ x: playerX.current, y: 85, id: Date.now() });
+    
+    // Cadencia de disparo
+    setTimeout(() => { isShooting.current = false; }, 200); 
+  };
+
+  const loop = () => {
     if (estado !== 'jugando') return;
 
-    if (opcion === preguntaActiva.ans) {
-      AudioEngine.laser();
-      // Daño al rival basado en qué tan rápido respondió
-      const dano = tiempo * 5; 
-      setVidaRival(v => {
-        const nv = v - dano;
-        if (nv <= 0) { setEstado('ganado'); AudioEngine.win(); onGanar(100); }
-        return nv;
-      });
-    } else {
-      AudioEngine.hit();
-      // Castigo por error
-      setVidaJugador(v => {
-        const nv = v - 20;
-        if (nv <= 0) { setEstado('perdido'); AudioEngine.lose(); }
-        return nv;
-      });
+    // 1. Mover Jugador
+    if (keys.current.ArrowLeft || keys.current.a) playerX.current = Math.max(5, playerX.current - 1.5);
+    if (keys.current.ArrowRight || keys.current.d) playerX.current = Math.min(95, playerX.current + 1.5);
+
+    // 2. Generar Enemigos (Sombras)
+    if (Math.random() < 0.03 + (score * 0.0005)) { // Aumenta dificultad
+      enemies.current.push({ x: Math.random() * 90 + 5, y: -10, hp: 1, id: Date.now() });
     }
-    siguientePregunta();
+
+    // 3. Mover Balas (Lasers)
+    for (let b of bullets.current) {
+      b.y -= 3; // Sube rápido
+    }
+    bullets.current = bullets.current.filter(b => b.y > -10);
+
+    // 4. Mover Enemigos y Detectar Colisión
+    let hitPiso = false;
+    for (let i = 0; i < enemies.current.length; i++) {
+      let e = enemies.current[i];
+      e.y += 0.5 + (score * 0.01); // Caen más rápido con el tiempo
+
+      // Colisión Enemigo <-> Bala
+      for (let j = 0; j < bullets.current.length; j++) {
+        let b = bullets.current[j];
+        if (Math.abs(b.x - e.x) < 5 && Math.abs(b.y - e.y) < 5) {
+          // Destruido!
+          AudioEngine.hit();
+          e.hp -= 1;
+          b.y = -100; // Eliminar bala
+          setScore(s => {
+            const ns = s + 10;
+            if (ns % 200 === 0) onGanar(20);
+            return ns;
+          });
+        }
+      }
+
+      if (e.y > 90 && e.hp > 0) {
+        hitPiso = true;
+      }
+    }
+
+    // Limpiar muertos
+    enemies.current = enemies.current.filter(e => e.hp > 0);
+
+    if (hitPiso) {
+      cancelAnimationFrame(frameRef.current);
+      setEstado('gameover');
+      AudioEngine.explosion();
+      return;
+    }
+
+    // 5. Renderizado Manual
+    if (playerRefDOM.current) {
+      playerRefDOM.current.style.left = `${playerX.current}%`;
+    }
+    
+    if (objectsRefDOM.current) {
+      let html = '';
+      // Dibujar Balas
+      bullets.current.forEach(b => {
+        html += `<div style="position:absolute; left:${b.x}%; top:${b.y}%; width:4px; height:20px; background-color:#38bdf8; box-shadow:0 0 10px #38bdf8; transform:translate(-50%, -50%); border-radius:5px;"></div>`;
+      });
+      // Dibujar Enemigos
+      enemies.current.forEach(e => {
+        html += `<div style="position:absolute; left:${e.x}%; top:${e.y}%; transform:translate(-50%, -50%); font-size:30px; filter:drop-shadow(0 0 5px #ef4444);">👾</div>`;
+      });
+      objectsRefDOM.current.innerHTML = html;
+    }
+
+    frameRef.current = requestAnimationFrame(loop);
   };
 
-  if (estado === 'ganado') return <div style={{textAlign: 'center', padding: '50px', color: '#a855f7'}}><h2>¡RIVAL DESTRUIDO!</h2></div>;
-  if (estado === 'perdido') return <div style={{textAlign: 'center', padding: '50px', color: '#ef4444'}}><h2>CAÍSTE EN LA ARENA.</h2><button onClick={()=>{setVidaJugador(100);setVidaRival(100);setEstado('jugando');setTiempo(5);}}>Reintentar</button></div>;
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (keys.current.hasOwnProperty(e.key)) keys.current[e.key] = true;
+      if (e.code === 'Space') disparar();
+    };
+    const handleKeyUp = (e) => {
+      if (keys.current.hasOwnProperty(e.key)) keys.current[e.key] = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      cancelAnimationFrame(frameRef.current);
+    };
+  }, [estado]);
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-      {/* BARRAS DE VIDA (Estilo Pelea) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center' }}>
-        <div style={{ width: '40%' }}>
-          <div style={{ color: '#10b981', fontWeight: '900', marginBottom: '5px' }}>VOS ({vidaJugador}%)</div>
-          <div style={{ height: '20px', backgroundColor: '#18181b', border: '2px solid #10b981', transform: 'skewX(-15deg)' }}>
-            <div style={{ height: '100%', width: `${Math.max(0, vidaJugador)}%`, backgroundColor: '#10b981', transition: 'width 0.2s' }} />
-          </div>
+    <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+      <h2 style={{ color: '#ef4444', letterSpacing: '4px', textShadow: '0 0 10px #ef4444', marginBottom: '20px' }}>EL CENTINELA</h2>
+      
+      <div style={{ position: 'relative', height: '500px', backgroundColor: '#09090b', border: '2px solid #27272a', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 0 30px rgba(239,68,68,0.1)' }}>
+        
+        {/* Jugador */}
+        <div ref={playerRefDOM} style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
+          <span style={{ fontSize: '40px', filter: 'drop-shadow(0 0 10px #38bdf8)' }}>🚀</span>
         </div>
-        <div style={{ fontSize: '40px', fontWeight: '900', color: '#ef4444', textShadow: '0 0 20px #ef4444' }}>VS</div>
-        <div style={{ width: '40%', textAlign: 'right' }}>
-          <div style={{ color: '#ef4444', fontWeight: '900', marginBottom: '5px' }}>IA RIVAL ({vidaRival}%)</div>
-          <div style={{ height: '20px', backgroundColor: '#18181b', border: '2px solid #ef4444', transform: 'skewX(-15deg)', display: 'flex', justifyContent: 'flex-end' }}>
-            <div style={{ height: '100%', width: `${Math.max(0, vidaRival)}%`, backgroundColor: '#ef4444', transition: 'width 0.2s' }} />
-          </div>
+
+        {/* Contenedor de Proyectiles y Enemigos */}
+        <div ref={objectsRefDOM} style={{ position: 'absolute', inset: 0, zIndex: 5 }} />
+
+        {/* HUD Score */}
+        <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#fff', fontSize: '20px', fontWeight: '900', zIndex: 20 }}>
+          SOMBRAS DESTRUIDAS: {score}
         </div>
+
+        {/* Pantallas */}
+        {estado === 'inicio' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h3 style={{ color: '#fff', fontSize: '20px', marginBottom: '10px' }}>Mové con Flechas o A/D. Dispará con Espacio.</h3>
+            <p style={{ color: '#ef4444', marginBottom: '30px' }}>No dejes que toquen el piso.</p>
+            <button onClick={iniciarJuego} style={{ padding: '15px 40px', backgroundColor: '#ef4444', color: '#fff', fontSize: '20px', fontWeight: 'black', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 0 20px #ef4444' }}>INICIAR DEFENSA</button>
+          </div>
+        )}
+
+        {estado === 'gameover' && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(239,68,68,0.2)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+            <h2 style={{ color: '#ef4444', fontSize: '50px', margin: 0, textShadow: '0 0 20px #ef4444' }}>ESCUDO ROTO</h2>
+            <p style={{ color: '#fff', fontSize: '24px' }}>Puntaje Final: {score}</p>
+            <button onClick={iniciarJuego} style={{ padding: '15px 40px', marginTop: '20px', backgroundColor: '#ef4444', color: '#fff', fontSize: '20px', fontWeight: 'black', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 0 20px #ef4444' }}>REINTENTAR</button>
+          </div>
+        )}
       </div>
 
-      {/* RELOJ LETAL */}
-      <div style={{ textAlign: 'center', fontSize: '60px', fontWeight: '900', color: tiempo <= 2 ? '#ef4444' : '#fff', marginBottom: '20px', textShadow: tiempo <= 2 ? '0 0 20px #ef4444' : 'none' }}>
-        00:0{tiempo}
-      </div>
-
-      {/* PREGUNTA Y RESPUESTAS */}
-      <div style={{ backgroundColor: '#18181b', padding: '40px', border: '2px solid #a855f7', textAlign: 'center', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '24px', margin: 0 }}>{preguntaActiva.q}</h3>
-      </div>
-
-      <div style={{ display: 'flex', gap: '20px' }}>
-        <button onClick={() => responder('a')} style={{ flex: 1, backgroundColor: '#09090b', color: '#a855f7', border: '2px solid #a855f7', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.backgroundColor='#a855f7'} onMouseOut={e=>e.currentTarget.style.backgroundColor='#09090b'}>{preguntaActiva.a}</button>
-        <button onClick={() => responder('b')} style={{ flex: 1, backgroundColor: '#09090b', color: '#a855f7', border: '2px solid #a855f7', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.backgroundColor='#a855f7'} onMouseOut={e=>e.currentTarget.style.backgroundColor='#09090b'}>{preguntaActiva.b}</button>
+      {/* Botones táctiles para jugar en Celular */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
+        <button 
+          onPointerDown={() => keys.current.ArrowLeft = true} 
+          onPointerUp={() => keys.current.ArrowLeft = false} 
+          onPointerLeave={() => keys.current.ArrowLeft = false} 
+          style={{ width: '80px', height: '60px', backgroundColor: '#27272a', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '24px' }}>⬅</button>
+        
+        <button 
+          onPointerDown={disparar} 
+          style={{ flex: 1, height: '60px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '8px', color: '#000', fontWeight: 'black', fontSize: '20px', textTransform: 'uppercase', boxShadow: '0 0 15px #38bdf8' }}>FUEGO</button>
+        
+        <button 
+          onPointerDown={() => keys.current.ArrowRight = true} 
+          onPointerUp={() => keys.current.ArrowRight = false} 
+          onPointerLeave={() => keys.current.ArrowRight = false}
+          style={{ width: '80px', height: '60px', backgroundColor: '#27272a', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '24px' }}>➡</button>
       </div>
     </div>
   );
