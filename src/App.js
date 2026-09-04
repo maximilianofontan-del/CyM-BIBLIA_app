@@ -5,7 +5,7 @@ import {
   Loader2, LogOut, LogIn, Gamepad2, Award, Zap, Users, Edit2, Share2, UserPlus,
   GraduationCap, Calendar, Clock, PlusCircle, CheckCircle, ShieldCheck, DollarSign,
   Upload, Download, Image as ImageIcon, Shield, Search, Lock, Trash2, Check,
-  Swords, ShoppingCart, Trophy, Globe
+  Swords, ShoppingCart, Trophy, Globe, Target
 } from 'lucide-react';
 import ModuloAdolescentes from './ModuloAdolescentes';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -1178,6 +1178,11 @@ function AppMain() {
           
           <button onClick={() => setVistaActual('trivia')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-blue-600 text-white shadow-md hover:scale-105 transition-transform"><Gamepad2 size={14} /> <span className="hidden lg:inline">Trivia</span></button>
           <button onClick={() => setVistaActual('juegos')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-orange-500 text-white shadow-md hover:scale-105 transition-transform"><Sparkles size={14} /> <span className="hidden lg:inline">CyM Kids</span></button>
+          
+          <button onClick={() => setVistaActual('teens')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-purple-600 text-white shadow-md hover:scale-105 transition-transform">
+            <Target size={14} /> <span className="hidden lg:inline">CyM Teens</span>
+          </button>
+
           <button onClick={() => setVistaActual('duelo')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-purple-600 text-white shadow-md hover:scale-105 transition-transform"><Swords size={14} /> <span className="hidden lg:inline">Duelos</span></button>
           <button onClick={() => setVistaActual('clanes')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden lg:inline">Clanes</span></button>
           <button onClick={() => setVistaActual('tienda')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-pink-600 text-white shadow-md hover:scale-105 transition-transform"><ShoppingCart size={14} /> <span className="hidden lg:inline">Tienda</span></button>
@@ -1755,6 +1760,8 @@ function AppMain() {
         {/* TRIVIA Y CLUB Y JUEGOS KIDS */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
         {vistaActual === 'juegos' && <JuegosModule currentUser={currentUser} db={db} />}
+        
+        {vistaActual === 'teens' && <ModuloAdolescentes currentUser={currentUser} onVolver={() => setVistaActual('home')} />}
         
         {vistaActual === 'club' && (
           <ModuloClub 
