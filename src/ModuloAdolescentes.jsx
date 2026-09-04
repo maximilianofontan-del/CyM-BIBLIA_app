@@ -91,10 +91,10 @@ function GameCard({ title, desc, icon, color, onClick }) {
 // 1. EL PEREGRINO (Endless Runner / Saltos)
 // ==========================================
 function ElPeregrino({ onGanar }) {
-  const [estado, setEstado] = useState('inicio'); // inicio, jugando, gameover
+  const [estado, setEstado] = useState('inicio');
   const [score, setScore] = useState(0);
 
-  // Físicas
+  const isPlaying = useRef(false);
   const charY = useRef(0);
   const velY = useRef(0);
   const gravedad = -1.2;
@@ -103,16 +103,14 @@ function ElPeregrino({ onGanar }) {
   const obstaculos = useRef([]);
   const frameRef = useRef();
   
-  // Elementos DOM para renderizado rápido sin re-render de React
   const charRefDOM = useRef(null);
   const obsContainerRef = useRef(null);
-
   const velocidadJuego = useRef(1);
 
   const saltar = () => {
-    if (estado !== 'jugando') return;
+    if (!isPlaying.current) return;
     if (!isJumping.current) {
-      velY.current = 18; // Fuerza de salto
+      velY.current = 18;
       isJumping.current = true;
       AudioEngine.jump();
     }
@@ -120,25 +118,28 @@ function ElPeregrino({ onGanar }) {
 
   const iniciarJuego = () => {
     setEstado('jugando');
+    isPlaying.current = true;
     setScore(0);
     charY.current = 0;
     velY.current = 0;
     isJumping.current = false;
     obstaculos.current = [];
-    velocidadJuego.current = 1.2; // Velocidad inicial
-    loop();
+    velocidadJuego.current = 1.2;
+    
+    cancelAnimationFrame(frameRef.current);
+    frameRef.current = requestAnimationFrame(loop);
   };
 
   const gameover = () => {
-    cancelAnimationFrame(frameRef.current);
+    isPlaying.current = false;
     setEstado('gameover');
+    cancelAnimationFrame(frameRef.current);
     AudioEngine.explosion();
   };
 
   const loop = () => {
-    if (estado !== 'jugando') return;
+    if (!isPlaying.current) return;
 
-    // 1. Gravedad y Salto
     if (isJumping.current) {
       charY.current += velY.current;
       velY.current += gravedad;
@@ -149,26 +150,19 @@ function ElPeregrino({ onGanar }) {
       }
     }
 
-    // 2. Generar Obstáculos
     if (Math.random() < 0.02 * velocidadJuego.current && (obstaculos.current.length === 0 || obstaculos.current[obstaculos.current.length-1].x < 60)) {
       const tipo = Math.random() > 0.5 ? 'pincho' : 'pozo';
       obstaculos.current.push({ x: 100, tipo, id: Date.now() });
     }
 
-    // 3. Mover Obstáculos y Colisiones
     let hit = false;
     for (let i = 0; i < obstaculos.current.length; i++) {
       let obs = obstaculos.current[i];
-      obs.x -= velocidadJuego.current; // Mover a la izquierda
+      obs.x -= velocidadJuego.current;
 
-      // Colisión (Personaje fijo en x=10, ancho=10)
       if (obs.x > 5 && obs.x < 15) {
-        if (obs.tipo === 'pincho' && charY.current < 20) {
-          hit = true; // Tocó el pincho
-        }
-        if (obs.tipo === 'pozo' && charY.current === 0) {
-          hit = true; // Cayó al pozo
-        }
+        if (obs.tipo === 'pincho' && charY.current < 20) hit = true;
+        if (obs.tipo === 'pozo' && charY.current === 0) hit = true;
       }
     }
 
@@ -177,10 +171,8 @@ function ElPeregrino({ onGanar }) {
       return;
     }
 
-    // Limpiar obstáculos que ya pasaron
     obstaculos.current = obstaculos.current.filter(o => o.x > -10);
 
-    // Subir score y velocidad
     setScore(s => {
       const newScore = s + 1;
       if (newScore % 500 === 0) {
@@ -190,7 +182,6 @@ function ElPeregrino({ onGanar }) {
       return newScore;
     });
 
-    // 4. Renderizado Manual (Mejora drástica de FPS)
     if (charRefDOM.current) {
       charRefDOM.current.style.bottom = `${charY.current}%`;
     }
@@ -200,7 +191,6 @@ function ElPeregrino({ onGanar }) {
         if (obs.tipo === 'pincho') {
           return `<div style="position:absolute; left:${obs.x}%; bottom:0; width:30px; height:40px; background-color:#ef4444; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); box-shadow: 0 0 20px #ef4444;"></div>`;
         } else {
-          // Pozo (espacio negro en el piso neón)
           return `<div style="position:absolute; left:${obs.x}%; bottom:-10px; width:60px; height:20px; background-color:#09090b; border-left: 2px solid #10b981; border-right: 2px solid #10b981;"></div>`;
         }
       }).join('');
@@ -213,7 +203,7 @@ function ElPeregrino({ onGanar }) {
     const handleKeyDown = (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') saltar(); };
     window.addEventListener('keydown', handleKeyDown);
     return () => { window.removeEventListener('keydown', handleKeyDown); cancelAnimationFrame(frameRef.current); };
-  }, [estado]);
+  }, []);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }} onClick={saltar}>
@@ -221,27 +211,21 @@ function ElPeregrino({ onGanar }) {
       
       <div style={{ position: 'relative', height: '400px', backgroundColor: '#000', border: '2px solid #27272a', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 0 30px rgba(16,185,129,0.1)' }}>
         
-        {/* Fondo Parallax animado por CSS */}
         <div style={{ position: 'absolute', top: '10%', left: 0, width: '200%', height: '100%', backgroundImage: 'linear-gradient(90deg, transparent 50%, rgba(16,185,129,0.05) 50%)', backgroundSize: '100px 100%', animation: estado === 'jugando' ? 'scrollBg 2s linear infinite' : 'none', zIndex: 1 }} />
         <style>{`@keyframes scrollBg { from { transform: translateX(0); } to { transform: translateX(-100px); } }`}</style>
 
-        {/* Piso de Energía */}
         <div style={{ position: 'absolute', bottom: '0', left: 0, width: '100%', height: '10px', backgroundColor: '#10b981', boxShadow: '0 0 20px #10b981', zIndex: 5 }} />
 
-        {/* Personaje */}
         <div ref={charRefDOM} style={{ position: 'absolute', left: '10%', bottom: '0%', width: '40px', height: '50px', zIndex: 10, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', transition: 'bottom 0.05s linear' }}>
            <span style={{ fontSize: '40px', filter: 'drop-shadow(0 0 10px #34d399)' }}>🏃🏽‍♂️</span>
         </div>
 
-        {/* Contenedor de Obstáculos */}
         <div ref={obsContainerRef} style={{ position: 'absolute', inset: 0, zIndex: 6 }} />
 
-        {/* HUD Score */}
         <div style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', fontSize: '24px', fontWeight: '900', zIndex: 20 }}>
           DISTANCIA: {Math.floor(score / 10)}m
         </div>
 
-        {/* Pantallas de Inicio y Fin */}
         {estado === 'inicio' && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '20px' }}>Tocá la pantalla o Espacio para saltar.</h3>
@@ -265,74 +249,68 @@ function ElPeregrino({ onGanar }) {
 // 2. EL CENTINELA (Shooter / Space Invaders)
 // ==========================================
 function ElCentinela({ onGanar }) {
-  const [estado, setEstado] = useState('inicio'); // inicio, jugando, gameover
+  const [estado, setEstado] = useState('inicio');
   const [score, setScore] = useState(0);
 
-  // Posiciones
+  const isPlaying = useRef(false);
   const playerX = useRef(50);
   const bullets = useRef([]);
   const enemies = useRef([]);
   const frameRef = useRef();
 
-  // Controles Suaves
   const keys = useRef({ ArrowLeft: false, ArrowRight: false, a: false, d: false });
   const isShooting = useRef(false);
 
-  // DOM Refs
   const playerRefDOM = useRef(null);
   const objectsRefDOM = useRef(null);
 
   const iniciarJuego = () => {
     setEstado('jugando');
+    isPlaying.current = true;
     setScore(0);
     playerX.current = 50;
     bullets.current = [];
     enemies.current = [];
-    loop();
+    
+    cancelAnimationFrame(frameRef.current);
+    frameRef.current = requestAnimationFrame(loop);
   };
 
   const disparar = () => {
-    if (estado !== 'jugando' || isShooting.current) return;
+    if (!isPlaying.current || isShooting.current) return;
     isShooting.current = true;
     AudioEngine.shoot();
     bullets.current.push({ x: playerX.current, y: 85, id: Date.now() });
     
-    // Cadencia de disparo
     setTimeout(() => { isShooting.current = false; }, 200); 
   };
 
   const loop = () => {
-    if (estado !== 'jugando') return;
+    if (!isPlaying.current) return;
 
-    // 1. Mover Jugador
     if (keys.current.ArrowLeft || keys.current.a) playerX.current = Math.max(5, playerX.current - 1.5);
     if (keys.current.ArrowRight || keys.current.d) playerX.current = Math.min(95, playerX.current + 1.5);
 
-    // 2. Generar Enemigos (Sombras)
-    if (Math.random() < 0.03 + (score * 0.0005)) { // Aumenta dificultad
+    if (Math.random() < 0.03 + (score * 0.0005)) { 
       enemies.current.push({ x: Math.random() * 90 + 5, y: -10, hp: 1, id: Date.now() });
     }
 
-    // 3. Mover Balas (Lasers)
     for (let b of bullets.current) {
-      b.y -= 3; // Sube rápido
+      b.y -= 3; 
     }
     bullets.current = bullets.current.filter(b => b.y > -10);
 
-    // 4. Mover Enemigos y Detectar Colisión
     let hitPiso = false;
     for (let i = 0; i < enemies.current.length; i++) {
       let e = enemies.current[i];
-      e.y += 0.5 + (score * 0.01); // Caen más rápido con el tiempo
+      e.y += 0.5 + (score * 0.01); 
 
-      // Colisión Enemigo <-> Bala
       for (let j = 0; j < bullets.current.length; j++) {
         let b = bullets.current[j];
         if (Math.abs(b.x - e.x) < 5 && Math.abs(b.y - e.y) < 5) {
-          // Destruido!
           AudioEngine.hit();
           e.hp -= 1;
-          b.y = -100; // Eliminar bala
+          b.y = -100; 
           setScore(s => {
             const ns = s + 10;
             if (ns % 200 === 0) onGanar(20);
@@ -346,28 +324,25 @@ function ElCentinela({ onGanar }) {
       }
     }
 
-    // Limpiar muertos
     enemies.current = enemies.current.filter(e => e.hp > 0);
 
     if (hitPiso) {
+      isPlaying.current = false;
       cancelAnimationFrame(frameRef.current);
       setEstado('gameover');
       AudioEngine.explosion();
       return;
     }
 
-    // 5. Renderizado Manual
     if (playerRefDOM.current) {
       playerRefDOM.current.style.left = `${playerX.current}%`;
     }
     
     if (objectsRefDOM.current) {
       let html = '';
-      // Dibujar Balas
       bullets.current.forEach(b => {
         html += `<div style="position:absolute; left:${b.x}%; top:${b.y}%; width:4px; height:20px; background-color:#38bdf8; box-shadow:0 0 10px #38bdf8; transform:translate(-50%, -50%); border-radius:5px;"></div>`;
       });
-      // Dibujar Enemigos
       enemies.current.forEach(e => {
         html += `<div style="position:absolute; left:${e.x}%; top:${e.y}%; transform:translate(-50%, -50%); font-size:30px; filter:drop-shadow(0 0 5px #ef4444);">👾</div>`;
       });
@@ -393,7 +368,7 @@ function ElCentinela({ onGanar }) {
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(frameRef.current);
     };
-  }, [estado]);
+  }, []);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
@@ -401,20 +376,16 @@ function ElCentinela({ onGanar }) {
       
       <div style={{ position: 'relative', height: '500px', backgroundColor: '#09090b', border: '2px solid #27272a', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 0 30px rgba(239,68,68,0.1)' }}>
         
-        {/* Jugador */}
         <div ref={playerRefDOM} style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
           <span style={{ fontSize: '40px', filter: 'drop-shadow(0 0 10px #38bdf8)' }}>🚀</span>
         </div>
 
-        {/* Contenedor de Proyectiles y Enemigos */}
         <div ref={objectsRefDOM} style={{ position: 'absolute', inset: 0, zIndex: 5 }} />
 
-        {/* HUD Score */}
         <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#fff', fontSize: '20px', fontWeight: '900', zIndex: 20 }}>
           SOMBRAS DESTRUIDAS: {score}
         </div>
 
-        {/* Pantallas */}
         {estado === 'inicio' && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <h3 style={{ color: '#fff', fontSize: '20px', marginBottom: '10px' }}>Mové con Flechas o A/D. Dispará con Espacio.</h3>
@@ -432,7 +403,6 @@ function ElCentinela({ onGanar }) {
         )}
       </div>
 
-      {/* Botones táctiles para jugar en Celular */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
         <button 
           onPointerDown={() => keys.current.ArrowLeft = true} 
