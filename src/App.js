@@ -37,6 +37,10 @@ import BibliaDHH from './data/DHH.json';
 import BibliaLBLA from './data/LBLA.json';
 import BibliaTLA from './data/TLA.json';
 
+// ============================================================================
+// 1. NÚCLEO DE INFRAESTRUCTURA Y PERSISTENCIA (SINGLETON FIREBASE)
+// ============================================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyD2ya4X0gJZg9eaD7sYs7DOz43cu4Q83lQ",
   authDomain: "cym-biblia.firebaseapp.com",
@@ -92,6 +96,10 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
   if (sub === 'DIAMANTE') return { colorAro: 'border-[#00a86b]', colorBadge: 'bg-[#00a86b] text-white', texto: 'SOCIO DIAMANTE' };
   return { colorAro: 'border-[#3b82f6]', colorBadge: 'bg-[#3b82f6] text-white', texto: 'MEMBRESÍA GRATIS' };
 };
+
+// ============================================================================
+// 2. PANEL DE GOBERNANZA Y CONTROL MAESTRO (SOLO PERFIL OWNER)
+// ============================================================================
 
 function ModuloAdmin() {
   const [listaUsuarios, setListaUsuarios] = useState([]);
@@ -330,11 +338,16 @@ function ModuloAdmin() {
   );
 }
 
+// ============================================================================
+// 3. ORQUESTADOR CENTRAL DE LA APLICACIÓN (CLEAN ARCHITECTURE)
+// ============================================================================
+
 function AppMain() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   const [vistaActual, setVistaActualState] = useState(new URLSearchParams(window.location.search).get('duelo') ? 'duelo' : 'home');
+  const [tabTiendaInicial, setTabTiendaInicial] = useState('socios');
   const [versionActual, setVersionActual] = useState('RVR1960');
   const [libroActual, setLibroActual] = useState('Génesis');
   const [capituloActual, setCapituloActual] = useState(1);
@@ -422,6 +435,37 @@ function AppMain() {
         ubicacionActual: nuevaVista,
         ultimaConexion: new Date().toISOString()
       }).catch(() => {});
+    }
+  };
+
+  /**
+   * Genialidad Arquitectónica (Single Responsibility & Dependency Inversion):
+   * Punto único de enlace financiero con la pasarela de Mercado Pago.
+   * Consume los identificadores de planes mensuales y anuales emitidos tanto
+   * por el Centro Unificado (ModuloTienda) como por el adaptador ModuloClub.
+   */
+  const handleIniciarSuscripcionSocio = async (planElegido) => {
+    try {
+      const res = await fetch('/api/crear-preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: planElegido,
+          userId: currentUser?.uid,
+          email: currentUser?.email
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        alert("No se pudo iniciar el proceso de cobro. Intentá de nuevo.");
+      }
+    } catch (err) {
+      console.error("Error al iniciar suscripción:", err);
+      alert("Error al conectar con la pasarela de pago.");
     }
   };
 
@@ -839,7 +883,9 @@ function AppMain() {
 
     if (rol !== 'OWNER' && sub !== 'DIAMANTE') {
       alert("🔒 Exclusivo para Socios DIAMANTE.");
-      setVistaActual('club'); return;
+      setTabTiendaInicial('socios');
+      setVistaActual('tienda');
+      return;
     }
 
     if (tipo === 'word') {
@@ -1032,7 +1078,11 @@ function AppMain() {
   };
 
   const toggleLecturaAudio = () => {
-    if (!isPremium) { setVistaActual('club'); return; }
+    if (!isPremium) {
+      setTabTiendaInicial('socios');
+      setVistaActual('tienda');
+      return;
+    }
     
     if (leyendoAudio) { 
       window.speechSynthesis.cancel(); 
@@ -1092,7 +1142,12 @@ function AppMain() {
   const handleAbrirDevocional = () => {
     const sub = currentUser?.suscripcion || 'GRATIS'; const rol = currentUser?.role || 'USER';
     if (rol === 'OWNER' || sub === 'ORO' || sub === 'DIAMANTE') { setMostrarModalDevocional(true); } 
-    else { if (window.confirm("🔒 Devocional exclusivo Oro/Diamante. ¿Ir al Club CyM?")) { setVistaActual('club'); } }
+    else {
+      if (window.confirm("🔒 Devocional exclusivo Socios Oro/Diamante. ¿Ir a ver las Membresías?")) {
+        setTabTiendaInicial('socios');
+        setVistaActual('tienda');
+      }
+    }
   };
 
   const compartirDevocional = () => {
@@ -1103,7 +1158,7 @@ function AppMain() {
   const enviarMensaje = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    if (!isOwner && (currentUser?.creditosIA || 0) <= 0) { setChatHistorial([...chatHistorial, { rol: 'asistente', texto: '⚠️ Consultas agotadas. Unite al Club CyM.' }]); setChatInput(''); return; }
+    if (!isOwner && (currentUser?.creditosIA || 0) <= 0) { setChatHistorial([...chatHistorial, { rol: 'asistente', texto: '⚠️ Consultas agotadas. Hacete Socio CyM.' }]); setChatInput(''); return; }
     const nuevoMensajeUsuario = { rol: 'usuario', texto: chatInput };
     const nuevoHistorial = [...chatHistorial, nuevoMensajeUsuario];
     setChatHistorial(nuevoHistorial); setChatInput('');
@@ -1173,9 +1228,9 @@ function AppMain() {
 
           <button onClick={() => setVistaActual('duelo')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-purple-600 text-white shadow-md hover:scale-105 transition-transform"><Swords size={14} /> <span className="hidden lg:inline">Duelos</span></button>
           <button onClick={() => setVistaActual('clanes')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-amber-600 text-white shadow-md hover:scale-105 transition-transform"><Shield size={14} /> <span className="hidden lg:inline">Clanes</span></button>
-          <button onClick={() => setVistaActual('tienda')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-pink-600 text-white shadow-md hover:scale-105 transition-transform"><ShoppingCart size={14} /> <span className="hidden lg:inline">Tienda</span></button>
+          <button onClick={() => { setTabTiendaInicial('diamantes'); setVistaActual('tienda'); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-pink-600 text-white shadow-md hover:scale-105 transition-transform"><ShoppingCart size={14} /> <span className="hidden lg:inline">Tienda</span></button>
 
-          <button onClick={() => setVistaActual('club')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden lg:inline">Club CyM</span></button>
+          <button onClick={() => { setTabTiendaInicial('socios'); setVistaActual('tienda'); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] md:text-xs uppercase bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md hover:scale-105 transition-transform"><Crown size={14} className="fill-black" /> <span className="hidden lg:inline">Club VIP</span></button>
           
           <button onClick={() => setMostrarAjustes(!mostrarAjustes)} className="p-2 rounded-full hover:bg-white/10 transition-colors ml-1"><Settings size={18} /></button>
           <button onClick={handleLogout} className="p-2 rounded-full text-red-500 hover:bg-red-500/20 transition-colors"><LogOut size={18} /></button>
@@ -1305,8 +1360,8 @@ function AppMain() {
                 <button onClick={() => setVistaActual('trivia')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Gamepad2 size={16}/> Jugar Trivia</button>
               </div>
               <div className="bg-gradient-to-br from-amber-950/60 to-black border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col justify-between">
-                <div><div className="flex items-center gap-2 mb-2"><Award size={24} className="text-amber-400" /><h4 className="text-amber-400 font-black text-sm uppercase tracking-widest">Club CyM</h4></div><p className="text-white font-bold text-lg mb-1">Apoyo al Ministerio</p><p className="text-slate-400 text-xs mb-4">Desbloqueá herramientas con IA apoyando mes a mes.</p></div>
-                <button onClick={() => setVistaActual('club')} className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Crown size={16} className="fill-black" /> Unirme / Donar</button>
+                <div><div className="flex items-center gap-2 mb-2"><Award size={24} className="text-amber-400" /><h4 className="text-amber-400 font-black text-sm uppercase tracking-widest">Club CyM VIP & Tienda</h4></div><p className="text-white font-bold text-lg mb-1">Impulsá el Ministerio</p><p className="text-slate-400 text-xs mb-4">Hacete Socio Anual o recargá Diamantes para expandir esta obra.</p></div>
+                <button onClick={() => { setTabTiendaInicial('socios'); setVistaActual('tienda'); }} className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Crown size={16} className="fill-black" /> Membresías & Diamantes</button>
               </div>
             </div>
 
@@ -1730,7 +1785,13 @@ function AppMain() {
           <ModuloClanes currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
         )}
         {vistaActual === 'tienda' && (
-          <ModuloTienda currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
+          <ModuloTienda
+            currentUser={currentUser}
+            db={db}
+            tabInicial={tabTiendaInicial}
+            onSuscribir={handleIniciarSuscripcionSocio}
+            onVolver={() => setVistaActual('home')}
+          />
         )}
 
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
@@ -1738,34 +1799,13 @@ function AppMain() {
         
         {vistaActual === 'teens' && <ModuloAdolescentes currentUser={currentUser} onVolver={() => setVistaActual('home')} />}
         
+        {/* ADAPTADOR FACADE RETROCOMPATIBLE CON CLUB CYM VIP */}
         {vistaActual === 'club' && (
           <ModuloClub 
-            tema={tema} 
+            currentUser={currentUser}
+            db={db}
             onVolver={() => setVistaActual('home')} 
-            onSuscribir={async (planElegido) => {
-              try {
-                const res = await fetch('/api/crear-preferencia', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    plan: planElegido,
-                    userId: currentUser?.uid,
-                    email: currentUser?.email
-                  })
-                });
-
-                const data = await res.json();
-
-                if (data.init_point) {
-                  window.location.href = data.init_point;
-                } else {
-                  alert("No se pudo iniciar el proceso de cobro. Intentá de nuevo.");
-                }
-              } catch (err) {
-                console.error("Error al iniciar suscripción:", err);
-                alert("Error al conectar con la pasarela de pago.");
-              }
-            }} 
+            onSuscribir={handleIniciarSuscripcionSocio} 
           />
         )}
       </main>
@@ -1781,7 +1821,7 @@ function AppMain() {
         </div>
       )}
 
-      {/* MOTOR GLOBAL DE CONVERSIÓN Y MEMBRESÍAS VIP (MULTI-PESTAÑA CON CONTENCIÓN CONTEXTUAL) */}
+      {/* MOTOR GLOBAL DE CONVERSIÓN MINISTERIAL (CLUB VIP ANUAL/MENSUAL + RECARGA DIAMANTES) */}
       <PromocionMembresiaVIP
         currentUser={currentUser}
         enTienda={vistaActual === 'tienda' || vistaActual === 'club'}
@@ -1793,7 +1833,14 @@ function AppMain() {
           mostrarModalDevocional ||
           mostrarInstalador
         }
-        onIrATienda={() => setVistaActual('tienda')}
+        onIrASocios={() => {
+          setTabTiendaInicial('socios');
+          setVistaActual('tienda');
+        }}
+        onIrADiamantes={() => {
+          setTabTiendaInicial('diamantes');
+          setVistaActual('tienda');
+        }}
       />
 
       {/* CARTEL INTELIGENTE DE DESCARGA / INSTALACIÓN */}
@@ -1830,6 +1877,10 @@ function AppMain() {
     </div>
   );
 }
+
+// ============================================================================
+// 4. PARACAÍDAS ESTRUCTURAL DE CONTENCIÓN DE FALLOS (ERROR BOUNDARY)
+// ============================================================================
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
