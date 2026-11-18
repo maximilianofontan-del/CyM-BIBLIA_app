@@ -4,22 +4,20 @@ import {
 } from 'firebase/firestore';
 import {
   Gem, Heart, Gift, ShoppingCart, ChevronLeft, Loader2, Sparkles, Send,
-  CreditCard, Crown, CheckCircle2, Flame, Calendar, Star, Shield, Diamond
+  CreditCard, Crown, CheckCircle2, Flame, Star, Shield, Diamond
 } from 'lucide-react';
 
 /**
  * FUENTE ÚNICA DE VERDAD (Single Source of Truth - Principio DRY):
- * Unifica los planes reales de Club CyM (Bronce, Plata, Oro, Diamante)
- * con modalidad Anual (2 meses bonificados) y Mensual, manteniendo intactos
- * los IDs ('BRONCE', 'PLATA', 'ORO', 'DIAMANTE') que consume /api/crear-preferencia.
+ * Tarifario oficial de producción calibrado con el backend de Mercado Pago.
+ * Los IDs ('BRONCE', 'PLATA', 'ORO', 'DIAMANTE') coinciden exactamente con
+ * los planes mensuales procesados por /api/crear-preferencia.
  */
 export const PLANES_CLUB_VIP = [
   {
     id: 'BRONCE',
     nombre: 'Socio Bronce',
     precioMensual: '$5.000',
-    precioAnual: '$50.000',
-    ahorroAnual: 'Ahorrás $10.000 (2 meses gratis)',
     colorBorde: 'border-[#cd7f32]',
     badgeBg: 'bg-[#cd7f32] text-white',
     icono: <Star className="text-[#cd7f32] w-11 h-11 mx-auto" />,
@@ -32,8 +30,6 @@ export const PLANES_CLUB_VIP = [
     id: 'PLATA',
     nombre: 'Socio Plata',
     precioMensual: '$10.000',
-    precioAnual: '$100.000',
-    ahorroAnual: 'Ahorrás $20.000 (2 meses gratis)',
     colorBorde: 'border-[#c0c0c0]',
     badgeBg: 'bg-[#c0c0c0] text-black',
     icono: <Shield className="text-[#c0c0c0] w-11 h-11 mx-auto" />,
@@ -48,8 +44,6 @@ export const PLANES_CLUB_VIP = [
     nombre: 'Socio Oro',
     popular: true,
     precioMensual: '$20.000',
-    precioAnual: '$200.000',
-    ahorroAnual: 'Ahorrás $40.000 (2 meses gratis)',
     colorBorde: 'border-[#ffd700]',
     badgeBg: 'bg-[#ffd700] text-black',
     icono: <Crown className="text-[#ffd700] w-11 h-11 mx-auto" />,
@@ -64,8 +58,6 @@ export const PLANES_CLUB_VIP = [
     id: 'DIAMANTE',
     nombre: 'Socio Diamante',
     precioMensual: '$30.000',
-    precioAnual: '$300.000',
-    ahorroAnual: 'Ahorrás $60.000 (2 meses gratis)',
     colorBorde: 'border-[#b9f2ff]',
     badgeBg: 'bg-[#00a86b] text-white',
     icono: <Diamond className="text-[#b9f2ff] w-11 h-11 mx-auto" />,
@@ -78,10 +70,10 @@ export const PLANES_CLUB_VIP = [
 ];
 
 export const PAQUETES_DIAMANTES = [
-  { id: 'pack_chico', cant: 10, precio: '$2.500 / mes', desc: 'Recarga Básica: Ideal para recuperar vidas y consultas IA.', link: 'https://mpago.la/2E4E6DY' },
-  { id: 'pack_medio', cant: 25, precio: '$5.500 / mes', desc: 'Recarga Plata: Pases de torneos VIP y ventajas en duelos.', link: 'https://mpago.la/1dfisBW' },
-  { id: 'pack_clan', cant: 50, precio: '$10.000 / mes', desc: 'Recarga Liderazgo: Potenciá tu Clan y multiplicá recompensas.', link: 'https://mpago.la/1nDtvCR', popular: true },
-  { id: 'pack_leyenda', cant: 120, precio: '$20.000 / mes', desc: 'Recarga Leyenda: Abundancia para bendecir a todo tu Clan.', link: 'https://mpago.la/1u88YWB' }
+  { id: 'pack_chico', cant: 10, precio: '$2.500', desc: 'Pack Inicial: Ideal para recuperar vidas y consultas IA.', link: 'https://mpago.la/2E4E6DY' },
+  { id: 'pack_medio', cant: 25, precio: '$5.500', desc: 'Pack Plata: Pases de torneos VIP y ventajas en duelos.', link: 'https://mpago.la/1dfisBW' },
+  { id: 'pack_clan', cant: 50, precio: '$10.000', desc: 'Pack Liderazgo: Potenciá tu Clan y multiplicá recompensas.', link: 'https://mpago.la/1nDtvCR', popular: true },
+  { id: 'pack_leyenda', cant: 120, precio: '$20.000', desc: 'Pack Leyenda: Abundancia para bendecir a todo tu Clan.', link: 'https://mpago.la/1u88YWB' }
 ];
 
 export default function ModuloTienda({
@@ -92,7 +84,6 @@ export default function ModuloTienda({
   tabInicial = 'socios'
 }) {
   const [vistaActual, setVistaActual] = useState(tabInicial);
-  const [cicloFacturacion, setCicloFacturacion] = useState('ANUAL'); // 'ANUAL' | 'MENSUAL'
   const [procesandoPlan, setProcesandoPlan] = useState(null);
   const [procesandoRegalo, setProcesandoRegalo] = useState(false);
 
@@ -128,15 +119,14 @@ export default function ModuloTienda({
     if (procesandoPlan) return;
     setProcesandoPlan(plan.id);
     try {
-      const planPayload = cicloFacturacion === 'ANUAL' ? `${plan.id}_ANUAL` : plan.id;
       if (typeof onSuscribir === 'function') {
-        await onSuscribir(planPayload);
+        await onSuscribir(plan.id);
       } else {
         const res = await fetch('/api/crear-preferencia', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            plan: planPayload,
+            plan: plan.id,
             userId: currentUser?.uid,
             email: currentUser?.email
           })
@@ -155,7 +145,7 @@ export default function ModuloTienda({
 
   const handleComprarDiamantes = (paquete) => {
     alert(
-      `Serás redirigido a Mercado Pago para activar tu recarga de ${paquete.cant} Diamantes mensuales y apoyar el crecimiento del Ministerio CyM.\n\nUna vez aprobado el pago, los diamantes se acreditarán en tu cuenta.`
+      `Serás redirigido a Mercado Pago para adquirir ${paquete.cant} Diamantes (${paquete.precio}) y apoyar el crecimiento del Ministerio CyM.\n\nUna vez aprobado el pago, los diamantes se acreditarán en tu cuenta.`
     );
     window.open(paquete.link, '_blank', 'noopener,noreferrer');
   };
@@ -318,7 +308,7 @@ export default function ModuloTienda({
       </div>
 
       {/* ====================================================================
-          CANAL 1: MEMBRESÍAS CLUB CYM VIP (ANUAL Y MENSUAL)
+          CANAL 1: MEMBRESÍAS MENSUALES CLUB CYM VIP
       ==================================================================== */}
       {vistaActual === 'socios' && (
         <div className="space-y-6 pb-6">
@@ -327,47 +317,16 @@ export default function ModuloTienda({
               <Flame size={14} /> Sembrá en el Reino • Club CyM VIP
             </p>
             <h3 className="text-lg md:text-xl font-black text-white">
-              Tu Membresía sostiene y hace crecer el Ministerio Crecer y Multiplicar
+              Tu Membresía Mensual sostiene y hace crecer el Ministerio Crecer y Multiplicar
             </h3>
             <p className="text-xs text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Elegí tu nivel de apoyo mensual o anual para que miles de personas sigan recibiendo la Palabra gratis mientras desbloqueás IA ilimitada, audios narrados y bosquejos exclusivos.
+              Elegí tu nivel de apoyo mensual para que miles de personas sigan recibiendo la Palabra gratis mientras desbloqueás IA ilimitada, audios narrados y bosquejos exclusivos.
             </p>
           </div>
 
-          {/* SELECTOR DE CICLO: ANUAL (2 MESES BONIFICADOS) VS MENSUAL */}
-          <div className="flex justify-center">
-            <div className="bg-black/80 border border-amber-500/40 p-1.5 rounded-2xl flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCicloFacturacion('ANUAL')}
-                className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                  cicloFacturacion === 'ANUAL'
-                    ? 'bg-emerald-500 text-black shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Calendar size={14} /> Plan Anual (2 Meses Gratis)
-              </button>
-              <button
-                type="button"
-                onClick={() => setCicloFacturacion('MENSUAL')}
-                className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-                  cicloFacturacion === 'MENSUAL'
-                    ? 'bg-amber-400 text-black shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Plan Mensual
-              </button>
-            </div>
-          </div>
-
-          {/* GRILLA DE LOS 4 PLANES OFICIALES DE CLUB CYM */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {PLANES_CLUB_VIP.map((plan) => {
               const esMiPlanActual = String(suscripcionEnVivo).toUpperCase() === plan.id;
-              const precioMostrar = cicloFacturacion === 'ANUAL' ? plan.precioAnual : plan.precioMensual;
-              const sufijoPeriodo = cicloFacturacion === 'ANUAL' ? '/año' : '/mes';
 
               return (
                 <div
@@ -389,13 +348,8 @@ export default function ModuloTienda({
                         {plan.nombre}
                       </span>
                       <p className="text-3xl font-black text-amber-400 mt-2">
-                        {precioMostrar} <span className="text-sm text-slate-400 font-normal">{sufijoPeriodo}</span>
+                        {plan.precioMensual} <span className="text-sm text-slate-400 font-normal">/mes</span>
                       </p>
-                      {cicloFacturacion === 'ANUAL' && (
-                        <p className="text-[10px] font-black text-emerald-400 uppercase mt-1">
-                          {plan.ahorroAnual}
-                        </p>
-                      )}
                     </div>
 
                     <ul className="space-y-2.5 mb-6 border-t border-white/10 pt-4">
@@ -412,20 +366,14 @@ export default function ModuloTienda({
                     type="button"
                     disabled={procesandoPlan === plan.id}
                     onClick={() => handleActivarMembresia(plan)}
-                    className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-amber-400 to-amber-600 text-black'
-                        : 'bg-gradient-to-r from-amber-500/90 to-amber-600/90 text-black'
-                    }`}
+                    className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-600 text-black"
                   >
                     {procesandoPlan === plan.id ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <Crown size={16} className="fill-black" />
                     )}
-                    {esMiPlanActual
-                      ? `Renovar ${plan.nombre}`
-                      : `Unirme (${cicloFacturacion === 'ANUAL' ? 'Anual' : 'Mensual'})`}
+                    {esMiPlanActual ? `Renovar ${plan.nombre}` : 'Unirme'}
                   </button>
                 </div>
               );

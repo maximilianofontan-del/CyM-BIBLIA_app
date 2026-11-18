@@ -17,15 +17,15 @@ const MENSAJES_INSPIRACIONALES = [
     badge: 'IMPULSÁ EL REINO • CRECER Y MULTIPLICAR',
     titulo: 'Ayudá a que el Ministerio llegue a miles de vidas más',
     subtitulo:
-      'Tu Membresía Anual de Socio sostiene esta plataforma gratuita para toda la comunidad y desbloquea IA sin límites, audios narrados, devocionales y bosquejos en Word/PDF.',
+      'Tu Membresía Mensual de Socio sostiene esta plataforma gratuita para toda la comunidad y desbloquea IA sin límites, audios narrados, devocionales y bosquejos en Word/PDF.',
     versiculo: '“El que siembra generosamente, generosamente también segará.” — 2 Corintios 9:6',
   },
   {
     id: 'liderazgo_espiritual',
-    badge: 'CLUB CYM VIP • PLAN ANUAL BONIFICADO',
+    badge: 'CLUB CYM VIP • MEMBRESÍA MENSUAL',
     titulo: 'Crecé en la Palabra y Multiplicá tu Liderazgo',
     subtitulo:
-      'Unite como Socio Bronce, Plata, Oro o Diamante con 2 meses bonificados en el plan anual, y equipá tu Clan con recargas de Diamantes.',
+      'Unite mes a mes como Socio Bronce, Plata, Oro o Diamante para expandir el evangelio, y equipá tu Clan con recargas de Diamantes.',
     versiculo: '“Y todo lo que hagáis, hacedlo de corazón, como para el Señor.” — Colosenses 3:23',
   },
   {
@@ -169,7 +169,7 @@ export default function PromocionMembresiaVIP({
               </p>
             </div>
 
-            {/* BLOQUE UNIFICADO: LAS DOS RECARGAS EN UN MISMO LUGAR */}
+            {/* BLOQUE UNIFICADO: MEMBRESÍA MENSUAL Y DIAMANTES EN UN MISMO LUGAR */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-amber-500/10 border border-amber-400/50 rounded-2xl p-3.5 flex flex-col justify-between">
                 <div>
@@ -178,7 +178,7 @@ export default function PromocionMembresiaVIP({
                       <Crown size={13} /> Membresía Club VIP
                     </span>
                     <span className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
-                      Anual / Mensual
+                      Mensual
                     </span>
                   </div>
                   <p className="text-xs font-black text-white">Desde $5.000 / mes</p>
@@ -195,7 +195,7 @@ export default function PromocionMembresiaVIP({
                       <Gem size={13} /> Diamantes 💎
                     </span>
                     <span className="bg-cyan-400 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
-                      Recargas
+                      Desde $2.500
                     </span>
                   </div>
                   <p className="text-xs font-black text-white">Packs de 10 a 120 💎</p>
@@ -215,7 +215,7 @@ export default function PromocionMembresiaVIP({
                 }}
                 className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#ffe066] via-[#f5c242] to-[#b38600] hover:brightness-110 text-black font-black text-xs uppercase tracking-widest shadow-[0_0_25px_rgba(245,194,66,0.4)] flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
               >
-                <Crown size={16} className="fill-black" /> Hacerme Socio Anual (Apoyar al Ministerio) <ArrowRight size={16} />
+                <Crown size={16} className="fill-black" /> Hacerme Socio VIP (Apoyar al Ministerio) <ArrowRight size={16} />
               </button>
 
               <button

@@ -38,7 +38,7 @@ import BibliaLBLA from './data/LBLA.json';
 import BibliaTLA from './data/TLA.json';
 
 // ============================================================================
-// 1. NÚCLEO DE INFRAESTRUCTURA Y PERSISTENCIA (SINGLETON FIREBASE)
+// 1. NÚCLEO DE INFRAESTRUCTURA Y PERSISTENCIA (PATRÓN SINGLETON FIREBASE)
 // ============================================================================
 
 const firebaseConfig = {
@@ -98,7 +98,7 @@ export const obtenerEstiloSuscripcion = (suscripcion, role) => {
 };
 
 // ============================================================================
-// 2. PANEL DE GOBERNANZA Y CONTROL MAESTRO (SOLO PERFIL OWNER)
+// 2. PANEL DE GOBERNANZA Y CONTROL MAESTRO (AISLAMIENTO DE PRIVILEGIOS OWNER)
 // ============================================================================
 
 function ModuloAdmin() {
@@ -441,8 +441,8 @@ function AppMain() {
   /**
    * Genialidad Arquitectónica (Single Responsibility & Dependency Inversion):
    * Punto único de enlace financiero con la pasarela de Mercado Pago.
-   * Consume los identificadores de planes mensuales y anuales emitidos tanto
-   * por el Centro Unificado (ModuloTienda) como por el adaptador ModuloClub.
+   * Consume los identificadores mensuales ('BRONCE', 'PLATA', 'ORO', 'DIAMANTE')
+   * emitidos tanto por ModuloTienda como por el adaptador ModuloClub.
    */
   const handleIniciarSuscripcionSocio = async (planElegido) => {
     try {
@@ -1360,7 +1360,7 @@ function AppMain() {
                 <button onClick={() => setVistaActual('trivia')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Gamepad2 size={16}/> Jugar Trivia</button>
               </div>
               <div className="bg-gradient-to-br from-amber-950/60 to-black border border-amber-500/40 p-6 rounded-3xl backdrop-blur-md flex flex-col justify-between">
-                <div><div className="flex items-center gap-2 mb-2"><Award size={24} className="text-amber-400" /><h4 className="text-amber-400 font-black text-sm uppercase tracking-widest">Club CyM VIP & Tienda</h4></div><p className="text-white font-bold text-lg mb-1">Impulsá el Ministerio</p><p className="text-slate-400 text-xs mb-4">Hacete Socio Anual o recargá Diamantes para expandir esta obra.</p></div>
+                <div><div className="flex items-center gap-2 mb-2"><Award size={24} className="text-amber-400" /><h4 className="text-amber-400 font-black text-sm uppercase tracking-widest">Club CyM VIP & Tienda</h4></div><p className="text-white font-bold text-lg mb-1">Impulsá el Ministerio</p><p className="text-slate-400 text-xs mb-4">Hacete Socio VIP mes a mes o recargá Diamantes para expandir esta obra.</p></div>
                 <button onClick={() => { setTabTiendaInicial('socios'); setVistaActual('tienda'); }} className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"><Crown size={16} className="fill-black" /> Membresías & Diamantes</button>
               </div>
             </div>
@@ -1821,7 +1821,7 @@ function AppMain() {
         </div>
       )}
 
-      {/* MOTOR GLOBAL DE CONVERSIÓN MINISTERIAL (CLUB VIP ANUAL/MENSUAL + RECARGA DIAMANTES) */}
+      {/* MOTOR GLOBAL DE CONVERSIÓN MINISTERIAL (CLUB VIP MENSUAL + RECARGA DIAMANTES) */}
       <PromocionMembresiaVIP
         currentUser={currentUser}
         enTienda={vistaActual === 'tienda' || vistaActual === 'club'}
