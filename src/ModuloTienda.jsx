@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, query, collection, where, getDocs, arrayUnion, onSnapshot } from 'firebase/firestore';
-import { 
+import {
+  doc, query, collection, where, getDocs, arrayUnion, onSnapshot, runTransaction
+} from 'firebase/firestore';
+import {
   Gem, Heart, Gift, ShoppingCart, ChevronLeft, Loader2, Sparkles, Send, CreditCard, Infinity
 } from 'lucide-react';
 
-// ACÁ ESTÁN TUS LINKS REALES DE MERCADO PAGO
-const PAQUETES_DIAMANTES = [
+/**
+ * FUENTE ÚNICA DE VERDAD (Single Source of Truth - Principio DRY):
+ * Exportada para ser consumida tanto por el Banco Central (ModuloTienda)
+ * como por el Motor Global de Conversión (PromocionMembresiaVIP).
+ */
+export const PAQUETES_DIAMANTES = [
   { id: 'pack_chico', cant: 10, precio: '$2.500 / mes', desc: 'Suscripción Básica: Para recuperar vidas y consultas IA.', link: 'https://mpago.la/2E4E6DY' },
   { id: 'pack_medio', cant: 25, precio: '$5.500 / mes', desc: 'Suscripción Plata: Ideal para pases de torneos VIP.', link: 'https://mpago.la/1dfisBW' },
   { id: 'pack_clan', cant: 50, precio: '$10.000 / mes', desc: 'Suscripción Liderazgo: El justo para crear y potenciar Clanes.', link: 'https://mpago.la/1nDtvCR', popular: true },
@@ -14,8 +20,8 @@ const PAQUETES_DIAMANTES = [
 
 export default function ModuloTienda({ currentUser, db, onVolver }) {
   const [procesando, setProcesando] = useState(false);
-  const [vistaActual, setVistaActual] = useState('comprar'); 
-  
+  const [vistaActual, setVistaActual] = useState('comprar');
+
   const [emailAmigo, setEmailAmigo] = useState('');
   const [mensajeRegalo, setMensajeRegalo] = useState('');
   const [corazonesAEnviar, setCorazonesAEnviar] = useState(5);
@@ -23,8 +29,9 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
   const [diamantesEnVivo, setDiamantesEnVivo] = useState(currentUser?.diamantes || 0);
   const [corazonesEnVivo, setCorazonesEnVivo] = useState(currentUser?.corazones || 0);
 
+  // Suscripción en tiempo real con limpieza determinista de listener
   useEffect(() => {
-    if (!currentUser?.uid) return;
+    if (!db || !currentUser?.uid) return;
     const userRef = doc(db, 'cym_usuarios', currentUser.uid);
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -37,54 +44,96 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
   }, [currentUser, db]);
 
   const handleComprarDiamantes = (paquete) => {
-    alert(`Serás redirigido a Mercado Pago para iniciar tu suscripción de ${paquete.cant} Diamantes mensuales.\n\nUna vez aprobado el débito automático, los diamantes se acreditarán en tu cuenta.`);
-    window.open(paquete.link, '_blank');
+    alert(
+      `Serás redirigido a Mercado Pago para iniciar tu suscripción de ${paquete.cant} Diamantes mensuales.\n\nUna vez aprobado el débito automático, los diamantes se acreditarán en tu cuenta.`
+    );
+    window.open(paquete.link, '_blank', 'noopener,noreferrer');
   };
 
+  /**
+   * Genialidad Arquitectónica (Bioseguridad Transaccional):
+   * Ejecuta la transferencia de corazones mediante runTransaction (ACID).
+   * Erradica cualquier condición de carrera (race condition) o doble gasto
+   * leyendo y validando ambos documentos en el servidor antes de escribir.
+   */
   const handleEnviarRegalo = async (e) => {
     e.preventDefault();
-    if (!emailAmigo.trim()) {
-      alert("Ingresá el email de tu amigo.");
+    if (procesando || !db || !currentUser?.uid) return;
+
+    const emailDestino = emailAmigo.toLowerCase().trim();
+    const emailPropio = String(currentUser?.email || '').toLowerCase().trim();
+
+    if (!emailDestino) {
+      alert('Ingresá el email de tu amigo.');
+      return;
+    }
+    if (emailDestino === emailPropio) {
+      alert('No podés enviarte corazones a tu propia cuenta.');
       return;
     }
     if (corazonesEnVivo < corazonesAEnviar) {
-      alert("No tenés suficientes corazones para enviar este regalo.");
+      alert('No tenés suficientes corazones para enviar este regalo.');
       return;
     }
 
     setProcesando(true);
     try {
-      const q = query(collection(db, "cym_usuarios"), where("email", "==", emailAmigo.toLowerCase().trim()));
+      const q = query(collection(db, 'cym_usuarios'), where('email', '==', emailDestino));
       const snap = await getDocs(q);
-      
+
       if (snap.empty) {
-        alert("No se encontró ningún usuario con ese correo en CyM Biblia.");
+        alert('No se encontró ningún usuario con ese correo en CyM Biblia.');
         setProcesando(false);
         return;
       }
 
       const amigoDoc = snap.docs[0];
-      const amigoData = amigoDoc.data();
+      const amigoNombre = amigoDoc.data().nombre || amigoDoc.data().email;
 
-      await updateDoc(doc(db, 'cym_usuarios', currentUser.uid), {
-        corazones: corazonesEnVivo - corazonesAEnviar
+      await runTransaction(db, async (transaction) => {
+        const emisorRef = doc(db, 'cym_usuarios', currentUser.uid);
+        const receptorRef = doc(db, 'cym_usuarios', amigoDoc.id);
+
+        // Fase 1: Lecturas obligatorias antes de cualquier escritura
+        const emisorSnap = await transaction.get(emisorRef);
+        const receptorSnap = await transaction.get(receptorRef);
+
+        if (!emisorSnap.exists() || !receptorSnap.exists()) {
+          throw new Error('CUENTA_INEXISTENTE');
+        }
+
+        const saldoEmisorReal = Number(emisorSnap.data().corazones || 0);
+        const saldoReceptorReal = Number(receptorSnap.data().corazones || 0);
+
+        if (saldoEmisorReal < corazonesAEnviar) {
+          throw new Error('SALDO_INSUFICIENTE');
+        }
+
+        // Fase 2: Escrituras atómicas simultáneas
+        transaction.update(emisorRef, {
+          corazones: saldoEmisorReal - corazonesAEnviar
+        });
+
+        transaction.update(receptorRef, {
+          corazones: saldoReceptorReal + corazonesAEnviar,
+          regalosRecibidos: arrayUnion({
+            de: currentUser.nombre || currentUser.email,
+            cantidad: corazonesAEnviar,
+            mensaje: mensajeRegalo.trim() || '¡Bendiciones! Te mando vidas extra.',
+            fecha: new Date().toISOString()
+          })
+        });
       });
 
-      await updateDoc(doc(db, 'cym_usuarios', amigoDoc.id), {
-        corazones: (amigoData.corazones || 0) + corazonesAEnviar,
-        regalosRecibidos: arrayUnion({
-          de: currentUser.nombre || currentUser.email,
-          cantidad: corazonesAEnviar,
-          mensaje: mensajeRegalo || '¡Bendiciones! Te mando vidas extra.',
-          fecha: new Date().toISOString()
-        })
-      });
-
-      alert(`🎁 ¡Regalo enviado con éxito a ${amigoData.nombre || amigoData.email}!`);
+      alert(`🎁 ¡Regalo enviado con éxito a ${amigoNombre}!`);
       setEmailAmigo('');
       setMensajeRegalo('');
     } catch (error) {
-      alert("Ocurrió un error al enviar el regalo.");
+      if (error?.message === 'SALDO_INSUFICIENTE') {
+        alert('No tenés suficientes corazones disponibles para completar esta operación.');
+      } else {
+        alert('Ocurrió un error al procesar la transferencia. Intentá nuevamente.');
+      }
     } finally {
       setProcesando(false);
     }
@@ -92,7 +141,7 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
 
   return (
     <div className="relative min-h-[80vh] w-full flex flex-col justify-start p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-cyan-950/40 to-slate-900 border-2 border-cyan-500/30 text-white shadow-2xl overflow-hidden">
-      
+
       <div className="w-full flex justify-between items-center mb-6">
         <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft size={22} />
@@ -119,13 +168,13 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
       </div>
 
       <div className="flex gap-2 mb-6">
-        <button 
+        <button
           onClick={() => setVistaActual('comprar')}
           className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex justify-center items-center gap-2 ${vistaActual === 'comprar' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-black/40 text-slate-400 border border-white/10 hover:bg-white/5'}`}
         >
           <Infinity size={16} /> Membresías Mensuales
         </button>
-        <button 
+        <button
           onClick={() => setVistaActual('regalar')}
           className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex justify-center items-center gap-2 ${vistaActual === 'regalar' ? 'bg-pink-600 text-white shadow-lg' : 'bg-black/40 text-slate-400 border border-white/10 hover:bg-white/5'}`}
         >
@@ -138,7 +187,7 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
           <div className="bg-cyan-900/30 border border-cyan-500/30 p-4 rounded-2xl mb-6 text-center">
             <p className="text-xs text-cyan-200 font-medium">Al suscribirte, recibirás tu recarga de Diamantes 💎 de forma mensual para potenciar tu Clan, revivir en trivias y acceder a torneos.</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6">
             {PAQUETES_DIAMANTES.map((pack) => (
               <div key={pack.id} className={`relative bg-black/60 border ${pack.popular ? 'border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'border-white/10'} p-5 rounded-2xl flex flex-col justify-between`}>
@@ -152,7 +201,7 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
                   <h3 className="text-3xl font-black text-white">{pack.cant} 💎</h3>
                   <p className="text-xs text-slate-400 mt-2 h-10">{pack.desc}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => handleComprarDiamantes(pack)}
                   className={`w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 ${pack.popular ? 'bg-cyan-400 text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
                 >
@@ -175,26 +224,26 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
           <form onSubmit={handleEnviarRegalo} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-slate-400 block mb-1">Email del Amigo</label>
-              <input 
-                type="email" 
-                placeholder="ejemplo@correo.com" 
+              <input
+                type="email"
+                placeholder="ejemplo@correo.com"
                 value={emailAmigo}
                 onChange={(e) => setEmailAmigo(e.target.value)}
                 className="w-full bg-black/80 border border-pink-500/30 rounded-xl p-3 text-white text-sm outline-none focus:border-pink-400"
               />
             </div>
-            
+
             <div>
               <label className="text-xs font-bold text-slate-400 block mb-1">¿Cuántos corazones enviar?</label>
               <div className="flex gap-2">
-                {[2, 5, 10].map(cant => (
+                {[2, 5, 10].map((cant) => (
                   <button
                     key={cant}
                     type="button"
                     onClick={() => setCorazonesAEnviar(cant)}
                     className={`flex-1 py-3 rounded-xl font-black text-sm flex justify-center items-center gap-1 border ${corazonesAEnviar === cant ? 'bg-pink-600 border-pink-400 text-white' : 'bg-black/40 border-white/10 text-slate-400'}`}
                   >
-                    {cant} <Heart size={16} className={corazonesAEnviar === cant ? "fill-white" : ""} />
+                    {cant} <Heart size={16} className={corazonesAEnviar === cant ? 'fill-white' : ''} />
                   </button>
                 ))}
               </div>
@@ -202,9 +251,9 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
 
             <div>
               <label className="text-xs font-bold text-slate-400 block mb-1">Mensaje de Bendición (Opcional)</label>
-              <input 
-                type="text" 
-                placeholder="¡Para que ganes ese duelo!" 
+              <input
+                type="text"
+                placeholder="¡Para que ganes ese duelo!"
                 maxLength={40}
                 value={mensajeRegalo}
                 onChange={(e) => setMensajeRegalo(e.target.value)}
@@ -212,15 +261,15 @@ export default function ModuloTienda({ currentUser, db, onVolver }) {
               />
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={procesando || corazonesEnVivo < corazonesAEnviar}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform flex justify-center items-center gap-2 mt-4"
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform flex justify-center items-center gap-2 mt-4 disabled:opacity-50"
             >
               {procesando ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-              {procesando ? "Enviando Regalo..." : "Enviar Bendición"}
+              {procesando ? 'Enviando Regalo...' : 'Enviar Bendición'}
             </button>
-            
+
             {corazonesEnVivo < corazonesAEnviar && (
               <p className="text-center text-[10px] text-red-400 font-bold mt-2">No tenés suficientes corazones para este envío.</p>
             )}

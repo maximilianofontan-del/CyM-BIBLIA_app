@@ -29,6 +29,7 @@ import ModuloDuelo from './ModuloDuelo';
 import ModuloClanes from './ModuloClanes';
 import ModuloTienda from './ModuloTienda';
 import JuegosModule from './JuegosModule';
+import PromocionMembresiaVIP from './PromocionMembresiaVIP';
 
 import BibliaRVR from './data/RVR1960.json';
 import BibliaNTV from './data/NTV.json';
@@ -178,11 +179,9 @@ function ModuloAdmin() {
       const aOnline = esOnline(a.ultimaConexion);
       const bOnline = esOnline(b.ultimaConexion);
       
-      // Los online van arriba
       if (aOnline && !bOnline) return -1;
       if (!aOnline && bOnline) return 1;
       
-      // Si ambos están igual (los dos online o los dos offline), ordena por el más reciente
       const fechaA = a.ultimaConexion ? new Date(a.ultimaConexion).getTime() : 0;
       const fechaB = b.ultimaConexion ? new Date(b.ultimaConexion).getTime() : 0;
       return fechaB - fechaA;
@@ -347,7 +346,6 @@ function AppMain() {
   
   const [mostrarAsistente, setMostrarAsistente] = useState(false);
   
-  // ESTADOS DE VOCES PARA LECTURA
   const [leyendoAudio, setLeyendoAudio] = useState(false);
   const [vocesDisponibles, setVocesDisponibles] = useState([]);
   const [vozSeleccionada, setVozSeleccionada] = useState('');
@@ -362,23 +360,18 @@ function AppMain() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [mostrarInstalador, setMostrarInstalador] = useState(false);
   
-  // ESTADOS PARA EL INSTALADOR INTELIGENTE
   const [esDispositivoIOS, setEsDispositivoIOS] = useState(false);
 
-  // REFERENCIAS PARA EL LECTOR DE VOZ
   const lectorEstadoRef = useRef({ libro: libroActual, capitulo: capituloActual, leyendoAudio });
 
-  // ESTADOS PARA COMUNIDAD Y RANKING
   const [pestañaComunidad, setPestañaComunidad] = useState('amigos');
   const [rankingGlobal, setRankingGlobal] = useState([]);
 
-  // ESTADOS PARA EDICIÓN DE PRÉDICAS
   const [predicaEditando, setPredicaEditando] = useState(null);
   const [editTitulo, setEditTitulo] = useState('');
   const [editPasaje, setEditPasaje] = useState('');
   const [guardandoEdit, setGuardandoEdit] = useState(false);
 
-  // 1. CARGA ROBUSTA DE VOCES (Especial para arreglar el bug de Safari/Edge Mobile)
   useEffect(() => {
     let intentoCarga;
     const cargarVoces = () => {
@@ -403,7 +396,6 @@ function AppMain() {
     return () => clearInterval(intentoCarga);
   }, []);
 
-  // 2. INSTALADOR INTELIGENTE (Detecta iPhone vs Android)
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -506,7 +498,6 @@ function AppMain() {
     return () => clearTimeout(timer);
   }, []);
 
-  // CARGAR RANKING GLOBAL CUANDO ESTÁ EN LA PESTAÑA COMUNIDAD
   useEffect(() => {
     if (vistaActual === 'comunidad' && pestañaComunidad === 'global') {
       const cargarRankingGlobal = async () => {
@@ -526,7 +517,7 @@ function AppMain() {
       };
       cargarRankingGlobal();
     }
-  }, [vistaActual, pestañaComunidad, db]);
+  }, [vistaActual, pestañaComunidad]);
 
   const cargarCursosFirebase = async () => {
     setCargandoCursos(true);
@@ -959,12 +950,10 @@ function AppMain() {
   };
   const versiculosActuales = obtenerVersiculos();
 
-  // ACTUALIZAR REF PARA LA LECTURA EN VOZ ALTA CADA VEZ QUE CAMBIAN
   useEffect(() => {
     lectorEstadoRef.current = { libro: libroActual, capitulo: capituloActual, leyendoAudio };
   }, [libroActual, capituloActual, leyendoAudio]);
 
-  // CANCELAR AUDIO SI SALIMOS DEL LECTOR
   useEffect(() => { 
     if (vistaActual !== 'lector') {
       window.speechSynthesis.cancel(); 
@@ -1096,7 +1085,6 @@ function AppMain() {
     }
   };
 
-
   const diasTranscurridos = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); 
   const lecturaHoy = LECTURAS_DIARIAS[diasTranscurridos % LECTURAS_DIARIAS.length] || LECTURAS_DIARIAS[0];
   const devocionalHoy = lecturaHoy.devocional || devocionalPorDefecto;
@@ -1227,7 +1215,6 @@ function AppMain() {
         </div>
       )}
 
-      {/* MODAL EDICIÓN DE PRÉDICA */}
       {predicaEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
           <div className="w-full max-w-md bg-[#0e1626] border border-cyan-500/50 p-6 rounded-3xl shadow-2xl space-y-4">
@@ -1258,7 +1245,6 @@ function AppMain() {
 
       <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-8 relative z-10">
         
-        {/* PANEL ADMIN (SOLO OWNER) */}
         {vistaActual === 'admin' && isOwner && <ModuloAdmin />}
 
         {vistaActual === 'home' && (
@@ -1338,7 +1324,6 @@ function AppMain() {
           </div>
         )}
 
-        {/* ACADEMIA */}
         {vistaActual === 'capacitaciones' && (
           <div className="space-y-8">
             <div className="bg-black/80 border border-amber-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
@@ -1451,7 +1436,6 @@ function AppMain() {
           </div>
         )}
 
-        {/* PREDICACIONES VIP */}
         {vistaActual === 'predicas' && (
           <div className="space-y-6">
             <div className="bg-black/80 border border-cyan-500/40 p-6 md:p-8 rounded-3xl backdrop-blur-md shadow-2xl">
@@ -1513,7 +1497,6 @@ function AppMain() {
                       return (
                         <div key={p.id} className="bg-black/60 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl relative group">
                           
-                          {/* BOTONES EXCLUSIVOS OWNER: EDITAR Y BORRAR */}
                           {isOwner && (
                             <div className="absolute top-3 right-3 z-20 flex gap-2">
                               <button
@@ -1579,12 +1562,10 @@ function AppMain() {
           </div>
         )}
 
-        {/* COMUNIDAD (MIS AMIGOS Y RANKING GLOBAL) */}
         {vistaActual === 'comunidad' && (
           <div className="bg-black/80 border border-[#cca300]/30 p-6 rounded-3xl backdrop-blur-md">
             <h2 className="text-2xl font-black text-[#ffd700] mb-6 flex items-center gap-2"><Trophy size={28} /> Salón de la Fama</h2>
             
-            {/* PESTAÑAS */}
             <div className="flex gap-2 mb-6 bg-black/50 p-1.5 rounded-2xl border border-white/10">
               <button 
                 onClick={() => setPestañaComunidad('amigos')} 
@@ -1667,7 +1648,6 @@ function AppMain() {
                             <p className="text-[10px] uppercase text-slate-400 font-bold">Puntos</p>
                           </div>
                           
-                          {/* BOTONES DE AGREGAR AMIGO DESDE EL GLOBAL */}
                           {!esYo && !esAmigo && (
                             <button 
                               onClick={() => agregarAmigoPorId(user.id)}
@@ -1692,7 +1672,6 @@ function AppMain() {
           </div>
         )}
 
-        {/* LECTOR BÍBLICO */}
         {vistaActual === 'lector' && (
           <div className="bg-black/70 p-4 md:p-10 rounded-3xl backdrop-blur-md border border-[#cca300]/20 shadow-2xl">
             <div className="mb-8 p-4 bg-black/50 border border-[#cca300]/30 rounded-2xl"><div className="grid grid-cols-2 md:grid-cols-4 gap-2"><select value={versionActual} onChange={(e) => setVersionActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-[#cca300]/40 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="RVR1960">Reina Valera 1960</option><option value="NTV">NTV</option><option value="DHH">DHH</option><option value="LBLA">LBLA</option><option value="TLA">TLA</option></select><select value={libroActual} onChange={(e) => { setLibroActual(e.target.value); setCapituloActual(1); setVersiculoActual(''); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{LIBROS_MENU.map((l) => <option key={l.nombre} value={l.nombre}>{l.nombre}</option>)}</select><select value={capituloActual} onChange={(e) => { setCapituloActual(Number(e.target.value)); setVersiculoActual(''); }} className="w-full bg-[#1a1a1a] border border-white/20 text-white p-2 rounded-lg font-bold text-xs outline-none">{Array.from({ length: 150 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select><select value={versiculoActual} onChange={(e) => setVersiculoActual(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/20 text-amber-300 p-2 rounded-lg font-bold text-xs outline-none"><option value="">Todo el cap.</option>{versiculosActuales.map((v) => <option key={v.numero} value={v.numero}>Versículo {v.numero}</option>)}</select></div></div>
@@ -1704,7 +1683,6 @@ function AppMain() {
                 <button onClick={irCapituloSiguiente} className="p-2 hover:bg-[#cca300]/20 rounded-full text-[#ffd700] transition-colors"><ChevronRight size={32}/></button>
               </div>
 
-              {/* SELECTOR DE VOCES VISIBLE */}
               {vocesDisponibles.length > 0 && (
                 <div className="mb-6 flex items-center gap-2 bg-black/40 border border-[#cca300]/30 px-4 py-2 rounded-full">
                   <Volume2 size={16} className="text-[#ffd700]" />
@@ -1738,7 +1716,6 @@ function AppMain() {
               })}
             </div>
             
-            {/* Navegación al final del capítulo */}
             <div className="mt-12 pt-8 border-t border-[#cca300]/30 flex justify-between items-center">
                <button onClick={irCapituloAnterior} className="flex items-center gap-2 text-slate-400 hover:text-[#ffd700] font-bold uppercase tracking-wider text-xs transition-colors"><ChevronLeft size={20}/> Capítulo Anterior</button>
                <button onClick={irCapituloSiguiente} className="flex items-center gap-2 text-slate-400 hover:text-[#ffd700] font-bold uppercase tracking-wider text-xs transition-colors">Siguiente Capítulo <ChevronRight size={20}/></button>
@@ -1746,7 +1723,6 @@ function AppMain() {
           </div>
         )}
 
-        {/* NUEVAS VISTAS MODULARES */}
         {vistaActual === 'duelo' && (
           <ModuloDuelo currentUser={currentUser} db={db} listaAmigos={listaAmigos} onVolver={() => setVistaActual('home')} />
         )}
@@ -1757,7 +1733,6 @@ function AppMain() {
           <ModuloTienda currentUser={currentUser} db={db} onVolver={() => setVistaActual('home')} />
         )}
 
-        {/* TRIVIA Y CLUB Y JUEGOS KIDS */}
         {vistaActual === 'trivia' && <ModuloTrivia currentUser={currentUser} db={db} tema={tema} onVolver={() => setVistaActual('home')} />}
         {vistaActual === 'juegos' && <JuegosModule currentUser={currentUser} db={db} />}
         
@@ -1806,6 +1781,21 @@ function AppMain() {
         </div>
       )}
 
+      {/* MOTOR GLOBAL DE CONVERSIÓN Y MEMBRESÍAS VIP (MULTI-PESTAÑA CON CONTENCIÓN CONTEXTUAL) */}
+      <PromocionMembresiaVIP
+        currentUser={currentUser}
+        enTienda={vistaActual === 'tienda' || vistaActual === 'club'}
+        pausarAnuncios={
+          vistaActual === 'trivia' ||
+          vistaActual === 'duelo' ||
+          vistaActual === 'juegos' ||
+          vistaActual === 'teens' ||
+          mostrarModalDevocional ||
+          mostrarInstalador
+        }
+        onIrATienda={() => setVistaActual('tienda')}
+      />
+
       {/* CARTEL INTELIGENTE DE DESCARGA / INSTALACIÓN */}
       {mostrarInstalador && (
         <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent backdrop-blur-md animate-in slide-in-from-bottom flex flex-col items-center justify-center">
@@ -1841,9 +1831,6 @@ function AppMain() {
   );
 }
 
-// --------------------------------------------------
-// EL PARACAÍDAS DE REACT (ERROR BOUNDARY)
-// --------------------------------------------------
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -1882,7 +1869,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// EXPORTACIÓN FINAL BLINDADA
 export default function App() {
   return (
     <ErrorBoundary>
