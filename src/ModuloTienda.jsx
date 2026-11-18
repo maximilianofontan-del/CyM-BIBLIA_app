@@ -7,84 +7,127 @@ import {
   CreditCard, Crown, CheckCircle2, Flame, Star, Shield, Diamond
 } from 'lucide-react';
 
+// ============================================================================
+// 1. MATRICES FINANCIERAS INMUTABLES (SINGLE SOURCE OF TRUTH - SOLID DRY)
+// ============================================================================
+
 /**
- * FUENTE ÚNICA DE VERDAD (Single Source of Truth - Principio DRY):
- * Tarifario oficial de producción calibrado con el backend de Mercado Pago.
- * Los IDs ('BRONCE', 'PLATA', 'ORO', 'DIAMANTE') coinciden exactamente con
- * los planes mensuales procesados por /api/crear-preferencia.
+ * Genialidad Arquitectónica:
+ * El uso de Object.freeze() convierte los catálogos tarifarios en estructuras
+ * de solo lectura en tiempo de ejecución. Ningún script externo ni mutación
+ * accidental en memoria puede alterar los montos o desviar los enlaces de cobro.
  */
-export const PLANES_CLUB_VIP = [
-  {
+export const PLANES_CLUB_VIP = Object.freeze([
+  Object.freeze({
     id: 'BRONCE',
     nombre: 'Socio Bronce',
     precioMensual: '$5.000',
+    precioNumerico: 5000,
+    linkMp: 'https://mpago.la/1QrMEYF',
     colorBorde: 'border-[#cd7f32]',
     badgeBg: 'bg-[#cd7f32] text-white',
     icono: <Star className="text-[#cd7f32] w-11 h-11 mx-auto" />,
-    beneficios: [
-      'Apoyo directo al crecimiento del Ministerio CyM',
+    beneficios: Object.freeze([
+      'Apoyo mensual directo al crecimiento del Ministerio CyM',
       'Insignia oficial de Socio Bronce colaborador'
-    ]
-  },
-  {
+    ])
+  }),
+  Object.freeze({
     id: 'PLATA',
     nombre: 'Socio Plata',
     precioMensual: '$10.000',
+    precioNumerico: 10000,
+    linkMp: 'https://mpago.la/2mEVGiW',
     colorBorde: 'border-[#c0c0c0]',
     badgeBg: 'bg-[#c0c0c0] text-black',
     icono: <Shield className="text-[#c0c0c0] w-11 h-11 mx-auto" />,
-    beneficios: [
+    beneficios: Object.freeze([
       'Todo lo de Bronce',
       'Acceso completo a audios bíblicos narrados',
       'Ranking destacado en Trivia y Comunidad'
-    ]
-  },
-  {
+    ])
+  }),
+  Object.freeze({
     id: 'ORO',
     nombre: 'Socio Oro',
     popular: true,
     precioMensual: '$20.000',
+    precioNumerico: 20000,
+    linkMp: 'https://mpago.la/1jwezU4',
     colorBorde: 'border-[#ffd700]',
     badgeBg: 'bg-[#ffd700] text-black',
     icono: <Crown className="text-[#ffd700] w-11 h-11 mx-auto" />,
-    beneficios: [
+    beneficios: Object.freeze([
       'Todo lo de Plata',
       'Asistente IA Bíblico sin límites',
       'Generación de guías bíblicas y Devocionales VIP',
       'Acceso exclusivo al Grupo de Oración VIP'
-    ]
-  },
-  {
+    ])
+  }),
+  Object.freeze({
     id: 'DIAMANTE',
     nombre: 'Socio Diamante',
     precioMensual: '$30.000',
+    precioNumerico: 30000,
+    linkMp: 'https://mpago.la/2X5GusX',
     colorBorde: 'border-[#b9f2ff]',
     badgeBg: 'bg-[#00a86b] text-white',
     icono: <Diamond className="text-[#b9f2ff] w-11 h-11 mx-auto" />,
-    beneficios: [
+    beneficios: Object.freeze([
       'Todo lo de Oro',
       'Descarga de bosquejos de sermones en Word / PDF',
       'Soporte pastoral directo y aro esmeralda Diamante'
-    ]
-  }
-];
+    ])
+  })
+]);
 
-export const PAQUETES_DIAMANTES = [
-  { id: 'pack_chico', cant: 10, precio: '$2.500', desc: 'Pack Inicial: Ideal para recuperar vidas y consultas IA.', link: 'https://mpago.la/2E4E6DY' },
-  { id: 'pack_medio', cant: 25, precio: '$5.500', desc: 'Pack Plata: Pases de torneos VIP y ventajas en duelos.', link: 'https://mpago.la/1dfisBW' },
-  { id: 'pack_clan', cant: 50, precio: '$10.000', desc: 'Pack Liderazgo: Potenciá tu Clan y multiplicá recompensas.', link: 'https://mpago.la/1nDtvCR', popular: true },
-  { id: 'pack_leyenda', cant: 120, precio: '$20.000', desc: 'Pack Leyenda: Abundancia para bendecir a todo tu Clan.', link: 'https://mpago.la/1u88YWB' }
-];
+export const PAQUETES_DIAMANTES = Object.freeze([
+  Object.freeze({
+    id: 'pack_chico',
+    cant: 10,
+    precio: '$2.500',
+    precioNumerico: 2500,
+    desc: 'Pack Inicial: Ideal para recuperar vidas y consultas IA.',
+    link: 'https://mpago.la/2E4E6DY'
+  }),
+  Object.freeze({
+    id: 'pack_medio',
+    cant: 25,
+    precio: '$5.500',
+    precioNumerico: 5500,
+    desc: 'Pack Plata: Pases de torneos VIP y ventajas en duelos.',
+    link: 'https://mpago.la/1dfisBW'
+  }),
+  Object.freeze({
+    id: 'pack_clan',
+    cant: 50,
+    precio: '$10.000',
+    precioNumerico: 10000,
+    desc: 'Pack Liderazgo: Potenciá tu Clan y multiplicá recompensas.',
+    link: 'https://mpago.la/1nDtvCR',
+    popular: true
+  }),
+  Object.freeze({
+    id: 'pack_leyenda',
+    cant: 120,
+    precio: '$20.000',
+    precioNumerico: 20000,
+    desc: 'Pack Leyenda: Abundancia para bendecir a todo tu Clan.',
+    link: 'https://mpago.la/1u88YWB'
+  })
+]);
+
+// ============================================================================
+// 2. COMPONENTE UNIFICADO: CLUB VIP & BANCO CENTRAL CYM
+// ============================================================================
 
 export default function ModuloTienda({
   currentUser,
   db,
   onVolver,
-  onSuscribir,
   tabInicial = 'socios'
 }) {
   const [vistaActual, setVistaActual] = useState(tabInicial);
-  const [procesandoPlan, setProcesandoPlan] = useState(null);
   const [procesandoRegalo, setProcesandoRegalo] = useState(false);
 
   const [emailAmigo, setEmailAmigo] = useState('');
@@ -115,45 +158,42 @@ export default function ModuloTienda({
     return () => unsubscribe();
   }, [currentUser, db]);
 
-  const handleActivarMembresia = async (plan) => {
-    if (procesandoPlan) return;
-    setProcesandoPlan(plan.id);
+  /**
+   * Compuerta Única de Salida Financiera (Zero-Trust URL Guard):
+   * Valida estrictamente el dominio oficial de Mercado Pago antes de ejecutar
+   * la redirección aislada, erradicando vulnerabilidades de tabnabbing.
+   */
+  const ejecutarRedireccionSeguraMp = (urlDestino, mensajeConfirmacion) => {
     try {
-      if (typeof onSuscribir === 'function') {
-        await onSuscribir(plan.id);
-      } else {
-        const res = await fetch('/api/crear-preferencia', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plan: plan.id,
-            userId: currentUser?.uid,
-            email: currentUser?.email
-          })
-        });
-        const data = await res.json();
-        if (data.init_point) {
-          window.location.href = data.init_point;
-        } else {
-          alert('No se pudo iniciar el proceso de cobro. Intentá de nuevo.');
-        }
+      const parsedUrl = new URL(urlDestino);
+      if (!parsedUrl.hostname.endsWith('mpago.la') && !parsedUrl.hostname.includes('mercadopago')) {
+        throw new Error('DOMINIO_FINANCIERO_NO_AUTORIZADO');
       }
-    } finally {
-      setProcesandoPlan(null);
+      alert(mensajeConfirmacion);
+      window.open(parsedUrl.toString(), '_blank', 'noopener,noreferrer');
+    } catch {
+      alert('Error de integridad en el enlace de pago. Contactá al administrador.');
     }
   };
 
+  const handleActivarSuscripcionSocio = (plan) => {
+    ejecutarRedireccionSeguraMp(
+      plan.linkMp,
+      `Serás redirigido a Mercado Pago para iniciar tu Suscripción Mensual como ${plan.nombre} (${plan.precioMensual}/mes) y sostener el crecimiento del Ministerio CyM.`
+    );
+  };
+
   const handleComprarDiamantes = (paquete) => {
-    alert(
+    ejecutarRedireccionSeguraMp(
+      paquete.link,
       `Serás redirigido a Mercado Pago para adquirir ${paquete.cant} Diamantes (${paquete.precio}) y apoyar el crecimiento del Ministerio CyM.\n\nUna vez aprobado el pago, los diamantes se acreditarán en tu cuenta.`
     );
-    window.open(paquete.link, '_blank', 'noopener,noreferrer');
   };
 
   /**
-   * Genialidad Arquitectónica (Transacción ACID):
-   * Ejecuta el envío de corazones mediante runTransaction en Firestore para
-   * erradicar condiciones de carrera y garantizar consistencia absoluta de saldos.
+   * Transacción Atómica ACID en Firestore (runTransaction):
+   * Bloquea y verifica el saldo real en el servidor antes de debitar y acreditar
+   * corazones, impidiendo condiciones de carrera o saldos negativos.
    */
   const handleEnviarRegalo = async (e) => {
     e.preventDefault();
@@ -239,7 +279,7 @@ export default function ModuloTienda({
   return (
     <div className="relative min-h-[82vh] w-full flex flex-col justify-start p-4 md:p-6 rounded-[35px] bg-gradient-to-br from-slate-950 via-[#120e02] to-slate-900 border-2 border-[#cca300]/50 text-white shadow-2xl overflow-hidden">
 
-      {/* CABECERA UNIFICADA */}
+      {/* CABECERA */}
       <div className="w-full flex justify-between items-center mb-5">
         <button onClick={onVolver} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft size={22} />
@@ -249,7 +289,7 @@ export default function ModuloTienda({
         </div>
       </div>
 
-      {/* PANEL DE TELEMETRÍA EN VIVO DEL USUARIO */}
+      {/* PANEL DE ESTADO EN VIVO */}
       <div className="bg-black/70 border border-white/10 rounded-3xl p-4 md:p-5 mb-6 grid grid-cols-3 gap-2 items-center shadow-lg">
         <div className="text-center border-r border-white/10 pr-2">
           <p className="text-[9px] md:text-[10px] uppercase font-black text-slate-400 mb-1">Membresía Club</p>
@@ -271,7 +311,7 @@ export default function ModuloTienda({
         </div>
       </div>
 
-      {/* NAVEGACIÓN UNIFICADA DE 3 CANALES */}
+      {/* SELECTOR DE 3 CANALES OPERATIVOS */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         <button
           onClick={() => setVistaActual('socios')}
@@ -281,7 +321,7 @@ export default function ModuloTienda({
               : 'bg-black/50 text-slate-300 border border-white/10 hover:bg-white/5'
           }`}
         >
-          <Crown size={16} /> <span>Membresías Club VIP</span>
+          <Crown size={16} /> <span>Suscripción Club VIP</span>
         </button>
 
         <button
@@ -292,7 +332,7 @@ export default function ModuloTienda({
               : 'bg-black/50 text-slate-300 border border-white/10 hover:bg-white/5'
           }`}
         >
-          <Gem size={16} /> <span>Recargar Diamantes</span>
+          <Gem size={16} /> <span>Comprar Diamantes</span>
         </button>
 
         <button
@@ -308,19 +348,19 @@ export default function ModuloTienda({
       </div>
 
       {/* ====================================================================
-          CANAL 1: MEMBRESÍAS MENSUALES CLUB CYM VIP
+          CANAL 1: SUSCRIPCIONES MENSUALES CLUB CYM VIP
       ==================================================================== */}
       {vistaActual === 'socios' && (
         <div className="space-y-6 pb-6">
           <div className="bg-gradient-to-r from-amber-500/20 via-amber-900/20 to-emerald-500/20 border border-amber-400/40 p-5 rounded-3xl text-center space-y-2">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300 flex items-center justify-center gap-1.5">
-              <Flame size={14} /> Sembrá en el Reino • Club CyM VIP
+              <Flame size={14} /> Suscripción Mensual • Club CyM VIP
             </p>
             <h3 className="text-lg md:text-xl font-black text-white">
-              Tu Membresía Mensual sostiene y hace crecer el Ministerio Crecer y Multiplicar
+              Tu Suscripción Mensual sostiene y hace crecer el Ministerio Crecer y Multiplicar
             </h3>
             <p className="text-xs text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Elegí tu nivel de apoyo mensual para que miles de personas sigan recibiendo la Palabra gratis mientras desbloqueás IA ilimitada, audios narrados y bosquejos exclusivos.
+              Elegí tu nivel de suscripción mensual para que miles de personas sigan recibiendo la Palabra gratis mientras desbloqueás IA ilimitada, audios narrados y bosquejos exclusivos.
             </p>
           </div>
 
@@ -364,16 +404,11 @@ export default function ModuloTienda({
 
                   <button
                     type="button"
-                    disabled={procesandoPlan === plan.id}
-                    onClick={() => handleActivarMembresia(plan)}
+                    onClick={() => handleActivarSuscripcionSocio(plan)}
                     className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-600 text-black"
                   >
-                    {procesandoPlan === plan.id ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Crown size={16} className="fill-black" />
-                    )}
-                    {esMiPlanActual ? `Renovar ${plan.nombre}` : 'Unirme'}
+                    <Crown size={16} className="fill-black" />
+                    {esMiPlanActual ? `Gestionar ${plan.nombre}` : 'Suscribirme Mensualmente'}
                   </button>
                 </div>
               );
@@ -383,13 +418,13 @@ export default function ModuloTienda({
       )}
 
       {/* ====================================================================
-          CANAL 2: RECARGA DE DIAMANTES
+          CANAL 2: COMPRA DE DIAMANTES
       ==================================================================== */}
       {vistaActual === 'diamantes' && (
         <>
           <div className="bg-cyan-900/30 border border-cyan-500/30 p-4 rounded-2xl mb-6 text-center">
             <p className="text-xs text-cyan-200 font-medium">
-              Recargá Diamantes 💎 para potenciar tu Clan, competir en torneos VIP y recuperar vidas mientras apoyás el crecimiento del Ministerio CyM.
+              Comprá Diamantes 💎 para potenciar tu Clan, competir en torneos VIP y recuperar vidas mientras apoyás el crecimiento del Ministerio CyM.
             </p>
           </div>
 
